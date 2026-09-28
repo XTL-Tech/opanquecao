@@ -37,77 +37,77 @@
         {
           "nome": "Bacon",
           "ingredientes": "Mussarela, bacon e orégano",
-          "tamanhos": { "M": "R$ 26,00", "G": "R$ 36,00" }
+          "tamanhos": { "M": "R$ 28,00", "G": "R$ 38,00" }
         },
         {
           "nome": "Brocolis e Catupiry",
           "ingredientes": "Brocolis, mussarela, requeijão e orégano",
-          "tamanhos": { "M": "R$ 21,00", "G": "R$ 31,00" }
+          "tamanhos": { "M": "R$ 23,00", "G": "R$ 33,00" }
         },
         {
           "nome": "Calabresa",
           "ingredientes": "Calabresa, mussarela e orégano",
-          "tamanhos": { "M": "R$ 26,00", "G": "R$ 36,00" }
+          "tamanhos": { "M": "R$ 28,00", "G": "R$ 38,00" }
         },
         {
           "nome": "Carne de Panela",
           "ingredientes": "Carne de panela ao molho, mussarela e orégano",
-          "tamanhos": { "M": "R$ 28,00", "G": "R$ 38,00" }
+          "tamanhos": { "M": "R$ 30,00", "G": "R$ 40,00" }
         },
         {
           "nome": "Coração",
           "ingredientes": "Coração ao molho, mussarela e orégano",
-          "tamanhos": { "M": "R$ 26,00", "G": "R$ 36,00" }
+          "tamanhos": { "M": "R$ 28,00", "G": "R$ 38,00" }
         },
         {
           "nome": "Estrogonofe de Carne",
           "ingredientes": "Carne de panela ao molho, ketchup, creme de leite, mussarela e orégano",
-          "tamanhos": { "M": "R$ 28,00", "G": "R$ 38,00" }
+          "tamanhos": { "M": "R$ 30,00", "G": "R$ 40,00" }
         },
         {
           "nome": "Estrogonofe de Frango",
           "ingredientes": "Frango ao molho, ketchup, creme de leite, mussarela e orégano",
-          "tamanhos": { "M": "R$ 26,00", "G": "R$ 36,00" }
+          "tamanhos": { "M": "R$ 28,00", "G": "R$ 38,00" }
         },
         {
           "nome": "Frango e Catupiry",
           "ingredientes": "Frango ao molho, requeijão, mussarela e orégano",
-          "tamanhos": { "M": "R$ 26,00", "G": "R$ 36,00" }
+          "tamanhos": { "M": "R$ 28,00", "G": "R$ 38,00" }
         },
         {
           "nome": "Milho e Mussarela",
           "ingredientes": "Milho verde, mussarela e orégano",
-          "tamanhos": { "M": "R$ 21,00", "G": "R$ 31,00" }
+          "tamanhos": { "M": "R$ 23,00", "G": "R$ 33,00" }
         },
         {
           "nome": "Mussarela",
           "ingredientes": "Mussarela e orégano",
-          "tamanhos": { "M": "R$ 21,00", "G": "R$ 31,00" }
+          "tamanhos": { "M": "R$ 23,00", "G": "R$ 33,00" }
         },
         {
           "nome": "Quatro Queijos",
           "ingredientes": "Mussarela, requeijão, parmesão, cheddar e orégano",
-          "tamanhos": { "M": "R$ 26,00", "G": "R$ 36,00" }
+          "tamanhos": { "M": "R$ 28,00", "G": "R$ 38,00" }
         },
         {
           "nome": "Presunto",
           "ingredientes": "Presunto, mussarela e orégano",
-          "tamanhos": { "M": "R$ 24,00", "G": "R$ 34,00" }
+          "tamanhos": { "M": "R$ 26,00", "G": "R$ 36,00" }
         },
         {
           "nome": "Panquegumes",
           "ingredientes": "Brócolis, tomate, cebola, pimentão, milho, requeijão, mussarela e orégano",
-          "tamanhos": { "M": "R$ 26,00", "G": "R$ 36,00" }
+          "tamanhos": { "M": "R$ 28,00", "G": "R$ 38,00" }
         },
         {
           "nome": "Portuguesa",
           "ingredientes": "Presunto, cebola, tomate, azeitonas, mussarela, ovo e orégano",
-          "tamanhos": { "M": "R$ 26,00", "G": "R$ 36,00" }
+          "tamanhos": { "M": "R$ 28,00", "G": "R$ 38,00" }
         },
         {
           "nome": "Panquetudo (Especial)",
           "ingredientes": "Carne de panela ao molho, coração, frango ao molho, calabresa, bacon, mussarela, molho barbecue, batata palha, milho",
-          "tamanhos": { "M": "R$ 30,00", "G": "R$ 40,00" }
+          "tamanhos": { "M": "R$ 32,00", "G": "R$ 42,00" }
         }
       ]
     },
@@ -118,42 +118,42 @@
         {
           "nome": "Banana e Canela",
           "ingredientes": "Banana e canela",
-          "tamanhos": { "M": "R$ 21,00", "G": "R$ 31,00" }
+          "tamanhos": { "M": "R$ 23,00", "G": "R$ 33,00" }
         },
         {
           "nome": "Banana e Canela Cremosa",
           "ingredientes": "Banana, canela e leite condensado",
-          "tamanhos": { "M": "R$ 24,00", "G": "R$ 34,00" }
+          "tamanhos": { "M": "R$ 26,00", "G": "R$ 36,00" }
         },
         {
           "nome": "Chocolate Branco",
           "ingredientes": "Chocolate branco",
-          "tamanhos": { "M": "R$ 28,00", "G": "R$ 38,00" }
+          "tamanhos": { "M": "R$ 30,00", "G": "R$ 40,00" }
         },
         {
           "nome": "Chocolate Preto",
           "ingredientes": "Chocolate preto",
-          "tamanhos": { "M": "R$ 26,00", "G": "R$ 36,00" }
+          "tamanhos": { "M": "R$ 28,00", "G": "R$ 38,00" }
         },
         {
           "nome": "Chocolate Branco e Confetes",
           "ingredientes": "Chocolate branco e confetes",
-          "tamanhos": { "M": "R$ 28,00", "G": "R$ 38,00" }
+          "tamanhos": { "M": "R$ 30,00", "G": "R$ 40,00" }
         },
         {
           "nome": "Chocolate Preto e Confetes",
           "ingredientes": "Chocolate preto e confetes",
-          "tamanhos": { "M": "R$ 26,00", "G": "R$ 36,00" }
+          "tamanhos": { "M": "R$ 28,00", "G": "R$ 38,00" }
         },
         {
           "nome": "Chocolate Branco e Morango",
           "ingredientes": "Chocolate branco e morango",
-          "tamanhos": { "M": "R$ 28,00", "G": "R$ 38,00" }
+          "tamanhos": { "M": "R$ 30,00", "G": "R$ 40,00" }
         },
         {
           "nome": "Chocolate Preto e Morango",
           "ingredientes": "Chocolate preto e morango",
-          "tamanhos": { "M": "R$ 26,00", "G": "R$ 36,00" }
+          "tamanhos": { "M": "R$ 28,00", "G": "R$ 38,00" }
         },
         {
           "nome": "Chocolate Branco e Óreo",
@@ -163,27 +163,27 @@
         {
           "nome": "Chocolate Preto e Óreo",
           "ingredientes": "Chocolate preto e biscoito Óreo",
-          "tamanhos": { "M": "R$ 26,00", "G": "R$ 36,00" }
+          "tamanhos": { "M": "R$ 28,00", "G": "R$ 38,00" }
         },
         {
           "nome": "Choquito Branco",
           "ingredientes": "Chocolate branco e flocos de coco",
-          "tamanhos": { "M": "R$ 28,00", "G": "R$ 38,00" }
+          "tamanhos": { "M": "R$ 30,00", "G": "R$ 40,00" }
         },
         {
           "nome": "Choquito Preto",
           "ingredientes": "Chocolate preto e flocos de coco",
-          "tamanhos": { "M": "R$ 26,00", "G": "R$ 36,00" }
+          "tamanhos": { "M": "R$ 28,00", "G": "R$ 38,00" }
         },
         {
           "nome": "Prestigio Branco",
           "ingredientes": "Chocolate branco e coco em flocos",
-          "tamanhos": { "M": "R$ 28,00", "G": "R$ 38,00" }
+          "tamanhos": { "M": "R$ 30,00", "G": "R$ 40,00" }
         },
         {
           "nome": "Prestigio Preto",
           "ingredientes": "Chocolate preto e coco em flocos",
-          "tamanhos": { "M": "R$ 26,00", "G": "R$ 36,00" }
+          "tamanhos": { "M": "R$ 28,00", "G": "R$ 38,00" }
         }
       ]
     },
@@ -194,17 +194,17 @@
         {
           "nome": "Panqueca Meio a Meio (2 Sabores Salgados)",
           "ingredientes": "Os sabores são os mesmos do cardápio de panquecas salgadas",
-          "preco": "R$ 40,00"
+          "preco": "R$ 42,00"
         },
         {
           "nome": "Panqueca Meio a Meio (2 Sabores Doces)",
           "ingredientes": "Os sabores são os mesmos do cardápio de panquecas doces",
-          "preco": "R$ 40,00"
+          "preco": "R$ 42,00"
         },
         {
           "nome": "Panqueca Meio a Meio (Salgada e Doce)",
           "ingredientes": "Os sabores são os mesmos do cardápio de panquecas",
-          "preco": "R$ 40,00"
+          "preco": "R$ 42,00"
         }
       ]
     },
@@ -215,27 +215,27 @@
         {
           "nome": "Estrogonofe de Frango",
           "ingredientes": "Massa espaguete, frango, creme de leite, ketchup, mussarela, batata palha e orégano",
-          "preco": "R$ 49,00"
+          "preco": "R$ 51,00"
         },
         {
           "nome": "Frango e Catupiry",
           "ingredientes": "Massa espaguete, frango, creme de leite, ketchup, mussarela, batata palha e orégano",
-          "preco": "R$ 49,00"
+          "preco": "R$ 51,00"
         },
         {
           "nome": "Estrogonofe de Carne",
           "ingredientes": "Massa espaguete, carne de panela, creme de leite, ketchup, mussarela, batata palha e orégano",
-          "preco": "R$ 52,00"
+          "preco": "R$ 54,00"
         },
         {
           "nome": "Carne de Panela",
           "ingredientes": "Massa espaguete, carne de panela, creme de leite, ketchup, mussarela, batata palha e orégano",
-          "preco": "R$ 52,00"
+          "preco": "R$ 54,00"
         },
         {
           "nome": "Meio a Meio (2 Sabores)",
           "ingredientes": "Combinação de dois sabores do cardápio",
-          "preco": "R$ 55,00"
+          "preco": "R$ 57,00"
         }
       ]
     },
