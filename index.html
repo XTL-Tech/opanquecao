@@ -8,7 +8,10 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&family=Open+Sans:wght@300;400;600&display=swap" rel="stylesheet">
-    <link rel="icon" type="image/png" sizes="16x16"  href="favicons/favicon-16x16.png">
+    <link rel="icon" type="image/png" sizes="16x16"  href="favicons/oficial/favicon-16x16.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicons/oficial/favicon-32x32.png">
+    <link rel="icon" type="image/x-icon" href="favicons/oficial/favicon.ico">
+    <link rel="apple-touch-icon" sizes="180x180" href="favicons/oficial/apple-touch-icon.png">
     <meta name="msapplication-TileColor" content="#741c2d">
     <meta name="theme-color" content="#741c2d">
     
@@ -54,7 +57,7 @@
         /* Cabeçalho */
         header {
             width: 100%;
-            background: linear-gradient(rgba(56,29,32,.85), rgba(56,29,32,.85)), url("img/panqueca-quadrada.webp") center / cover, var(--secondary);
+            background: var(--secondary);
             color: #fff6e9;
             padding: 56px 0 40px;
             text-align: center;
@@ -368,12 +371,11 @@ src="https://www.facebook.com/tr?id=766179976513223&ev=PageView&noscript=1"
 <header>
     <div class="container">
         <span class="restaurant-badge">DESDE 2017</span>
-        <h1 class="restaurant-logo">O PAN<span>QUECÃO</span></h1>
+        <h1 class="restaurant-logo"><img src="img/logo-disk-panquecao.webp" width="160" height="175" alt="Disk Panquecão" style="max-width:40vw;height:auto;vertical-align:middle"></h1>
         <div style="margin-top:10px; opacity:0.7; font-size:0.9rem">
             <p>Praça do Trabalhador · Nova Hartz/RS</p>
             <p>DiskPanquecão: <a href="tel:+5551997383849">(51) 9 9738-3849</a></p>
         </div>
-        <p class="hero-caption">Imagem ilustrativa</p>
     </div>
 </header>
 
@@ -426,14 +428,107 @@ src="https://www.facebook.com/tr?id=766179976513223&ev=PageView&noscript=1"
     }
 
     const itemPhotos = {
-        'panquecas-salgadas': {
-            'Frango e Catupiry': 'frango-cremoso.webp',
-            'Carne de Panela': 'carne-ao-molho.webp'
-        },
-        'panquecas-doces': {
-            'Banana e Canela Cremosa': 'banana-chocolate.webp'
-        }
-    };
+    "acai": {
+        "Açaí Panquecão": "cardapio/c01-p01.webp"
+    },
+    "panquecas-salgadas": {
+        "Bacon": "cardapio/c02-p01.webp",
+        "Brocolis e Catupiry": "cardapio/c02-p02.webp",
+        "Calabresa": "cardapio/c02-p03.webp",
+        "Carne de Panela": "cardapio/c02-p04.webp",
+        "Coração": "cardapio/c02-p05.webp",
+        "Estrogonofe de Carne": "cardapio/c02-p06.webp",
+        "Estrogonofe de Frango": "cardapio/c02-p07.webp",
+        "Frango e Catupiry": "cardapio/c02-p08.webp",
+        "Milho e Mussarela": "cardapio/c02-p09.webp",
+        "Mussarela": "cardapio/c02-p10.webp",
+        "Quatro Queijos": "cardapio/c02-p11.webp",
+        "Presunto": "cardapio/c02-p12.webp",
+        "Panquegumes": "cardapio/c02-p13.webp",
+        "Portuguesa": "cardapio/c02-p14.webp",
+        "Panquetudo (Especial)": "cardapio/c02-p15.webp"
+    },
+    "panquecas-doces": {
+        "Banana e Canela": "cardapio/c03-p01.webp",
+        "Banana e Canela Cremosa": "cardapio/c03-p02.webp",
+        "Chocolate Branco": "cardapio/c03-p03.webp",
+        "Chocolate Preto": "cardapio/c03-p04.webp",
+        "Chocolate Branco e Confetes": "cardapio/c03-p05.webp",
+        "Chocolate Preto e Confetes": "cardapio/c03-p06.webp",
+        "Chocolate Branco e Morango": "cardapio/c03-p07.webp",
+        "Chocolate Preto e Morango": "cardapio/c03-p08.webp",
+        "Chocolate Branco e Óreo": "cardapio/c03-p09.webp",
+        "Chocolate Preto e Óreo": "cardapio/c03-p10.webp"
+    },
+    "panquecas-2-sabores": {
+        "Panqueca Meio a Meio (2 Sabores Doces)": "cardapio/c04-p02.webp",
+        "Panqueca Meio a Meio (Salgada e Doce)": "cardapio/c04-p03.webp"
+    },
+    "lasanhas-de-massa-de-panqueca": {
+        "Estrogonofe de Frango": "cardapio/c05-p01.webp",
+        "Frango e Catupiry": "cardapio/c05-p02.webp",
+        "Estrogonofe de Carne": "cardapio/c05-p03.webp",
+        "Carne de Panela": "cardapio/c05-p04.webp",
+        "Meio a Meio (2 Sabores)": "cardapio/c05-p05.webp"
+    },
+    "frango-frito-crocrante-no-pote": {
+        "Frango Frito Crocrante no Pote": "cardapio/c06-p01.webp",
+        "Frango + Polenta": "cardapio/c06-p02.webp",
+        "Frango + Batatas Fritas": "cardapio/c06-p03.webp",
+        "Frango + Batatas Fritas + Polenta": "cardapio/c06-p04.webp"
+    },
+    "batatas-fritas": {
+        "Batatas Fritas Simples": "cardapio/c07-p01.webp",
+        "Batatas Fritas com Calabresa e Requeijão/Cheddar": "cardapio/c07-p02.webp",
+        "Batatas Fritas com Bacon e Requeijão/Cheddar": "cardapio/c07-p03.webp"
+    },
+    "massas": {
+        "Massa a Carbonara": "cardapio/c08-p01.webp",
+        "Estrogonofe de Carne": "cardapio/c08-p02.webp",
+        "Estrogonofe de Frango": "cardapio/c08-p03.webp",
+        "Quatro Queijos": "cardapio/c08-p04.webp"
+    },
+    "paokecao": {
+        "Carne de Panela": "cardapio/c09-p01.webp",
+        "Frango": "cardapio/c09-p02.webp",
+        "Coração de Frango": "cardapio/c09-p03.webp"
+    },
+    "bebidas": {
+        "Coca-Cola 2L": "cardapio/c10-p01.webp",
+        "Coca-Cola Zero 2L": "cardapio/c10-p02.webp",
+        "Coca-Cola Lata": "cardapio/c10-p03.webp",
+        "Coca-Cola Zero Lata": "cardapio/c10-p04.webp",
+        "Guaraná Lata": "cardapio/c10-p05.webp",
+        "Água Mineral 500ml": "cardapio/c10-p06.webp",
+        "Suco Natural Copo": "cardapio/c10-p07.webp",
+        "Cerveja Latão": "cardapio/c10-p08.webp",
+        "Cerveja Longneck": "cardapio/c10-p09.webp",
+        "Chopp Litro": "cardapio/c10-p10.webp",
+        "Vinhos": "cardapio/c10-p11.webp"
+    },
+    "cocktails-com-alcool": {
+        "Caipira de Morango": "cardapio/c11-p01.webp",
+        "Caipira de Limão": "cardapio/c11-p02.webp",
+        "Sex on the Beach": "cardapio/c11-p03.webp",
+        "Mojito": "cardapio/c11-p04.webp",
+        "Vodka Sunrise": "cardapio/c11-p05.webp",
+        "Tequila Sunrise": "cardapio/c11-p06.webp",
+        "Sakerinha": "cardapio/c11-p07.webp",
+        "Margarita": "cardapio/c11-p08.webp",
+        "Martini Spritz": "cardapio/c11-p09.webp",
+        "Lagoa Azul": "cardapio/c11-p10.webp",
+        "Coco Splash": "cardapio/c11-p11.webp",
+        "Fresh Paradise": "cardapio/c11-p12.webp"
+    },
+    "cocktails-sem-alcool": {
+        "Tropical Breeze": "cardapio/c12-p01.webp",
+        "High Voltage": "cardapio/c12-p02.webp",
+        "Mango Dawnburst": "cardapio/c12-p03.webp",
+        "Green Apple Zest": "cardapio/c12-p04.webp",
+        "Minty Splash": "cardapio/c12-p06.webp",
+        "Limonada Suíça": "cardapio/c12-p07.webp"
+    }
+};
 
     function renderMenu(data) {
         const nav = document.getElementById('categoriesNav');
