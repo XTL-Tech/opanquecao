@@ -9,15 +9,15 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&family=Open+Sans:wght@300;400;600&display=swap" rel="stylesheet">
     <link rel="icon" type="image/png" sizes="16x16"  href="favicons/favicon-16x16.png">
-    <meta name="msapplication-TileColor" content="#ffffff">
-    <meta name="theme-color" content="#ffffff">
+    <meta name="msapplication-TileColor" content="#741c2d">
+    <meta name="theme-color" content="#741c2d">
     
     <style>
         :root {
-            --primary: #CC0000;
-            --secondary: #000000;
-            --bg-body: #FFFFFF;
-            --text-main: #000000;
+            --primary: #741c2d;
+            --secondary: #381d20;
+            --bg-body: #fff6e9;
+            --text-main: #381d20;
             --text-muted: #4b5563;
         }
 
@@ -54,25 +54,28 @@
         /* Cabeçalho */
         header {
             width: 100%;
-            background: var(--secondary);
-            color: white;
-            padding: 60px 0 40px;
+            background: linear-gradient(rgba(56,29,32,.85), rgba(56,29,32,.85)), url("img/panqueca-quadrada.webp") center / cover, var(--secondary);
+            color: #fff6e9;
+            padding: 56px 0 40px;
             text-align: center;
-            border-bottom: 8px solid var(--primary);
+            border-bottom: 10px solid transparent;
+            border-image: repeating-conic-gradient(#a53541 0% 25%, #fff6e9 0% 50%) 25;
         }
 
         .restaurant-logo {
-            font-size: 3.5rem;
+            font-size: clamp(2rem, 8vw, 3.5rem);
             font-weight: 800;
             letter-spacing: -2px;
             text-transform: uppercase;
         }
 
-        .restaurant-logo span { color: var(--primary); }
+        .restaurant-logo span { color: #ffd080; }
+        header a { color: inherit; }
 
         .restaurant-badge {
-            border: 2px solid var(--primary);
-            color: var(--primary);
+            border: 1px solid #ffd080;
+            color: #ffd080;
+            border-radius: 999px;
             padding: 4px 16px;
             font-size: 0.8rem;
             font-weight: 700;
@@ -86,7 +89,7 @@
             position: sticky;
             top: 0;
             width: 100%;
-            background: rgba(255, 255, 255, 0.98);
+            background: #fffaf3;
             z-index: 1000;
             padding: 10px 0;
             border-bottom: 1px solid #eee;
@@ -101,19 +104,14 @@
             gap: 10px;
             padding: 5px 20px;
             overflow-x: auto; /* Permite scroll horizontal */
-            scrollbar-width: none; /* Esconde scrollbar no Firefox */
-            -ms-overflow-style: none; /* Esconde scrollbar no IE/Edge */
             max-width: 100%;
             -webkit-overflow-scrolling: touch; /* Scroll suave no iOS */
         }
 
-        .categories-nav::-webkit-scrollbar {
-            display: none; /* Esconde scrollbar no Chrome/Safari */
-        }
-
         .category-link {
             background: white;
-            border: 2px solid var(--secondary);
+            border: 1px solid #c9a5a4;
+            border-radius: 999px;
             padding: 10px 18px;
             color: var(--secondary);
             font-weight: 700;
@@ -169,7 +167,9 @@
         .menu-item {
             background: white;
             padding: 20px;
-            border: 1px solid #e5e7eb;
+            border: 1px solid #e4cbc0;
+            border-radius: 18px;
+            box-shadow: 0 4px 16px #381d200a;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -177,6 +177,21 @@
             width: 100%;
             max-width: 400px;
         }
+
+        .item-photo { width: 100%; margin: 0 0 16px; }
+        .item-photo img {
+            display: block;
+            width: 100%;
+            aspect-ratio: 4 / 3;
+            object-fit: cover;
+            border-radius: 12px;
+        }
+        .item-photo figcaption, .hero-caption {
+            font-size: .75rem;
+            margin-top: 4px;
+        }
+        .item-photo figcaption { color: var(--text-muted); }
+        .item-footer { margin-top: auto; }
 
         .item-title {
             font-size: 1.2rem;
@@ -197,8 +212,10 @@
             display: flex;
             justify-content: center;
             gap: 2px;
-            background: var(--secondary);
-            border: 1px solid var(--secondary);
+            background: #e4cbc0;
+            border: 1px solid #e4cbc0;
+            border-radius: 10px;
+            overflow: hidden;
             width: 100%;
             margin-top: auto;
         }
@@ -206,7 +223,7 @@
         .size-box {
             flex: 1;
             text-align: center;
-            background: white;
+            background: #fff6e9;
             padding: 10px;
         }
 
@@ -267,7 +284,7 @@
             margin-bottom: 30px;
         }
 
-        .footer-obs h3 { color: var(--primary); margin-bottom: 15px; }
+        .footer-obs h3 { color: #ffd080; margin-bottom: 15px; }
 
         .whatsapp-float {
             position: fixed;
@@ -295,7 +312,7 @@
                 justify-content: center;
             }
             .categories-nav {
-                justify-content: center; /* Centraliza no desktop se houver poucas */
+                justify-content: safe center;
             }
         }
     </style>
@@ -352,15 +369,16 @@ src="https://www.facebook.com/tr?id=766179976513223&ev=PageView&noscript=1"
     <div class="container">
         <span class="restaurant-badge">DESDE 2017</span>
         <h1 class="restaurant-logo">O PAN<span>QUECÃO</span></h1>
-        <div style="margin-top:10px; opacity:0.7; font-size:0.8rem">
-            <p>RUA DA VARZEA N° 258, CENTRO - NOVA HARTZ/RS</p>
+        <div style="margin-top:10px; opacity:0.7; font-size:0.9rem">
+            <p>Praça do Trabalhador · Nova Hartz/RS</p>
             <p>DiskPanquecão: <a href="tel:+5551997383849">(51) 9 9738-3849</a></p>
         </div>
+        <p class="hero-caption">Imagem ilustrativa</p>
     </div>
 </header>
 
 <div class="nav-wrapper">
-    <nav class="categories-nav" id="categoriesNav"></nav>
+    <nav class="categories-nav" id="categoriesNav" aria-label="Categorias do cardápio"></nav>
 </div>
 
 <main class="main-content">
@@ -407,6 +425,16 @@ src="https://www.facebook.com/tr?id=766179976513223&ev=PageView&noscript=1"
         }
     }
 
+    const itemPhotos = {
+        'panquecas-salgadas': {
+            'Frango e Catupiry': 'frango-cremoso.webp',
+            'Carne de Panela': 'carne-ao-molho.webp'
+        },
+        'panquecas-doces': {
+            'Banana e Canela Cremosa': 'banana-chocolate.webp'
+        }
+    };
+
     function renderMenu(data) {
         const nav = document.getElementById('categoriesNav');
         const content = document.getElementById('menuContent');
@@ -430,6 +458,7 @@ src="https://www.facebook.com/tr?id=766179976513223&ev=PageView&noscript=1"
 
             let itemsHtml = '';
             categoria.itens.forEach(item => {
+                const photo = itemPhotos[categoria.id]?.[item.nome];
                 let priceSection = '';
                 let extraSection = '';
 
@@ -461,6 +490,10 @@ src="https://www.facebook.com/tr?id=766179976513223&ev=PageView&noscript=1"
 
                 itemsHtml += `
                     <div class="menu-item">
+                        ${photo ? `<figure class="item-photo">
+                            <img src="img/${photo}" alt="" loading="lazy" decoding="async">
+                            <figcaption>Imagem ilustrativa</figcaption>
+                        </figure>` : ''}
                         <div>
                             ${item.sub ? `<span class="size-label" style="color:var(--primary); margin-bottom:2px">${item.sub}</span>` : ''}
                             <h3 class="item-title">${item.nome}</h3>
