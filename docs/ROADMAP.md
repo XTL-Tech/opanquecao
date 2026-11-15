@@ -1,0 +1,84 @@
+# Disk Panquecão — roadmap e estado oficial
+
+Atualizado em 2026-11-15. Repositório: samuelwhite777/opanquecao.
+
+## Regra de entrega
+
+O GitHub é a fonte oficial. Todo trabalho deve ser enviado para uma branch e documentado no repositório. Código apenas no ambiente de trabalho não conta como entrega. Preview só conta como publicado após URL e deploy verificados. Produção é a main; branches de desenvolvimento não representam aprovação para produção.
+
+## Fases
+
+1. **MVP do site — em andamento:** categorias, fotos, detalhes, seleção, carrinho, revisão e WhatsApp.
+2. **Notificações e atendimento — implementação inicial nesta branch:** Telegram e PDF térmico; configuração e teste real pendentes.
+3. **Conversão — pendente:** recomendações, bebidas/açaí, refinamento mobile e desempenho.
+4. **Piloto XTL Food — planejado:** catálogo e operação administrativa, incluindo visibilidade e reajustes por categoria/ingrediente.
+5. **ID e Core — planejado:** autenticação, permissões e integração operacional.
+6. **Evolução e migração — planejado:** transição gradual sem interromper atendimento.
+
+## Código desta branch
+
+- index.html: botão Chamar no WhatsApp, Fazer pedido e formulário do carrinho.
+- cart.mjs: seleção de opção, quantidade e observação, remoção, subtotal e mensagem WhatsApp.
+- order-catalog.mjs: opções comerciais e recálculo de preços usado pelo servidor.
+- api/order.js: validação, Turnstile e envio de PDF ao Telegram.
+- api/order-config.js: disponibiliza somente a chave pública quando configuração completa existe.
+- lib/order-pdf.js: PDF com itens em destaque; largura padrão 58 mm, configurável de 40 a 210 mm ou A4.
+- package.json/package-lock.json/vercel.json: dependência PDF e inclusão do catálogo na função.
+
+## Pendências para fechar fase 1
+
+- [ ] Fluxo claro Escolher → Carrinho → Revisar → Enviar.
+- [ ] Edição de quantidades/observações no carrinho e persistência ao recarregar.
+- [ ] Entrega, retirada ou consumo no local, endereço/mesa conforme modalidade, pagamento e revisão final.
+- [ ] Tratar produtos sob consulta e opções especiais no fluxo de compra.
+- [ ] Teste visual e funcional em celular e desktop no preview.
+- [ ] Aprovação da experiência e publicação em produção.
+
+## Pendências da fase 2
+
+- [ ] Configurar Telegram e Turnstile no ambiente correto, sem segredos no Git.
+- [ ] Teste real de recebimento e impressão, inclusive larguras menores.
+- [ ] Prevenção de pedidos duplicados em reenvios e persistência dos pedidos.
+- [ ] Incluir no PDF os futuros campos de entrega e pagamento.
+
+## Verificação de base
+
+Na auditoria de 2026-11-15, produção e main correspondiam a da2840bf8943e36698fb888e3eb67cb70066b818. cardapio.json publicado era idêntico ao arquivo do repositório, com 82 produtos. O novo carrinho ainda não estava publicado. A consulta Vercel ao projeto opanquecao no escopo conectado retornou `404: not_found — Project not found`; isso não significa que o site esteja fora do ar.
+
+## Configuração futura
+
+Variáveis no servidor Vercel: TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID, TURNSTILE_SECRET_KEY, TURNSTILE_SITE_KEY. Opcional: ORDER_PRINT_WIDTH_MM (padrão 58). Nunca adicionar valores reais ao repositório. Sem configuração completa, o envio digital fica indisponível e o carrinho oferece WhatsApp. Nenhum recebimento real pelo bot foi validado nesta entrega.
+
+## Atendimento no local — requisito aprovado
+
+O checkout deverá oferecer três modalidades: **Entrega**, **Retirada** e **Comer no local**.
+
+- Entrega: solicitar endereço; informar a condição da taxa antes do envio.
+- Retirada: identificar claramente retirada no estabelecimento, sem exigir endereço ou mesa.
+- Comer no local: solicitar número da mesa obrigatório e destacar **MESA + número** no resumo, na mensagem WhatsApp e no PDF da cozinha.
+- Ao trocar a modalidade, não enviar campos irrelevantes da modalidade anterior.
+- A revisão final deve exibir a modalidade e permitir corrigi-la antes do envio.
+
+Estado: requisito registrado; implementação e testes ainda pendentes. O checkout atual não coleta modalidade nem mesa.
+
+## Primeiro preview da branch
+
+O GitHub confirmou status Vercel **success / Deployment has completed** para o commit 8619174.
+Registro do deploy: https://vercel.com/samuelwhite777s-projects/opanquecao/HLrsAgwMAa2PHXBbE5rTpVcUr2xL
+Isso confirma a publicação do build, não a aprovação da experiência. Teste visual no preview ainda pendente.
+
+## Ajustes de clareza — 2026-11-15
+
+- O botão dos produtos passa de “Ver detalhes” para “Escolher para pedir”; abre a seleção antes de adicionar ao carrinho.
+- A mensagem do pedido pelo WhatsApp contém itens, opções, quantidades e observações, sem subtotal. O subtotal continua visível no carrinho do site.
+- Validação: sintaxe JavaScript, diff sem erros e conferência da composição da mensagem. Validação visual no preview ainda pendente.
+
+## Carrinho revisado — 2026-11-15
+
+- Cabeçalho bordô, cartões individuais, nome/opção/preço separados e observações visíveis.
+- Quantidade ajustável com +/− (1 a 10), remoção e estado vazio; subtotal atualizado automaticamente.
+- Botão WhatsApp em destaque e instrução para enviar a mensagem e aguardar confirmação da loja.
+- Ausência de configuração do Telegram não é exibida como erro ao cliente; erros de uma tentativa real de envio continuam visíveis.
+- Mensagem WhatsApp continua sem subtotal. cardapio.json preservado.
+- Teste reproduzível: `npm ci && npm test`, usando serviços simulados, sem enviar pedidos reais. Testa seleção, observação, quantidade, WhatsApp sem subtotal, verificação, falha e sucesso simulado com PDF.
+- Validação visual em dispositivo real pendente. Modalidade de atendimento e mesa continuam pendentes.

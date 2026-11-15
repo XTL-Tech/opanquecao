@@ -1,0 +1,11 @@
+{
+  "dependencies": {
+    "pdf-lib": "1.17.1"
+  },
+  "devDependencies": {
+    "jsdom": "^31.0.1"
+  },
+  "scripts": {
+    "test": "node tests/order-flow.cjs"
+  }
+}
