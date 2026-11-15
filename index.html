@@ -364,6 +364,32 @@
         @media (prefers-reduced-motion: reduce) {
             * { scroll-behavior: auto; }
         }
+
+        .site-tabs, .info-actions {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 16px;
+        }
+        .site-tabs a, .info-actions a {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 44px;
+            padding: 8px 14px;
+            border-radius: 8px;
+            background: #fff6e9;
+            color: #381d20;
+            font-weight: 700;
+            text-decoration: none;
+        }
+        .footer-info {
+            width: 100%;
+            max-width: 600px;
+            margin-bottom: 28px;
+            scroll-margin-top: 88px;
+        }
     </style>
 </head>
 
@@ -423,6 +449,11 @@ src="https://www.facebook.com/tr?id=766179976513223&ev=PageView&noscript=1"
             <p>DiskPanquecão: <a href="tel:+5551997383849">(51) 9 9738-3849</a></p>
         </div>
     </div>
+    <nav class="site-tabs" aria-label="Navegação principal">
+        <a href="#cardapio">Cardápio</a>
+        <a href="#contato">Contato</a>
+        <a href="#como-chegar">Como chegar</a>
+    </nav>
 </header>
 
 <div class="nav-wrapper">
@@ -433,7 +464,7 @@ src="https://www.facebook.com/tr?id=766179976513223&ev=PageView&noscript=1"
     <nav class="categories-nav" id="categoriesNav" aria-label="Categorias do cardápio"></nav>
 </div>
 
-<main class="main-content">
+<main class="main-content" id="cardapio" style="scroll-margin-top: 84px">
     <div class="container" id="menuContent">
         <!-- O conteúdo será injetado dinamicamente -->
     </div>
@@ -441,6 +472,22 @@ src="https://www.facebook.com/tr?id=766179976513223&ev=PageView&noscript=1"
 
 <footer>
     <div class="container">
+        <section class="footer-info" id="contato" aria-labelledby="titulo-contato">
+            <h2 id="titulo-contato">Contato</h2>
+            <p>(51) 9 9738-3849</p>
+            <div class="info-actions">
+                <a href="tel:+5551997383849">Ligar agora</a>
+                <a href="https://wa.me/5551997383849" target="_blank" rel="noopener noreferrer">Chamar no WhatsApp</a>
+            </div>
+        </section>
+        <section class="footer-info" id="como-chegar" aria-labelledby="titulo-local">
+            <h2 id="titulo-local">Como chegar</h2>
+            <p>Ponto de referência: Praça do Trabalhador · Nova Hartz/RS</p>
+            <div class="info-actions">
+                <a href="https://www.google.com/maps/search/?api=1&amp;query=Pra%C3%A7a%20do%20Trabalhador%2C%20Nova%20Hartz%2C%20RS" target="_blank" rel="noopener noreferrer">Ver no Google Maps</a>
+                <a href="https://www.google.com/maps/dir/?api=1&amp;destination=Pra%C3%A7a%20do%20Trabalhador%2C%20Nova%20Hartz%2C%20RS&amp;dir_action=navigate" target="_blank" rel="noopener noreferrer">Traçar rota até a praça</a>
+            </div>
+        </section>
         <div class="footer-obs">
             <h3>Informações Importantes</h3>
             <ul id="observationsList" style="list-style: none; font-size: 0.9rem;"></ul>
