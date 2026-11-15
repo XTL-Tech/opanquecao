@@ -72,3 +72,13 @@ Isso confirma a publicação do build, não a aprovação da experiência. Teste
 - O botão dos produtos passa de “Ver detalhes” para “Escolher para pedir”; abre a seleção antes de adicionar ao carrinho.
 - A mensagem do pedido pelo WhatsApp contém itens, opções, quantidades e observações, sem subtotal. O subtotal continua visível no carrinho do site.
 - Validação: sintaxe JavaScript, diff sem erros e conferência da composição da mensagem. Validação visual no preview ainda pendente.
+
+## Carrinho revisado — 2026-11-15
+
+- Cabeçalho bordô, cartões individuais, nome/opção/preço separados e observações visíveis.
+- Quantidade ajustável com +/− (1 a 10), remoção e estado vazio; subtotal atualizado automaticamente.
+- Botão WhatsApp em destaque e instrução para enviar a mensagem e aguardar confirmação da loja.
+- Ausência de configuração do Telegram não é exibida como erro ao cliente; erros de uma tentativa real de envio continuam visíveis.
+- Mensagem WhatsApp continua sem subtotal. cardapio.json preservado.
+- Teste reproduzível: `npm ci && npm test`, usando serviços simulados, sem enviar pedidos reais. Testa seleção, observação, quantidade, WhatsApp sem subtotal, verificação, falha e sucesso simulado com PDF.
+- Validação visual em dispositivo real pendente. Modalidade de atendimento e mesa continuam pendentes.

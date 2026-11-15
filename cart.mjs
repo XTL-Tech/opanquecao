@@ -19,18 +19,68 @@ function refresh() {
         total += line.cents * line.quantity;
         const row = document.createElement('div');
         row.className = 'cart-line';
-        row.textContent = `${line.quantity} × ${line.product} (${line.option}) · ${money(line.cents * line.quantity)} `;
+        const info = document.createElement('div');
+        info.className = 'cart-item-info';
+        const title = document.createElement('h3');
+        title.textContent = line.product;
+        const option = document.createElement('p');
+        option.className = 'cart-option';
+        option.textContent = line.option === 'Único' ? 'Por unidade' : 'Opção: ' + line.option;
+        const price = document.createElement('strong');
+        price.className = 'cart-item-price';
+        price.textContent = money(line.cents * line.quantity);
+        info.append(title, option, price);
+        if (line.note) {
+            const note = document.createElement('p');
+            note.className = 'cart-note';
+            note.textContent = 'Observação: ' + line.note;
+            info.append(note);
+        }
+        const controls = document.createElement('div');
+        controls.className = 'cart-item-controls';
+        const stepper = document.createElement('div');
+        stepper.className = 'cart-stepper';
+        const count = document.createElement('span');
+        count.textContent = line.quantity;
+        count.setAttribute('aria-label', 'Quantidade: ' + line.quantity);
+        for (const [delta, label, text] of [[-1, 'Diminuir', '−'], [1, 'Aumentar', '+']]) {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.textContent = text;
+            button.setAttribute('aria-label', label + ' quantidade de ' + line.product);
+            button.disabled = sending || (delta < 0 ? line.quantity <= 1 : line.quantity >= 10);
+            button.onclick = () => {
+                line.quantity += delta;
+                refresh();
+                const updated = rows.children[index]?.querySelectorAll('.cart-stepper button');
+                const preferred = updated?.[delta < 0 ? 0 : 1];
+                (preferred?.disabled ? updated[delta < 0 ? 1 : 0] : preferred)?.focus({ preventScroll: true });
+            };
+            stepper.append(button);
+            if (delta < 0) stepper.append(count);
+        }
         const remove = document.createElement('button');
         remove.type = 'button';
+        remove.className = 'cart-remove';
         remove.textContent = 'Remover';
         remove.setAttribute('aria-label', 'Remover ' + line.product);
         remove.disabled = sending;
-        remove.onclick = () => { cart.splice(index, 1); refresh(); };
-        row.append(remove);
+        remove.onclick = () => {
+            cart.splice(index, 1);
+            refresh();
+            (rows.children[Math.min(index, cart.length - 1)]?.querySelector('button') ||
+                byId('cartDialog').querySelector('.cart-back')).focus({ preventScroll: true });
+        };
+        controls.append(stepper, remove);
+        row.append(info, controls);
         rows.append(row);
     }
     byId('openCart').textContent = cart.length ? 'Fazer pedido (' + cart.reduce((sum, line) => sum + line.quantity, 0) + ')' : 'Fazer pedido';
-    byId('cartTotal').textContent = cart.length ? 'Subtotal: ' + money(total) : 'Seu carrinho está vazio.';
+    const quantity = cart.reduce((sum, line) => sum + line.quantity, 0);
+    byId('cartCount').textContent = quantity ? quantity + (quantity === 1 ? ' item no pedido' : ' itens no pedido') : 'Vamos escolher algo gostoso?';
+    byId('cartEmpty').hidden = !!cart.length;
+    byId('cartSummary').hidden = !cart.length;
+    byId('cartTotal').textContent = money(total);
     byId('sendOrder').disabled = !cart.length || !challenge || sending;
     const fallback = byId('cartWhatsApp');
     fallback.hidden = !cart.length || sending;
@@ -54,7 +104,7 @@ byId('menuContent').addEventListener('click', event => {
     form.innerHTML = '<label>Opção <select name="option" required></select></label>' +
         '<label>Quantidade <input name="quantity" type="number" min="1" max="10" value="1" required></label>' +
         '<label>Observações <textarea name="note" maxlength="160"></textarea></label>' +
-        '<button>Adicionar ao carrinho</button><p role="status"></p>';
+        '<button class="order-primary">Adicionar ao carrinho</button><p role="status"></p>';
     for (const option of options) form.elements.option.add(new Option(option.label + ' · ' + money(option.cents), option.label));
     form.onsubmit = event => {
         event.preventDefault();
@@ -99,7 +149,7 @@ byId('openCart').onclick = async () => {
         digitalAvailable = true;
     } catch {
         configPromise = undefined;
-        byId('orderStatus').textContent = 'Envio digital indisponível. Você pode continuar pelo WhatsApp.';
+        byId('orderStatus').textContent = '';
     } finally {
         byId('checkout').hidden = !digitalAvailable;
         refresh();

@@ -433,6 +433,46 @@
             font: inherit;
         }
         .cart-line { padding-block: 8px; border-bottom: 1px solid #e4cbc0; }
+
+        .product-dialog .order-primary, #sendOrder {
+            background: var(--primary); color: #fff; font-weight: 700;
+        }
+        #cartDialog { width: min(94vw, 560px); max-height: 92dvh; padding: 0; background: #fff9f3; border-radius: 24px; }
+        #cartDialog .cart-header { text-align: left; border: 0; border-image: none; padding: 18px 22px 22px; background: linear-gradient(125deg, #750e20, #410914); color: #fff; }
+        #cartDialog button.cart-back { margin: 0 0 20px; padding: 8px 0; background: transparent; border: 0; color: #fff; font-size: 14px; }
+        .cart-eyebrow { font-size: 11px; letter-spacing: .14em; font-weight: 700; color: #ffd48b; margin: 0 0 6px; }
+        #cartTitle { font-size: 28px; line-height: 1.2; margin: 0 0 8px; }
+        #cartCount { font-size: 14px; margin: 0; color: #ffe9dd; }
+        .cart-body { padding: 20px; }
+        .cart-guide { font-size: 13px; line-height: 1.5; color: #705c59; margin: 0 0 16px; }
+        #cartDialog .cart-lines { gap: 12px; margin: 0; }
+        #cartDialog .cart-line { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: center; background: #fff; border: 1px solid #ecdcd5; border-radius: 16px; padding: 16px; }
+        .cart-item-info { min-width: 0; overflow-wrap: anywhere; }
+        .cart-item-info h3 { font-size: 16px; line-height: 1.35; margin: 0 0 4px; color: #381d20; }
+        .cart-option { font-size: 12px; color: #705c59; margin: 0 0 8px; }
+        .cart-item-price { font-size: 16px; color: #891528; }
+        .cart-note { font-size: 12px; line-height: 1.4; padding-top: 8px; margin: 0; color: #705c59; }
+        .cart-item-controls { display: grid; justify-items: center; gap: 4px; }
+        .cart-stepper { display: flex; align-items: center; border: 1px solid #ecdcd5; border-radius: 12px; overflow: hidden; }
+        #cartDialog .cart-stepper button { margin: 0; border: 0; border-radius: 0; padding: 0; width: 44px; min-height: 44px; font-size: 22px; background: #fff9f3; }
+        .cart-stepper span { min-width: 24px; text-align: center; font-size: 14px; font-weight: 700; }
+        #cartDialog button.cart-remove { margin: 0; min-height: 44px; padding: 4px 8px; border: 0; background: transparent; font-size: 12px; text-decoration: underline; color: #705c59; }
+        #cartDialog button:disabled { opacity: .4; cursor: default; }
+        .cart-footer { display: block; color: #381d20; text-align: left; padding: 20px 22px calc(22px + env(safe-area-inset-bottom, 0px)); border-top: 1px solid #ecdcd5; background: #fff; }
+        .cart-total-row { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; font-size: 15px; }
+        #cartTotal { font-size: 21px; color: #381d20; }
+        .cart-disclaimer, .cart-next { font-size: 12px; line-height: 1.5; color: #705c59; margin: 8px 0 0; }
+        .cart-next { text-align: center; }
+        #cartWhatsApp { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 52px; padding: 12px; margin-top: 16px; border-radius: 12px; background: #14733b; color: white; font-size: 15px; font-weight: 700; text-decoration: none; text-align: center; }
+        #cartDialog [hidden] { display: none; }
+        #orderStatus:not(:empty) { margin-top: 12px; padding: 12px; border-radius: 10px; background: #fff3da; font-size: 14px; }
+        #cartDialog :focus-visible { outline: 3px solid #dc9f21; outline-offset: 3px; }
+        @media (max-width: 380px) {
+            .cart-body { padding: 14px; }
+            #cartDialog .cart-line { padding: 12px; gap: 8px; }
+            .cart-stepper span { min-width: 18px; }
+            .cart-item-info h3 { font-size: 15px; }
+        }
     </style>
 </head>
 
@@ -829,11 +869,22 @@ src="https://www.facebook.com/tr?id=766179976513223&ev=PageView&noscript=1"
 
 <button type="button" id="openCart" class="whatsapp-float cart-trigger">Fazer pedido</button>
 <dialog class="product-dialog" id="cartDialog" aria-labelledby="cartTitle">
-    <form method="dialog"><button autofocus>Voltar ao cardápio</button></form>
-    <h2 id="cartTitle">Seu carrinho</h2>
-    <div class="cart-lines" id="cartLines"></div>
-    <p id="cartTotal"></p>
-    <p>Taxa de entrega e adicionais sob consulta. A loja confirma seu pedido.</p>
+    <header class="cart-header">
+        <form method="dialog"><button class="cart-back" autofocus>← Continuar escolhendo</button></form>
+        <p class="cart-eyebrow">DISK PANQUECÃO</p>
+        <h2 id="cartTitle">Seu pedido</h2>
+        <p id="cartCount"></p>
+    </header>
+    <div class="cart-body">
+        <p class="cart-guide">Confira os itens. Use + e − para ajustar a quantidade.</p>
+        <div class="cart-lines" id="cartLines"></div>
+        <p id="cartEmpty" hidden>Seu carrinho está vazio. Volte ao cardápio para escolher seu pedido.</p>
+    </div>
+    <footer class="cart-footer">
+    <div id="cartSummary">
+        <div class="cart-total-row"><span>Subtotal dos itens</span><strong id="cartTotal"></strong></div>
+        <p class="cart-disclaimer">Entrega e adicionais serão combinados com a loja.</p>
+    </div>
     <form id="checkout" class="order-form" hidden>
         <label>Nome <input name="name" required maxlength="80" autocomplete="name"></label>
         <label>WhatsApp com DDD <input name="phone" type="tel" required maxlength="20" autocomplete="tel"></label>
@@ -842,7 +893,9 @@ src="https://www.facebook.com/tr?id=766179976513223&ev=PageView&noscript=1"
         <button id="sendOrder" disabled>Enviar pedido à loja</button>
     </form>
     <p id="orderStatus" role="status" aria-live="polite"></p>
-    <a id="cartWhatsApp" hidden target="_blank" rel="noopener noreferrer">Continuar pelo WhatsApp</a>
+    <a id="cartWhatsApp" class="cart-whatsapp" hidden target="_blank" rel="noopener noreferrer"><i class="fab fa-whatsapp" aria-hidden="true"></i> Enviar pedido pelo WhatsApp <span aria-hidden="true">→</span></a>
+    <p class="cart-next">O WhatsApp abrirá com seus itens. Toque em enviar na conversa; a loja confirmará o pedido.</p>
+    </footer>
 </dialog>
 <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" defer></script>
 <script type="module" src="cart.mjs"></script>
