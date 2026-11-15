@@ -390,6 +390,36 @@
             margin-bottom: 28px;
             scroll-margin-top: 88px;
         }
+        .menu-item button, .product-dialog button {
+            min-height: 44px;
+            padding: 8px 14px;
+            margin-top: 12px;
+            border: 1px solid var(--primary);
+            border-radius: 8px;
+            background: white;
+            color: var(--primary);
+            font: inherit;
+            cursor: pointer;
+        }
+        .product-dialog {
+            position: fixed;
+            inset: 0;
+            margin: auto;
+            width: min(90vw, 520px);
+            max-height: 85vh;
+            overflow: auto;
+            padding: 20px;
+            border: 0;
+            border-radius: 16px;
+            color: var(--secondary);
+        }
+        .product-dialog::backdrop { background: #0009; }
+        .related-category {
+            margin-top: 24px;
+            padding: 12px 16px;
+            color: var(--primary);
+            font-weight: 700;
+        }
     </style>
 </head>
 
@@ -469,6 +499,11 @@ src="https://www.facebook.com/tr?id=766179976513223&ev=PageView&noscript=1"
         <!-- O conteúdo será injetado dinamicamente -->
     </div>
 </main>
+<dialog class="product-dialog" id="productDialog" aria-labelledby="productDialogTitle">
+    <form method="dialog"><button autofocus>Voltar ao cardápio</button></form>
+    <h2 id="productDialogTitle"></h2>
+    <div id="productDialogContent"></div>
+</dialog>
 
 <footer>
     <div class="container">
@@ -707,6 +742,7 @@ src="https://www.facebook.com/tr?id=766179976513223&ev=PageView&noscript=1"
                             ${priceSection}
                             ${extraSection}
                         </div>
+                        <button type="button" class="product-details">Ver detalhes</button>
                     </div>
                 `;
             });
@@ -715,6 +751,17 @@ src="https://www.facebook.com/tr?id=766179976513223&ev=PageView&noscript=1"
                 <div class="section-header"><h2>${categoria.titulo}</h2></div>
                 <div class="menu-grid">${itemsHtml}</div>
             `;
+            const related = {
+                'panquecas-salgadas': ['panquecas-doces', 'Ver panquecas doces'],
+                'panquecas-doces': ['panquecas-salgadas', 'Ver panquecas salgadas']
+            }[categoria.id];
+            if (related && data.categorias.some(({ id }) => id === related[0])) {
+                const suggestion = document.createElement('a');
+                suggestion.className = 'related-category';
+                suggestion.href = '#' + related[0];
+                suggestion.textContent = related[1];
+                section.appendChild(suggestion);
+            }
             content.appendChild(section);
         });
 
@@ -745,6 +792,22 @@ src="https://www.facebook.com/tr?id=766179976513223&ev=PageView&noscript=1"
             });
         });
     }
+
+    const productDialog = document.getElementById('productDialog');
+    document.getElementById('menuContent').addEventListener('click', event => {
+        const trigger = event.target.closest('.product-details');
+        if (!trigger) return;
+        const card = trigger.closest('.menu-item');
+        const dialogContent = document.getElementById('productDialogContent');
+        document.getElementById('productDialogTitle').textContent =
+            card.querySelector('.item-title').textContent;
+        dialogContent.replaceChildren();
+        for (const selector of ['.item-photo', '.item-desc', '.item-footer']) {
+            const source = card.querySelector(selector);
+            if (source) dialogContent.appendChild(source.cloneNode(true));
+        }
+        productDialog.showModal();
+    });
 
     // Iniciar carregamento quando o DOM estiver pronto
     document.addEventListener('DOMContentLoaded', initMenu);
