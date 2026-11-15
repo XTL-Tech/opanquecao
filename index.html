@@ -420,6 +420,19 @@
             color: var(--primary);
             font-weight: 700;
         }
+        .cart-trigger { bottom: calc(76px + env(safe-area-inset-bottom, 0px)); border: 0; cursor: pointer; }
+        .order-form, .cart-lines { display: grid; gap: 10px; margin-top: 12px; }
+        .order-form[hidden] { display: none; }
+        .order-form label { display: grid; gap: 4px; }
+        .order-form input, .order-form select, .order-form textarea {
+            min-height: 44px;
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #a48179;
+            border-radius: 8px;
+            font: inherit;
+        }
+        .cart-line { padding-block: 8px; border-bottom: 1px solid #e4cbc0; }
     </style>
 </head>
 
@@ -535,8 +548,8 @@ src="https://www.facebook.com/tr?id=766179976513223&ev=PageView&noscript=1"
 <a href="https://wa.me/5551997383849?text=Ol%C3%A1!%20Vim%20pelo%20card%C3%A1pio%20online%20e%20quero%20fazer%20um%20pedido." 
    class="whatsapp-float" 
    target="_blank"
-   onclick="trackWhatsApp()">
-   <i class="fab fa-whatsapp"></i> ENVIAR PEDIDO
+   rel="noopener noreferrer">
+   <i class="fab fa-whatsapp"></i> Chamar no WhatsApp
 </a>
 
 <script>
@@ -550,6 +563,7 @@ src="https://www.facebook.com/tr?id=766179976513223&ev=PageView&noscript=1"
             if (!response.ok) throw new Error("Não foi possível carregar o cardapio.json");
             const data = await response.json();
             renderMenu(data);
+            document.dispatchEvent(new CustomEvent("menu-ready", { detail: data }));
         } catch (error) {
             console.error("Erro ao carregar cardápio:", error);
             document.getElementById('menuContent').innerHTML = `
@@ -813,5 +827,24 @@ src="https://www.facebook.com/tr?id=766179976513223&ev=PageView&noscript=1"
     document.addEventListener('DOMContentLoaded', initMenu);
 </script>
 
+<button type="button" id="openCart" class="whatsapp-float cart-trigger">Fazer pedido</button>
+<dialog class="product-dialog" id="cartDialog" aria-labelledby="cartTitle">
+    <form method="dialog"><button autofocus>Voltar ao cardápio</button></form>
+    <h2 id="cartTitle">Seu carrinho</h2>
+    <div class="cart-lines" id="cartLines"></div>
+    <p id="cartTotal"></p>
+    <p>Taxa de entrega e adicionais sob consulta. A loja confirma seu pedido.</p>
+    <form id="checkout" class="order-form" hidden>
+        <label>Nome <input name="name" required maxlength="80" autocomplete="name"></label>
+        <label>WhatsApp com DDD <input name="phone" type="tel" required maxlength="20" autocomplete="tel"></label>
+        <label><span><input name="consent" type="checkbox" required style="width:auto; min-height:auto"> Aceito que a loja use meu telefone para responder a este pedido.</span></label>
+        <div id="orderChallenge"></div>
+        <button id="sendOrder" disabled>Enviar pedido à loja</button>
+    </form>
+    <p id="orderStatus" role="status" aria-live="polite"></p>
+    <a id="cartWhatsApp" hidden target="_blank" rel="noopener noreferrer">Continuar pelo WhatsApp</a>
+</dialog>
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" defer></script>
+<script type="module" src="cart.mjs"></script>
 </body>
 </html>
