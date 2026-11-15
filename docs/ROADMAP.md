@@ -66,3 +66,9 @@ Estado: requisito registrado; implementação e testes ainda pendentes. O checko
 O GitHub confirmou status Vercel **success / Deployment has completed** para o commit 8619174.
 Registro do deploy: https://vercel.com/samuelwhite777s-projects/opanquecao/HLrsAgwMAa2PHXBbE5rTpVcUr2xL
 Isso confirma a publicação do build, não a aprovação da experiência. Teste visual no preview ainda pendente.
+
+## Ajustes de clareza — 2026-11-15
+
+- O botão dos produtos passa de “Ver detalhes” para “Escolher para pedir”; abre a seleção antes de adicionar ao carrinho.
+- A mensagem do pedido pelo WhatsApp contém itens, opções, quantidades e observações, sem subtotal. O subtotal continua visível no carrinho do site.
+- Validação: sintaxe JavaScript, diff sem erros e conferência da composição da mensagem. Validação visual no preview ainda pendente.

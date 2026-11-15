@@ -36,7 +36,7 @@ function refresh() {
     fallback.hidden = !cart.length || sending;
     const summary = cart.map(line => `${line.quantity} × ${line.product} (${line.option})${line.note ? ' — ' + line.note : ''}`);
     fallback.href = 'https://wa.me/5551997383849?text=' +
-        encodeURIComponent(['Olá! Quero pedir:', ...summary, 'Subtotal: ' + money(total)].join('\n'));
+        encodeURIComponent(['Olá! Quero pedir:', ...summary].join('\n'));
 }
 
 byId('menuContent').addEventListener('click', event => {
