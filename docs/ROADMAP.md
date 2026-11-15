@@ -29,7 +29,7 @@ O GitHub é a fonte oficial. Todo trabalho deve ser enviado para uma branch e do
 
 - [ ] Fluxo claro Escolher → Carrinho → Revisar → Enviar.
 - [ ] Edição de quantidades/observações no carrinho e persistência ao recarregar.
-- [ ] Entrega/retirada, endereço, pagamento e revisão final.
+- [ ] Entrega, retirada ou consumo no local, endereço/mesa conforme modalidade, pagamento e revisão final.
 - [ ] Tratar produtos sob consulta e opções especiais no fluxo de compra.
 - [ ] Teste visual e funcional em celular e desktop no preview.
 - [ ] Aprovação da experiência e publicação em produção.
@@ -48,3 +48,21 @@ Na auditoria de 2026-11-15, produção e main correspondiam a da2840bf8943e36698
 ## Configuração futura
 
 Variáveis no servidor Vercel: TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID, TURNSTILE_SECRET_KEY, TURNSTILE_SITE_KEY. Opcional: ORDER_PRINT_WIDTH_MM (padrão 58). Nunca adicionar valores reais ao repositório. Sem configuração completa, o envio digital fica indisponível e o carrinho oferece WhatsApp. Nenhum recebimento real pelo bot foi validado nesta entrega.
+
+## Atendimento no local — requisito aprovado
+
+O checkout deverá oferecer três modalidades: **Entrega**, **Retirada** e **Comer no local**.
+
+- Entrega: solicitar endereço; informar a condição da taxa antes do envio.
+- Retirada: identificar claramente retirada no estabelecimento, sem exigir endereço ou mesa.
+- Comer no local: solicitar número da mesa obrigatório e destacar **MESA + número** no resumo, na mensagem WhatsApp e no PDF da cozinha.
+- Ao trocar a modalidade, não enviar campos irrelevantes da modalidade anterior.
+- A revisão final deve exibir a modalidade e permitir corrigi-la antes do envio.
+
+Estado: requisito registrado; implementação e testes ainda pendentes. O checkout atual não coleta modalidade nem mesa.
+
+## Primeiro preview da branch
+
+O GitHub confirmou status Vercel **success / Deployment has completed** para o commit 8619174.
+Registro do deploy: https://vercel.com/samuelwhite777s-projects/opanquecao/HLrsAgwMAa2PHXBbE5rTpVcUr2xL
+Isso confirma a publicação do build, não a aprovação da experiência. Teste visual no preview ainda pendente.
