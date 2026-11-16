@@ -591,10 +591,10 @@ src="https://www.facebook.com/tr?id=766179976513223&ev=PageView&noscript=1"
     <section class="category-home container" id="categoryHome" aria-labelledby="categoriesTitle">
         <p class="category-kicker">FEITO PARA A SUA FOME</p>
         <h2 id="categoriesTitle" tabindex="-1">O que vamos pedir hoje?</h2>
-        <p>Escolha uma categoria e encontre seu favorito.</p>
+        <p>Explore as categorias ou veja todos os produtos abaixo.</p>
         <div id="categoryCards" class="category-cards"></div>
     </section>
-    <div class="category-toolbar container" id="categoryToolbar" hidden><a href="#cardapio">← Todas as categorias</a><span id="categoryCurrent"></span></div>
+    <div class="category-toolbar container" id="categoryToolbar" hidden><a href="#cardapio">← Voltar às categorias</a><span id="categoryCurrent"></span></div>
     <div class="container" id="menuContent">
         <p id="menuLoading" role="status">Carregando cardápio…</p>
     </div>
@@ -910,7 +910,7 @@ src="https://www.facebook.com/tr?id=766179976513223&ev=PageView&noscript=1"
             home.hidden = !!selected;
             toolbar.hidden = !selected;
             document.getElementById('categoryCurrent').textContent = titles.get(selected) || '';
-            for (const section of content.querySelectorAll('.category-section')) section.hidden = section.id !== selected;
+            for (const section of content.querySelectorAll('.category-section')) section.hidden = selected !== null && section.id !== selected;
             picker.value = selected || '';
             if (focus) {
                 const target = selected ? document.querySelector('#' + selected + ' h2') : cards.querySelector('a[href="#' + lastCategory + '"]') || document.getElementById('categoriesTitle');
