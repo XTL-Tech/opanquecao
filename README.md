@@ -73,3 +73,19 @@ Cada alteração deve ter commit, teste e preview. Ao aprovar, mesclar a branch 
 O card inteiro abre a configuração, além do botão de adicionar. Os complementos são dados estruturados validados no navegador e novamente no servidor. Açaí 300 ml permite até 3 grátis, 500 ml até 4, conforme o JSON vigente. O cliente pode escolher menos. Ao reduzir de 500 para 300 com quatro selecionados, precisa desmarcar um; nada é removido silenciosamente. Cada adicional pago cadastrado pode ser selecionado uma vez por unidade; o valor é multiplicado pela quantidade. Resumo, WhatsApp e PDF listam as escolhas. WhatsApp continua sem subtotal ou preços.
 
 Para outros produtos, o catálogo ainda não fornece uma tabela comercial de adicionais. Não há cobrança inventada: o modelo de grupos poderá ser ampliado após definição de ingredientes, preços, limites e elegibilidade. Não usar o campo de observações como autorização automática de adicionais pagos.
+
+## Validação do preview — 15/11/2026
+
+Deploy `a5d8896c9c42157332ff4debf7498f18b7b71bbf` confirmado como concluído no GitHub/Vercel. Acesso autenticado ao preview validado pelo navegador.
+
+- Card de açaí abre a personalização ao clicar no título, sem depender do botão.
+- 500 ml: quatro grátis selecionados, demais opções grátis desabilitadas.
+- Nutella adicionada: R$ 28 + R$ 5 = R$ 33; escolhas presentes no resumo.
+- Recarregar a página preserva tamanho, quatro grátis e adicional pago.
+- Link do WhatsApp inclui escolhas e não inclui preço/subtotal; nenhuma mensagem real enviada.
+- Testes automatizados aprovados; catálogo idêntico à main na comparação Git.
+- Inspeção visual realizada em desktop. Validação em aparelhos móveis e impressora física ainda pendente.
+
+### Próxima etapa: Telegram
+
+Configurar as quatro variáveis citadas acima no projeto existente, inicialmente em Preview. O bot precisa estar iniciado no chat de destino e ter permissão de envio. Validar com pedido explicitamente identificado como TESTE, verificar PDF e depois habilitar em produção. Token nunca deve entrar em código, documentação ou chat. O envio real ainda não foi validado.

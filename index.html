@@ -893,7 +893,7 @@ src="https://www.facebook.com/tr?id=766179976513223&ev=PageView&noscript=1"
             const title = document.createElement('strong');
             title.textContent = category.titulo.toLocaleLowerCase('pt-BR');
             const count = document.createElement('small');
-            count.textContent = category.itens.length + ' opções →';
+            count.textContent = category.itens.length + (category.itens.length === 1 ? ' opção →' : ' opções →');
             label.append(title, count);
             link.append(label);
             cards.append(link);

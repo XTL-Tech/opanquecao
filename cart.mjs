@@ -91,8 +91,8 @@ function refresh() {
         row.append(info, controls);
         rows.append(row);
     }
-    byId('openCart').textContent = 'Ver pedido · ' + cart.reduce((sum, line) => sum + line.quantity, 0) + ' itens';
     const quantity = cart.reduce((sum, line) => sum + line.quantity, 0);
+    byId('openCart').textContent = 'Ver pedido · ' + quantity + (quantity === 1 ? ' item' : ' itens');
     byId('cartCount').textContent = quantity ? quantity + (quantity === 1 ? ' item no pedido' : ' itens no pedido') : 'Vamos escolher algo gostoso?';
     byId('cartEmpty').hidden = !!cart.length;
     byId('cartSummary').hidden = !cart.length;
