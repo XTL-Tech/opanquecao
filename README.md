@@ -89,3 +89,7 @@ Deploy `a5d8896c9c42157332ff4debf7498f18b7b71bbf` confirmado como concluído no 
 ### Próxima etapa: Telegram
 
 Configurar as quatro variáveis citadas acima no projeto existente, inicialmente em Preview. O bot precisa estar iniciado no chat de destino e ter permissão de envio. Validar com pedido explicitamente identificado como TESTE, verificar PDF e depois habilitar em produção. Token nunca deve entrar em código, documentação ou chat. O envio real ainda não foi validado.
+
+## Atualização — açaí e carregamento
+
+Açaí 300 ml e 500 ml aparecem em cards separados, com tamanho fixo, preços e limites originais. O JSON comercial permanece inalterado; ambos usam a fotografia aprovada. O carrinho mantém os tamanhos distintos. O catálogo começa a carregar sem aguardar Turnstile; falhas exibem opção de tentar novamente.

@@ -10,8 +10,8 @@ let digitalAvailable = false;
 
 const storageKey = 'disk-panquecao-cart-v1';
 let feedbackTimer;
-document.addEventListener('menu-ready', event => {
-    catalog = event.detail;
+function initializeCatalog(data) {
+    catalog = data;
     try {
         const saved = JSON.parse(window.localStorage.getItem(storageKey));
         if (saved?.version === 1 && Date.now() - saved.updatedAt < 86400000 && saved.lines?.length) {
@@ -20,7 +20,9 @@ document.addEventListener('menu-ready', event => {
         }
     } catch { /* Invalid or unavailable storage never blocks ordering. */ }
     refresh();
-});
+}
+document.addEventListener('menu-ready', event => initializeCatalog(event.detail));
+if (window.menuCatalog) initializeCatalog(window.menuCatalog);
 
 function refresh() {
     try { window.localStorage.setItem(storageKey, JSON.stringify({version: 1, updatedAt: Date.now(), lines: cart})); } catch {}
@@ -110,10 +112,10 @@ byId('menuContent').addEventListener('click', event => {
     if (!button || !catalog) return;
     const card = button.closest('.menu-item');
     const category = card.closest('.category-section').id;
-    const product = card.querySelector('.item-title').textContent;
+    const product = card.dataset.product || card.querySelector('.item-title').textContent;
     const item = catalog.categorias.find(entry => entry.id === category)?.itens.find(entry => entry.nome === product);
     if (!item) return;
-    const options = orderOptions(item);
+    const options = orderOptions(item).filter(option => !card.dataset.option || option.label === card.dataset.option);
     if (!options.length) {
         const contact = document.createElement('a');
         contact.className = 'cart-whatsapp';
@@ -138,6 +140,7 @@ byId('menuContent').addEventListener('click', event => {
         const text = document.createElement('span'); text.textContent = option.label + ' · ' + money(option.cents);
         label.append(radio, text); form.querySelector('fieldset').append(label);
     });
+    if (card.dataset.option) form.querySelector('fieldset').hidden = true;
     const extrasBox = document.createElement('div'); extrasBox.className = 'extras-box';
     form.querySelector('fieldset').after(extrasBox);
     const freeSelected = new Set();

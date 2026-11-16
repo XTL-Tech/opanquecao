@@ -596,7 +596,7 @@ src="https://www.facebook.com/tr?id=766179976513223&ev=PageView&noscript=1"
     </section>
     <div class="category-toolbar container" id="categoryToolbar" hidden><a href="#cardapio">← Todas as categorias</a><span id="categoryCurrent"></span></div>
     <div class="container" id="menuContent">
-        <!-- O conteúdo será injetado dinamicamente -->
+        <p id="menuLoading" role="status">Carregando cardápio…</p>
     </div>
 </main>
 <dialog class="product-dialog" id="productDialog" aria-labelledby="productDialogTitle">
@@ -646,18 +646,21 @@ src="https://www.facebook.com/tr?id=766179976513223&ev=PageView&noscript=1"
     async function initMenu() {
         try {
             // Tenta carregar o ficheiro JSON externo
-            const response = await fetch('cardapio.json');
+            const response = await fetch('cardapio.json', { signal: AbortSignal.timeout(15000) });
             if (!response.ok) throw new Error("Não foi possível carregar o cardapio.json");
             const data = await response.json();
+            document.getElementById("menuContent").replaceChildren();
             renderMenu(data);
+            window.menuCatalog = data;
             document.dispatchEvent(new CustomEvent("menu-ready", { detail: data }));
         } catch (error) {
             console.error("Erro ao carregar cardápio:", error);
             document.getElementById('menuContent').innerHTML = `
                 <div style="text-align:center; padding: 50px 0;">
-                    <p>Erro ao carregar o cardápio. Certifique-se de que o ficheiro 'cardapio.json' está na mesma pasta.</p>
+                    <p>Não foi possível carregar o cardápio. Confira sua conexão e tente novamente.</p><button type="button" id="retryMenu">Tentar novamente</button>
                 </div>
             `;
+            document.getElementById("retryMenu").onclick = initMenu;
         }
     }
 
@@ -797,7 +800,9 @@ src="https://www.facebook.com/tr?id=766179976513223&ev=PageView&noscript=1"
             section.id = categoria.id;
 
             let itemsHtml = '';
-            categoria.itens.forEach(item => {
+            categoria.itens.flatMap(item => item.tamanhos_acai
+                ? item.tamanhos_acai.filter(t => /^\d+ml$/i.test(t.tamanho)).map(size => ({ item, size }))
+                : [{ item, size: null }]).forEach(({ item, size }) => {
                 const photo = itemPhotos[categoria.id]?.[item.nome];
                 let priceSection = '';
                 let extraSection = '';
@@ -812,7 +817,7 @@ src="https://www.facebook.com/tr?id=766179976513223&ev=PageView&noscript=1"
                             </div>
                         `).join('') + `</div>`;
                 } else if (item.tamanhos_acai) {
-                    priceSection = item.tamanhos_acai.map(t => `
+                    priceSection = [size].map(t => `
                         <div class="size-grid" style="margin-bottom:5px">
                             <div class="size-box" style="text-align:left; flex:2">
                                 <span class="size-label">${t.tamanho}</span>
@@ -829,14 +834,14 @@ src="https://www.facebook.com/tr?id=766179976513223&ev=PageView&noscript=1"
                 }
 
                 itemsHtml += `
-                    <div class="menu-item">
+                    <div class="menu-item" data-product="${item.nome}" ${size ? `data-option="${size.tamanho}"` : ''}>
                         ${photo ? `<figure class="item-photo">
                             <img src="img/${photo}" alt="" loading="lazy" decoding="async">
                             <figcaption>Imagem ilustrativa</figcaption>
                         </figure>` : ''}
                         <div>
                             ${item.sub ? `<span class="size-label" style="color:var(--primary); margin-bottom:2px">${item.sub}</span>` : ''}
-                            <h3 class="item-title">${item.nome}</h3>
+                            <h3 class="item-title">${item.nome}${size ? ' · ' + size.tamanho.replace('ml', ' ml') : ''}</h3>
                             ${item.ingredientes ? `<p class="item-desc">${item.ingredientes}</p>` : ''}
                         </div>
                         <div class="item-footer">
@@ -893,7 +898,8 @@ src="https://www.facebook.com/tr?id=766179976513223&ev=PageView&noscript=1"
             const title = document.createElement('strong');
             title.textContent = category.titulo.toLocaleLowerCase('pt-BR');
             const count = document.createElement('small');
-            count.textContent = category.itens.length + (category.itens.length === 1 ? ' opção →' : ' opções →');
+            const itemCount = section.querySelectorAll('.menu-item').length;
+            count.textContent = itemCount + (itemCount === 1 ? ' opção →' : ' opções →');
             label.append(title, count);
             link.append(label);
             cards.append(link);
@@ -954,7 +960,7 @@ src="https://www.facebook.com/tr?id=766179976513223&ev=PageView&noscript=1"
     });
 
     // Iniciar carregamento quando o DOM estiver pronto
-    document.addEventListener('DOMContentLoaded', initMenu);
+    initMenu();
 </script>
 
 <p id="cartFeedback" role="status" aria-live="polite"></p>
@@ -988,7 +994,7 @@ src="https://www.facebook.com/tr?id=766179976513223&ev=PageView&noscript=1"
     <p class="cart-next">O WhatsApp abrirá com seus itens. Toque em enviar na conversa; a loja confirmará o pedido.</p>
     </footer>
 </dialog>
-<script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" defer></script>
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async></script>
 <script type="module" src="cart.mjs"></script>
 </body>
 </html>
