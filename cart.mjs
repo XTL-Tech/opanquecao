@@ -1,4 +1,5 @@
-import { money, orderOptions, priceOrder, extraOptions, extraSummary } from './order-catalog.mjs';
+import { money, orderOptions, priceOrder, extraOptions, extraSummary, flavorChoices } from './order-catalog.mjs';
+import { parseCashAmount, PAYMENT_METHODS } from './payment.mjs';
 
 const byId = id => document.getElementById(id);
 const cart = [];
@@ -7,6 +8,7 @@ let widget;
 let challenge;
 let sending = false;
 let digitalAvailable = false;
+let areaUiReady = false;
 
 const storageKey = 'disk-panquecao-cart-v1';
 let feedbackTimer;
@@ -48,6 +50,14 @@ function refresh() {
         price.className = 'cart-item-price';
         price.textContent = money(line.cents * line.quantity);
         info.append(title, option, price);
+        if (line.flavors?.length === 2) {
+            for (const [i, flavor] of line.flavors.entries()) {
+                const detail = document.createElement('p');
+                detail.className = 'cart-note';
+                detail.textContent = 'Sabor ' + (i + 1) + ': ' + flavor;
+                info.append(detail);
+            }
+        }
         for (const description of extraSummary(line)) {
             const extra = document.createElement('p'); extra.className = 'cart-note'; extra.textContent = description; info.append(extra);
         }
@@ -102,6 +112,7 @@ function refresh() {
     byId('cartEmpty').hidden = !!cart.length;
     byId('cartSummary').hidden = !cart.length;
     byId('cartTotal').textContent = money(total);
+    if (areaUiReady) updateDeliveryFee();
     byId('sendOrder').disabled = !cart.length || !challenge || sending;
 
 }
@@ -139,7 +150,42 @@ byId('menuContent').addEventListener('click', event => {
         const text = document.createElement('span'); text.textContent = option.label + ' · ' + money(option.cents);
         label.append(radio, text); form.querySelector('fieldset').append(label);
     });
-    if (card.dataset.option) form.querySelector('fieldset').hidden = true;
+    if (card.dataset.option || options.length === 1) form.querySelector('fieldset').hidden = true;
+    // Cada metade deve ser escolhida separadamente, a partir dos sabores
+    // cadastrados em panquecas salgadas/doces.
+    const choices = flavorChoices(catalog, category, product);
+    let flavorSelectors = [];
+    if (choices) {
+        const flavorsBox = document.createElement('fieldset');
+        flavorsBox.className = 'extras-group flavor-choices';
+        const legend = document.createElement('legend');
+        legend.textContent = 'Escolha os dois sabores';
+        flavorsBox.append(legend);
+        const help = document.createElement('p');
+        help.textContent = 'Selecione um sabor para cada metade da panqueca.';
+        flavorsBox.append(help);
+        flavorSelectors = choices.map((choice, index) => {
+            const label = document.createElement('label');
+            label.textContent = choice.label;
+            const select = document.createElement('select');
+            select.name = 'flavor' + (index + 1);
+            select.required = true;
+            const placeholder = new Option('Selecione um sabor', '');
+            placeholder.disabled = true;
+            select.add(placeholder);
+            for (const flavor of choice.options) select.add(new Option(flavor, flavor));
+            select.value = '';
+            select.addEventListener('change', () => {
+                const values = flavorSelectors.map(field => field.value);
+                formStatus.textContent = values.every(Boolean) && values[0] === values[1]
+                    ? 'Escolha dois sabores diferentes.' : '';
+            });
+            label.append(select);
+            flavorsBox.append(label);
+            return select;
+        });
+        form.querySelector('fieldset').after(flavorsBox);
+    }
     const extrasBox = document.createElement('div'); extrasBox.className = 'extras-box';
     form.querySelector('fieldset').after(extrasBox);
     const freeSelected = new Set();
@@ -200,6 +246,7 @@ byId('menuContent').addEventListener('click', event => {
         try {
             const [line] = priceOrder(catalog, [{ category, product, option: selected.label,
                 quantity: form.elements.quantity.valueAsNumber, note: form.elements.note.value.trim(),
+                flavors: flavorSelectors.map(select => select.value),
                 freeExtras: [...freeSelected], paidExtras: [...paidSelected] }]);
             cart.push(line);
         } catch (error) { formStatus.textContent = error.message; return; }
@@ -214,7 +261,140 @@ byId('menuContent').addEventListener('click', event => {
 });
 
 const checkoutForm = byId('checkout');
+const paymentHint = byId('paymentHint');
+const cashChangeGroup = byId('cashChangeGroup');
+const changeForField = byId('changeForField');
+const paymentChangeCheckbox = checkoutForm.elements.needsChange;
+const changeForInput = checkoutForm.elements.changeFor;
+function selectedPaymentMethod() {
+    return checkoutForm.querySelector('input[name="paymentMethod"]:checked')?.value || '';
+}
+function deliveryAmount() {
+    const subtotal = cart.reduce((sum, line) => sum + line.cents * line.quantity, 0);
+    if (selectedFulfillment() !== 'delivery') return { total: subtotal, known: true };
+    const city = byId('deliveryCity').value;
+    const area = deliveryAreas?.cities?.[city]?.find(row => row.name === byId('deliveryNeighborhood').value);
+    const rate = area ? (area.feeCents ?? deliveryAreas?.defaultFeeCents?.[city]) : null;
+    if (!Number.isSafeInteger(rate) || rate < 0 || rate > 10000) return { total: subtotal, known: false };
+    return { total: subtotal + rate, known: true };
+}
+function updatePayment() {
+    const method = selectedPaymentMethod();
+    const cash = method === 'cash';
+    cashChangeGroup.hidden = !cash;
+    if (!cash) {
+        paymentChangeCheckbox.checked = false;
+        changeForInput.value = '';
+    }
+    const needsChange = cash && paymentChangeCheckbox.checked;
+    changeForField.hidden = !needsChange;
+    changeForInput.required = needsChange;
+    if (!needsChange) changeForInput.value = '';
+    if (!method) {
+        paymentHint.textContent = 'Selecione a forma de pagamento. Nenhuma cobrança online será realizada neste momento.';
+    } else if (method === 'cash') {
+        const { total, known } = deliveryAmount();
+        if (!needsChange) {
+            paymentHint.textContent = 'Pagamento em dinheiro à loja. Se precisar, marque "Preciso de troco".';
+        } else {
+            try {
+                const amount = parseCashAmount(changeForInput.value);
+                paymentHint.textContent = amount === null ? 'Informe para quanto precisa de troco.' :
+                    amount < total ? 'O valor para troco deve ser pelo menos ' + money(total) + '.' :
+                    known ? 'Troco estimado: ' + money(amount - total) + '. Valor sujeito à confirmação da loja.' :
+                    'Troco a confirmar: a taxa de entrega desta localidade ainda será informada pela loja.';
+            } catch (e) {
+                paymentHint.textContent = e.message;
+            }
+        }
+    } else if (method === 'pix') {
+        paymentHint.textContent = 'Pix a combinar com a loja após confirmação. Não será gerado pagamento automático.';
+    } else {
+        paymentHint.textContent = PAYMENT_METHODS[method] + ': pagamento com a loja, sem cobrança no site.';
+    }
+}
+checkoutForm.querySelectorAll('input[name="paymentMethod"]').forEach(input => {
+    input.addEventListener('change', updatePayment);
+});
+paymentChangeCheckbox.addEventListener('change', updatePayment);
+changeForInput.addEventListener('input', updatePayment);
+const orderStatus = byId('orderStatus');
+let lastInvalidInput = null;
+function fieldLabel(field) {
+    if (!field) return 'campo obrigatório';
+    if (field.name === 'consent') return 'autorização de contato';
+    return field.closest('label')?.firstChild?.textContent?.trim()?.replace(/\s*\*\s*/g, ' ').slice(0,80) ||
+        ({name:'nome', phone:'WhatsApp', city:'cidade', neighborhood:'bairro', street:'rua',
+            number:'número', table:'mesa'})[field.name] || 'campo obrigatório';
+}
+// O Safari impede o evento submit quando algum campo está inválido.
+// Mostrar o motivo evita a impressão de que o botão está sem funcionar.
+checkoutForm.addEventListener('invalid', event => {
+    const field = event.target;
+    if (lastInvalidInput === field) return;
+    lastInvalidInput = field;
+    orderStatus.textContent = 'Preencha ou corrija: ' + fieldLabel(field) + '. O pedido ainda NÃO foi enviado.';
+    field.setAttribute('aria-invalid', 'true');
+}, true);
+checkoutForm.addEventListener('input', event => {
+    if (event.target?.matches?.('input, select, textarea')) {
+        event.target.removeAttribute('aria-invalid');
+        if (lastInvalidInput === event.target) lastInvalidInput = null;
+    }
+});
+let deliveryAreas;
+let deliveryAreasRequest;
+const deliveryCity = byId('deliveryCity');
+const deliveryNeighborhood = byId('deliveryNeighborhood');
+const otherNeighborhood = byId('otherNeighborhood');
+const notListedValue = '__other__';
+const deliveryFields = ['city', 'neighborhood', 'street', 'number'];
 let estimates = {};
+
+async function loadDeliveryAreas() {
+    if (deliveryAreas) return;
+    deliveryAreasRequest ??= fetch('/delivery-areas.json', { cache: 'no-store' }).then(async response => {
+        if (!response.ok) throw new Error('Não foi possível carregar as áreas de entrega.');
+        const data = await response.json();
+        if (!data || !data.cities || !Array.isArray(data.cities['Nova Hartz']) || !Array.isArray(data.cities['Araricá'])) {
+            throw new Error('Cadastro de bairros indisponível.');
+        }
+        deliveryAreas = data;
+        deliveryCity.replaceChildren(new Option('Selecione a cidade', ''));
+        for (const city of Object.keys(data.cities)) {
+            deliveryCity.add(new Option(city, city));
+        }
+        updateNeighborhoodList();
+    }).catch(error => { deliveryAreasRequest = undefined; throw error; });
+    await deliveryAreasRequest;
+}
+function updateNeighborhoodList() {
+    deliveryNeighborhood.replaceChildren(new Option('Selecione o bairro', ''));
+    const areas = deliveryAreas?.cities?.[deliveryCity.value] || [];
+    for (const area of areas) deliveryNeighborhood.add(new Option(area.name, area.name));
+    if (areas.length) deliveryNeighborhood.add(new Option('Outro bairro / localidade', notListedValue));
+    deliveryNeighborhood.disabled = !areas.length;
+    updateDeliveryFee();
+}
+function updateDeliveryFee() {
+    const isDelivery = selectedFulfillment() === 'delivery';
+    const another = isDelivery && deliveryNeighborhood.value === notListedValue;
+    byId('otherNeighborhoodLabel').hidden = !another;
+    otherNeighborhood.required = another;
+    if (!another) otherNeighborhood.value = '';
+    const area = deliveryAreas?.cities?.[deliveryCity.value]?.find(row => row.name === deliveryNeighborhood.value);
+    // Bairros cadastrados herdam o padrão municipal; localidades fora da lista
+    // continuam sujeitas à confirmação de cobertura e taxa pela loja.
+    const rate = area ? (area.feeCents ?? deliveryAreas?.defaultFeeCents?.[deliveryCity.value]) : null;
+    const fee = isDelivery && Number.isSafeInteger(rate) && rate >= 0 && rate <= 10000 ? rate : null;
+    byId('deliveryFeeStatus').textContent = fee === null
+        ? 'Taxa de entrega: a confirmar pela loja antes de aceitar o pedido. O subtotal não inclui a taxa.'
+        : 'Taxa de entrega: ' + money(fee) + '. Total estimado com entrega: ' +
+            money(cart.reduce((sum, line) => sum + line.cents * line.quantity, 0) + fee);
+    updatePayment();
+}
+deliveryCity.addEventListener('change', updateNeighborhoodList);
+deliveryNeighborhood.addEventListener('change', updateDeliveryFee);
 function selectedFulfillment() {
     return checkoutForm.querySelector('input[name="fulfillment"]:checked')?.value || '';
 }
@@ -223,8 +403,9 @@ function updateFulfillment() {
     for (const [type, id] of [['delivery', 'fulfillmentDelivery'], ['pickup', 'fulfillmentPickup'], ['table', 'fulfillmentTable']]) {
         byId(id).hidden = type !== mode;
     }
-    checkoutForm.elements.address.required = mode === 'delivery';
+    for (const key of deliveryFields) checkoutForm.elements[key].required = mode === 'delivery';
     checkoutForm.elements.table.required = mode === 'table';
+    updateDeliveryFee();
     if (mode !== 'delivery') {
         byId('geoLatitude').value = '';
         byId('geoLongitude').value = '';
@@ -240,6 +421,7 @@ checkoutForm.querySelectorAll('input[name="fulfillment"]').forEach(radio => {
     radio.addEventListener('change', updateFulfillment);
 });
 updateFulfillment();
+areaUiReady = true;
 byId('captureLocation').onclick = () => {
     const status = byId('locationStatus');
     if (selectedFulfillment() !== 'delivery') return;
@@ -297,10 +479,16 @@ async function getRequestId(payload) {
     return fallbackAttempt.id;
 }
 
+
 let configPromise;
 byId('openCart').onclick = async () => {
     refresh();
     byId('cartDialog').showModal();
+    try {
+        await loadDeliveryAreas();
+    } catch (error) {
+        byId('deliveryFeeStatus').textContent = error.message + ' Escolha retirada ou tente novamente.';
+    }
     if (widget !== undefined) return;
     try {
         configPromise ??= fetch('/api/order-config').then(response => response.json());
@@ -313,13 +501,21 @@ byId('openCart').onclick = async () => {
         widget = window.turnstile.render('#orderChallenge', {
             sitekey: siteKey,
             callback: token => { challenge = token; refresh(); },
-            'expired-callback': () => { challenge = undefined; refresh(); },
-            'error-callback': () => { challenge = undefined; refresh(); }
+            'expired-callback': () => {
+                challenge = undefined;
+                orderStatus.textContent = 'Verificação de segurança expirada. Conclua uma nova verificação antes de enviar.';
+                refresh();
+            },
+            'error-callback': () => {
+                challenge = undefined;
+                orderStatus.textContent = 'O navegador não conseguiu validar a segurança. Recarregue a página e tente novamente. Nenhum pedido foi enviado.';
+                refresh();
+            }
         });
         digitalAvailable = true;
     } catch {
         configPromise = undefined;
-        byId('orderStatus').textContent = '';
+        orderStatus.textContent = 'Não foi possível iniciar a verificação de segurança. Recarregue a página. Nenhum pedido foi enviado.';
     } finally {
         byId('checkout').hidden = !cart.length;
         refresh();
@@ -328,45 +524,70 @@ byId('openCart').onclick = async () => {
 
 byId('checkout').onsubmit = async event => {
     event.preventDefault();
-    if (sending || !challenge) return;
+    if (sending) return;
     const form = event.currentTarget;
-    const status = byId('orderStatus');
+    const status = orderStatus;
+    if (!challenge) {
+        status.textContent = 'A verificação de segurança não foi concluída ou expirou. Aguarde e tente novamente. Nenhum pedido foi enviado.';
+        return;
+    }
+    const trace = Math.random().toString(36).slice(2, 10).padEnd(8, '0');
     sending = true;
     refresh();
     status.textContent = 'Enviando…';
     try {
         const lines = priceOrder(catalog, cart);
-        const payload = { lines, name: form.elements.name.value,
-            phone: form.elements.phone.value.replace(/\D/g, ''), challenge,
-            fulfillment: {
-                type: selectedFulfillment(),
-                address: form.elements.address.value.trim(),
-                table: form.elements.table.value.trim(),
-                latitude: byId('geoLatitude').value || null,
-                longitude: byId('geoLongitude').value || null
-            } };
+        const method = selectedPaymentMethod();
+        const payment = {
+            method,
+            changeForCents: method === 'cash' && paymentChangeCheckbox.checked
+                ? parseCashAmount(changeForInput.value) : null
+        };
+        if (method === 'cash' && paymentChangeCheckbox.checked && payment.changeForCents === null) {
+            throw new Error('Informe para quanto precisa de troco.');
+        }
+        const payload = { lines, payment, name: form.elements.name.value,
+                phone: form.elements.phone.value.replace(/\D/g, ''), challenge,
+                fulfillment: {
+                    type: selectedFulfillment(),
+                    city: form.elements.city.value,
+                    neighborhood: form.elements.neighborhood.value,
+                    otherNeighborhood: otherNeighborhood.value.trim(),
+                    street: form.elements.street.value.trim(),
+                    number: form.elements.number.value.trim(),
+                    postalCode: form.elements.postalCode.value.trim(),
+                    complement: form.elements.complement.value.trim(),
+                    reference: form.elements.reference.value.trim(),
+                    table: form.elements.table.value.trim(),
+                    latitude: byId('geoLatitude').value || null,
+                    longitude: byId('geoLongitude').value || null
+                } };
         payload.requestId = await getRequestId(payload);
         const response = await fetch('/api/order', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Checkout-Trace': trace },
             body: JSON.stringify(payload)
         });
-        const result = await response.json();
+        const result = await response.json().catch(() => ({}));
         if (response.status === 202 || result.pending) {
             status.textContent = (result.error || 'Pedido aguardando conferência.') +
                 ' Referência #' + (result.id || 'indisponível') + '. Consulte a loja pelo WhatsApp.';
             return;
         }
-        if (!response.ok) throw new Error(result.error);
+        if (!response.ok) throw new Error(result.error || 'Falha na comunicação com a loja.');
         fallbackAttempt = undefined;
         try { window.sessionStorage.removeItem(pendingOrderKey); } catch {}
         cart.length = 0;
         form.reset();
+        updateNeighborhoodList();
         updateFulfillment();
+        updatePayment();
         status.textContent = result.test
             ? 'TESTE #' + result.id + ' enviado ao grupo da loja. NÃO PREPARAR. Nenhum pedido real foi realizado.'
             : 'Solicitação #' + result.id + ' enviada à loja. Aguarde a confirmação pelo WhatsApp informado.';
     } catch (error) {
-        status.textContent = 'Confira antes de reenviar. ' + error.message;
+        status.textContent = 'Não foi possível confirmar o envio (código ' + trace +
+            '). ' + (error?.message || 'Erro de comunicação.') +
+            ' Antes de reenviar, confirme no Telegram com a loja para evitar pedidos duplicados.';
     } finally {
         sending = false;
         challenge = undefined;

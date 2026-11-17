@@ -75,7 +75,7 @@ function response() {
     };
     const data = requestId => ({
         requestId, name:'Pessoa de teste', phone:'51999999999', challenge:'turnstile-test',
-        lines:[item], fulfillment:{type:'pickup',address:'',table:'',latitude:null,longitude:null}
+        lines:[item], payment:{method:'pix',changeForCents:null}, fulfillment:{type:'pickup',address:'',table:'',latitude:null,longitude:null}
     });
     const submit = async payload => {
         const res = response();
@@ -97,6 +97,9 @@ function response() {
     result = await submit({...data(key),name:'Pedido diferente'});
     assert.equal(result.code,409);
     assert.equal(sent,1,'Changing payload with same key must be rejected');
+    result = await submit({...data(key),payment:{method:'cash',changeForCents:null}});
+    assert.equal(result.code,409);
+    assert.equal(sent,1,'Changing payment with same key must be rejected');
 
     const uncertainKey=randomUUID();
     accepted=false;

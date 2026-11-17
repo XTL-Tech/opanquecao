@@ -478,10 +478,29 @@
         .fulfillment-choices label { display: flex; gap: 6px; justify-content: center; align-items: center; flex-wrap: wrap; padding: 10px 5px; border: 1px solid #c9b4ad; border-radius: 10px; text-align: center; font-weight: 700; font-size: 12px; line-height: 1.4; cursor: pointer; background: #fff; }
         .fulfillment-choices input { width: 18px; height: 18px; min-height: 18px; flex: 0 0 18px; accent-color: #741c2d; }
         .fulfillment-choices label:has(input:checked) { border-color: #741c2d; background: #fff1e9; box-shadow: inset 0 0 0 1px #741c2d; }
+        .payment-options { border: 1px solid #ecdcd5; border-radius: 14px; padding: 13px; margin: 12px 0; }
+        .payment-options > legend { font-weight: 800; padding: 0 5px; color: #381d20; }
+        .payment-choices { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; margin: 10px 0; }
+        .payment-choices label { display: flex; align-items: center; gap: 8px; padding: 12px 9px; min-height: 49px; border: 1px solid #dac5b8; border-radius: 11px; background: #fff; font-size: 13px; font-weight: 700; cursor: pointer; }
+        .payment-choices label:has(input:checked) { background: #fff1e9; border-color: #741c2d; box-shadow: inset 0 0 0 1px #741c2d; }
+        .payment-choices input { accent-color: #741c2d; width: 18px; height: 18px; min-height: 18px; flex: 0 0 18px; }
+        #cashChangeGroup[hidden], #changeForField[hidden] { display: none; }
+        #cashChangeGroup { margin-top: 12px; padding: 11px; border-radius: 10px; background: #fff8ef; }
+        #cashChangeGroup label.change-toggle { display: flex; gap: 9px; align-items: center; min-height: 42px; font-weight: 700; }
+        #cashChangeGroup label.change-toggle input { width: 18px; height: 18px; min-height: 18px; accent-color: #741c2d; }
+        #changeForField { display: block; margin: 6px 0 4px; font-weight: 700; }
+        #changeForField input { display: block; margin-top: 6px; width: 100%; min-height: 46px; font: inherit; border: 1px solid #c9aaa0; border-radius: 10px; padding: 10px; background: white; color: #381d20; }
+        #paymentHint { font-size: 12px; color: #705c59; line-height: 1.5; padding: 4px 0; }
+        @media (max-width: 360px) { .payment-choices { grid-template-columns: 1fr; } }
         .fulfillment-panel { border: 1px solid #ecdcd5; border-radius: 12px; padding: 12px; margin: 0 0 12px; }
         .fulfillment-panel[hidden] { display: none; }
         .fulfillment-panel label { display: block; }
         .fulfillment-panel textarea { width: 100%; min-height: 75px; resize: vertical; }
+        .fulfillment-panel label { margin-bottom: 10px; }
+        .fulfillment-panel input:not([type="hidden"]), .fulfillment-panel select { width: 100%; min-width: 0; padding: 10px; min-height: 46px; border: 1px solid #c9aaa0; border-radius: 10px; background: #fff; color: #381d20; font: inherit; }
+        .fulfillment-panel label[hidden] { display: none; }
+        .delivery-address-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        #deliveryFeeStatus { margin: 12px 0; padding: 10px 12px; background: #fff5e4; border-radius: 9px; color: #583c2f; font-size: 13px; line-height: 1.5; }
         #captureLocation { display: inline-flex; align-items: center; justify-content: center; width: 100%; min-height: 44px; padding: 10px; margin-top: 8px; background: #f4e6dc; color: #381d20; border: 1px solid #c9b4ad; border-radius: 10px; font-weight: 700; }
         #locationStatus, #fulfillmentEstimate { font-size: 12px; line-height: 1.5; color: #705c59; margin: 8px 0; }
         #orderUnavailable { font-size: 13px; padding: 12px; border-radius: 10px; background: #fff3da; }
@@ -530,6 +549,11 @@
         .option-choices label { flex: 1; min-width: 110px; }
         .option-choices input { position: absolute; opacity: 0; width: 1px; min-height: 0; }
         .option-choices span { display: block; padding: 12px; border: 1px solid #d7b5a8; border-radius: 12px; text-align: center; }
+        .option-choices[hidden] { display: none; }
+        .order-form .flavor-choices { display: grid; gap: 10px; }
+        .order-form .extras-group.flavor-choices label { display: flex; flex-direction: column; align-items: stretch; gap: 7px; font-weight: 700; }
+        .order-form .flavor-choices select { width: 100%; min-height: 48px; padding: 10px 12px; border: 1px solid #c9aaa0; border-radius: 11px; background: #fff; color: #301e22; font: inherit; }
+        .order-form .flavor-choices select:focus-visible { outline: 3px solid #c88b16; outline-offset: 2px; }
         .option-choices input:checked + span { background: #81172a; color: white; border-color: #81172a; }
         .option-choices input:focus-visible + span { outline: 3px solid #c88b16; outline-offset: 2px; }
         #openCart { bottom: calc(14px + env(safe-area-inset-bottom, 0px)); left: 50%; right: auto; transform: translateX(-50%); width: min(92%, 520px); justify-content: center; background: #94172c; border: 1px solid #c14b55; border-radius: 16px; font-size: 16px; box-shadow: 0 5px 20px #34030b44; }
@@ -1080,9 +1104,37 @@ src="https://www.facebook.com/tr?id=766179976513223&ev=PageView&noscript=1"
             </div>
         </fieldset>
         <div class="fulfillment-panel" id="fulfillmentDelivery">
-            <label>Endereço de entrega (rua, número, bairro e cidade)
-                <textarea name="address" required minlength="8" maxlength="220" autocomplete="street-address" placeholder="Ex.: Rua..., 123, Centro, Nova Hartz"></textarea>
+            <label>Cidade de entrega *
+                <select name="city" id="deliveryCity" required>
+                    <option value="">Selecione a cidade</option>
+                </select>
             </label>
+            <label>Bairro ou localidade *
+                <select name="neighborhood" id="deliveryNeighborhood" required disabled>
+                    <option value="">Escolha primeiro a cidade</option>
+                </select>
+            </label>
+            <label id="otherNeighborhoodLabel" hidden>Qual bairro ou localidade? *
+                <input name="otherNeighborhood" id="otherNeighborhood" type="text" maxlength="80" minlength="3" placeholder="Informe seu bairro ou localidade" autocomplete="address-level3">
+            </label>
+            <label>Rua, avenida ou estrada *
+                <input name="street" type="text" required minlength="3" maxlength="120" autocomplete="address-line1" placeholder="Nome da rua, avenida ou estrada">
+            </label>
+            <div class="delivery-address-grid">
+                <label>Número *
+                    <input name="number" type="text" required maxlength="20" placeholder="123 ou S/N" autocomplete="off">
+                </label>
+                <label>CEP (opcional)
+                    <input name="postalCode" inputmode="numeric" type="text" maxlength="9" placeholder="00000-000" autocomplete="postal-code">
+                </label>
+            </div>
+            <label>Complemento (opcional)
+                <input name="complement" type="text" maxlength="100" placeholder="Casa, apartamento, bloco, portão...">
+            </label>
+            <label>Referência para o entregador (opcional)
+                <input name="reference" type="text" maxlength="140" placeholder="Próximo à praça, portão azul...">
+            </label>
+            <p id="deliveryFeeStatus" role="status" aria-live="polite">Taxa de entrega: a confirmar pela loja.</p>
             <button type="button" id="captureLocation">Usar minha localização atual (opcional)</button>
             <p id="locationStatus" role="status" aria-live="polite">A localização só será solicitada se você tocar no botão. Confirme também o endereço.</p>
             <input type="hidden" name="latitude" id="geoLatitude">
@@ -1099,6 +1151,22 @@ src="https://www.facebook.com/tr?id=766179976513223&ev=PageView&noscript=1"
         <p id="fulfillmentEstimate" role="status" aria-live="polite">O prazo será informado pela loja na confirmação.</p>
         <label>Nome <input name="name" required maxlength="80" autocomplete="name"></label>
         <label>WhatsApp com DDD <input name="phone" type="tel" required maxlength="20" autocomplete="tel"></label>
+        <fieldset class="payment-options" id="paymentOptions">
+            <legend>Como deseja pagar? *</legend>
+            <div class="payment-choices">
+                <label><input type="radio" name="paymentMethod" value="cash" required> Dinheiro</label>
+                <label><input type="radio" name="paymentMethod" value="credit" required> Cartão de crédito</label>
+                <label><input type="radio" name="paymentMethod" value="debit" required> Cartão de débito</label>
+                <label><input type="radio" name="paymentMethod" value="pix" required> Pix</label>
+            </div>
+            <div id="cashChangeGroup" hidden>
+                <label class="change-toggle"><input name="needsChange" type="checkbox"> Preciso de troco</label>
+                <label id="changeForField" hidden>Troco para quanto? (R$) *
+                    <input name="changeFor" type="text" inputmode="decimal" maxlength="12" placeholder="Ex.: 50,00" autocomplete="off" aria-describedby="paymentHint">
+                </label>
+            </div>
+            <p id="paymentHint" role="status" aria-live="polite">Escolha a forma de pagamento. Não há cobrança online nesta etapa.</p>
+        </fieldset>
         <label><span><input name="consent" type="checkbox" required style="width:auto; min-height:auto"> Autorizo a loja a usar meu contato exclusivamente para atender e confirmar este pedido.</span></label>
         <div id="orderChallenge"></div>
         <button id="sendOrder" disabled>Enviar solicitação à loja</button>
