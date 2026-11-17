@@ -1,0 +1,23 @@
+name: Monitorar Supabase Panquecao
+on:
+  schedule:
+    - cron: '17 */6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  health:
+    # Ativar a variável do repositório SOMENTE após criar o projeto
+    # Supabase e configurar SUPABASE_URL/PUBLISHABLE_KEY na Vercel.
+    if: vars.PANQUECAO_SUPABASE_MONITOR_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Consultar disponibilidade real do catalogo (sem gravar dados)
+        run: |
+          curl --fail-with-body --silent --show-error --max-time 20 \
+            --retry 2 --retry-delay 8 \
+            --header 'Cache-Control: no-cache' \
+            'https://opanquecao.vercel.app/api/health/supabase'
