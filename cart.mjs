@@ -403,13 +403,21 @@ byId('openCart').onclick = async () => {
         widget = window.turnstile.render('#orderChallenge', {
             sitekey: siteKey,
             callback: token => { challenge = token; refresh(); },
-            'expired-callback': () => { challenge = undefined; refresh(); },
-            'error-callback': () => { challenge = undefined; refresh(); }
+            'expired-callback': () => {
+                challenge = undefined;
+                orderStatus.textContent = 'Verificação de segurança expirada. Conclua uma nova verificação antes de enviar.';
+                refresh();
+            },
+            'error-callback': () => {
+                challenge = undefined;
+                orderStatus.textContent = 'O navegador não conseguiu validar a segurança. Recarregue a página e tente novamente. Nenhum pedido foi enviado.';
+                refresh();
+            }
         });
         digitalAvailable = true;
     } catch {
         configPromise = undefined;
-        byId('orderStatus').textContent = '';
+        orderStatus.textContent = 'Não foi possível iniciar a verificação de segurança. Recarregue a página. Nenhum pedido foi enviado.';
     } finally {
         byId('checkout').hidden = !cart.length;
         refresh();
