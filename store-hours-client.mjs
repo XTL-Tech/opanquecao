@@ -20,9 +20,14 @@ async function refreshStatus() {
   try {
     const response = await fetch('/api/store-status',{cache:'no-store'});
     const data = await response.json();
-    if (!data.enabled) { label.hidden = true; return; }
+    if (!data.enabled) {
+      label.hidden = true;
+      document.dispatchEvent(new CustomEvent('store-operation-status',{detail:{enabled:false,open:true}}));
+      return;
+    }
     label.hidden = false;
     const open = response.ok && data.open === true;
+    document.dispatchEvent(new CustomEvent('store-operation-status',{detail:{enabled:true,open,unknown:!!data.unknown}}));
     if (data.unknown || !response.ok) {
       label.textContent = 'Não foi possível confirmar o horário da loja. Pedidos temporariamente indisponíveis.';
     } else if (open) {
@@ -47,6 +52,7 @@ async function refreshStatus() {
     if (previousOpen !== false) noticeOnce(data);
     previousOpen = false;
   } catch {
+    document.dispatchEvent(new CustomEvent('store-operation-status',{detail:{enabled:true,open:false,unknown:true}}));
     label.hidden = false;
     label.textContent = 'Não foi possível verificar o funcionamento. Consulte a loja antes de enviar pedido.';
   }
