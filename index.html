@@ -1216,8 +1216,9 @@ src="https://www.facebook.com/tr?id=766179976513223&ev=PageView&noscript=1"
                 <label>Número *
                     <input name="number" type="text" required maxlength="20" placeholder="123 ou S/N" autocomplete="off">
                 </label>
-                <label>CEP (opcional)
-                    <input name="postalCode" inputmode="numeric" type="text" maxlength="9" placeholder="00000-000" autocomplete="postal-code">
+                <label>CEP da cidade (opcional)
+                    <input name="postalCode" inputmode="numeric" type="text" maxlength="9" placeholder="00000-000" autocomplete="postal-code" aria-describedby="postalCodeHelp">
+                    <small id="postalCodeHelp">O CEP é geral da localidade: não identifica seu bairro. Informe rua e número corretamente.</small>
                 </label>
             </div>
             <label>Complemento (opcional)
