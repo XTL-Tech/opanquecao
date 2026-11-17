@@ -314,7 +314,9 @@ byId('checkout').onsubmit = async event => {
         cart.length = 0;
         form.reset();
         updateFulfillment();
-        status.textContent = 'Solicitação #' + result.id + ' enviada à loja. Aguarde a confirmação pelo WhatsApp informado.';
+        status.textContent = result.test
+            ? 'TESTE #' + result.id + ' enviado ao grupo da loja. NÃO PREPARAR. Nenhum pedido real foi realizado.'
+            : 'Solicitação #' + result.id + ' enviada à loja. Aguarde a confirmação pelo WhatsApp informado.';
     } catch (error) {
         status.textContent = 'Confira antes de reenviar. ' + error.message;
     } finally {
