@@ -351,6 +351,61 @@ const notListedValue = '__other__';
 const deliveryFields = ['city', 'neighborhood', 'street', 'number'];
 let estimates = {};
 
+/* Ajuda contextual de três etapas. Não bloqueia o formulário nem armazena dados
+   pessoais. Nenhuma venda/urgência/avaliação é criada artificialmente. */
+const checkoutProgressSteps = Array.from(checkoutForm.querySelectorAll('[data-checkout-step]'));
+const checkoutProgressLabels = {
+    1: 'Etapa 1 de 3: escolha como receber.',
+    2: 'Etapa 2 de 3: informe seu nome e WhatsApp.',
+    3: 'Etapa 3 de 3: escolha o pagamento e confirme.'
+};
+function checkoutStepValid(step) {
+    const container = checkoutProgressSteps.find(e => Number(e.dataset.checkoutStep) === step);
+    if (!container) return false;
+    return Array.from(container.querySelectorAll('input, select, textarea'))
+        .every(field => !field.willValidate || field.checkValidity());
+}
+function updateCheckoutProgress(step = 1) {
+    for (const indicator of checkoutForm.querySelectorAll('[data-progress-step]')) {
+        const number = Number(indicator.dataset.progressStep);
+        if (number === step) indicator.setAttribute('aria-current', 'step');
+        else indicator.removeAttribute('aria-current');
+        indicator.dataset.done = number < step && checkoutStepValid(number) ? 'true' : 'false';
+    }
+    byId('checkoutProgressText').textContent = checkoutProgressLabels[step] || checkoutProgressLabels[1];
+}
+checkoutForm.querySelectorAll('[data-next-step]').forEach(button => {
+    button.addEventListener('click', () => {
+        const current = Number(button.closest('[data-checkout-step]')?.dataset.checkoutStep);
+        const target = Number(button.dataset.nextStep);
+        if (!Number.isInteger(current) || target !== current + 1) return;
+        const section = checkoutProgressSteps.find(e => Number(e.dataset.checkoutStep) === current);
+        const invalid = Array.from(section.querySelectorAll('input, select, textarea'))
+            .find(field => field.willValidate && !field.checkValidity());
+        if (invalid) {
+            invalid.setAttribute('aria-invalid', 'true');
+            orderStatus.textContent = 'Confira: ' + fieldLabel(invalid) + '. Você ainda não enviou o pedido.';
+            invalid.focus();
+            return;
+        }
+        orderStatus.textContent = '';
+        updateCheckoutProgress(target);
+        const heading = byId('checkoutStep' + target);
+        heading?.focus();
+        heading?.scrollIntoView?.({ block: 'start', behavior: 'smooth' });
+    });
+});
+checkoutForm.addEventListener('focusin', event => {
+    const step = Number(event.target.closest('[data-checkout-step]')?.dataset.checkoutStep);
+    if (step >= 1 && step <= 3) updateCheckoutProgress(step);
+});
+checkoutForm.addEventListener('change', event => {
+    const step = Number(event.target.closest('[data-checkout-step]')?.dataset.checkoutStep);
+    if (step >= 1 && step <= 3) updateCheckoutProgress(step);
+});
+updateCheckoutProgress();
+
+
 async function loadDeliveryAreas() {
     if (deliveryAreas) return;
     deliveryAreasRequest ??= fetch('/delivery-areas.json', { cache: 'no-store' }).then(async response => {
