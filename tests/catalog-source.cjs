@@ -19,14 +19,17 @@ const makeRes=()=>({
     assert.deepEqual(legacy,original);
     let res=makeRes();
     await api({method:'GET'},res);
-    assert.equal(res.code,307);
-    assert.equal(res.headers.location,'/cardapio.json');
+    assert.equal(res.code,200);
+    assert.deepEqual(res.body,original);
+    assert.equal(res.headers['cache-control'],'public, max-age=30, s-maxage=300, stale-while-revalidate=60');
+    assert.equal(res.headers.location,undefined);
     process.env.CATALOG_SOURCE='supabase';
     delete process.env.SUPABASE_URL;
     delete process.env.SUPABASE_PUBLISHABLE_KEY;
     await assert.rejects(()=>loadCatalog(),CatalogUnavailableError);
     res=makeRes();await api({method:'GET'},res);
     assert.equal(res.code,503);
+    assert.equal(res.headers['cache-control'],'no-store');
 
     process.env.SUPABASE_URL='https://example.supabase.co';
     process.env.SUPABASE_PUBLISHABLE_KEY='sb_publishable_test';
@@ -45,6 +48,7 @@ const makeRes=()=>({
     res=makeRes();await api({method:'GET'},res);
     assert.equal(res.code,200);
     assert.deepEqual(res.body,original);
+    assert.equal(res.headers['cache-control'],'no-store');
     global.fetch=async()=>({ok:false,status:503});
     await assert.rejects(()=>loadCatalog(),CatalogUnavailableError);
     res=makeRes();await api({method:'GET'},res);

@@ -788,7 +788,7 @@ src="https://www.facebook.com/tr?id=766179976513223&ev=PageView&noscript=1"
     async function initMenu() {
         try {
             // Lê sempre a API do catálogo; antes da migração a API redireciona para o JSON original
-            const response = await fetch('/api/catalog', { cache: 'no-store', signal: AbortSignal.timeout(15000) });
+            const response = await fetch('/api/catalog', { signal: AbortSignal.timeout(12000) });
             if (!response.ok) throw new Error("Não foi possível carregar o cardápio do servidor");
             const data = await response.json();
             document.getElementById("menuContent").replaceChildren();
@@ -978,7 +978,8 @@ src="https://www.facebook.com/tr?id=766179976513223&ev=PageView&noscript=1"
                 itemsHtml += `
                     <div class="menu-item" data-product="${item.nome}" ${size ? `data-option="${size.tamanho}"` : ''}>
                         ${photo ? `<figure class="item-photo">
-                            <img src="img/${photo}" alt="" loading="lazy" decoding="async">
+                            <img src="img/cardapio-lite/${photo.split('/').pop()}" data-full-src="img/${photo}" alt=""
+                                 width="560" height="420" loading="lazy" decoding="async">
                             <figcaption>Imagem ilustrativa</figcaption>
                         </figure>` : ''}
                         <div>
@@ -1039,7 +1040,8 @@ src="https://www.facebook.com/tr?id=766179976513223&ev=PageView&noscript=1"
             if (image) {
                 const cover = image.cloneNode();
                 cover.alt = '';
-                cover.loading = index < 4 ? 'eager' : 'lazy';
+                cover.loading = index < 2 ? 'eager' : 'lazy';
+                cover.fetchPriority = index === 0 ? 'high' : 'auto';
                 media.append(cover);
             }
             link.append(media);
@@ -1147,7 +1149,16 @@ src="https://www.facebook.com/tr?id=766179976513223&ev=PageView&noscript=1"
         dialogContent.replaceChildren();
         for (const selector of ['.item-photo', '.item-desc', '.item-footer']) {
             const source = card.querySelector(selector);
-            if (source) dialogContent.appendChild(source.cloneNode(true));
+            if (source) {
+                const clone = source.cloneNode(true);
+                const image = clone.querySelector('img[data-full-src]');
+                if (image) {
+                    image.src = image.dataset.fullSrc;
+                    image.loading = 'eager';
+                    image.decoding = 'async';
+                }
+                dialogContent.appendChild(clone);
+            }
         }
         productDialog.showModal();
     });
@@ -1281,7 +1292,7 @@ src="https://www.facebook.com/tr?id=766179976513223&ev=PageView&noscript=1"
     <p class="cart-next">Este é um pré-pedido. A loja confirmará o atendimento e o prazo pelo WhatsApp informado.</p>
     </footer>
 </dialog>
-<script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async></script>
+<!-- Turnstile é carregado apenas na abertura do carrinho pelo cart.mjs. -->
 <script type="module" src="cart.mjs"></script>
 </body>
 </html>

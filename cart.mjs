@@ -535,6 +535,28 @@ async function getRequestId(payload) {
 }
 
 
+
+let turnstileScriptPromise;
+function ensureTurnstile() {
+    if (window.turnstile?.render) return Promise.resolve(window.turnstile);
+    if (!turnstileScriptPromise) {
+        turnstileScriptPromise = new Promise((resolve, reject) => {
+            const script = document.createElement('script');
+            script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+            script.async = true;
+            script.onload = () => window.turnstile?.render ? resolve(window.turnstile)
+                : reject(new Error('Verificação de segurança não inicializada'));
+            script.onerror = () => reject(new Error('Falha de rede na verificação de segurança'));
+            document.head.appendChild(script);
+        }).catch(error => {
+            turnstileScriptPromise = undefined;
+            document.querySelector('script[src*="challenges.cloudflare.com/turnstile/v0/api.js"]')?.remove();
+            throw error;
+        });
+    }
+    return turnstileScriptPromise;
+}
+
 let configPromise;
 byId('openCart').onclick = async () => {
     refresh();
@@ -551,7 +573,9 @@ byId('openCart').onclick = async () => {
         if (testMode) byId('orderStatus').textContent = 'AMBIENTE DE TESTE: a comanda será enviada ao Telegram da loja com aviso NÃO PREPARAR.';
         estimates = { delivery: deliveryEstimateMinutes, pickup: pickupEstimateMinutes };
         updateFulfillment();
-        if (!siteKey || !window.turnstile) throw new Error();
+        if (!siteKey) throw new Error('Site key não disponível');
+        await ensureTurnstile();
+        if (!window.turnstile?.render) throw new Error('Verificação indisponível');
         if (widget !== undefined) return;
         widget = window.turnstile.render('#orderChallenge', {
             sitekey: siteKey,

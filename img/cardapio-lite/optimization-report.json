@@ -1,0 +1,501 @@
+{
+  "source_count": 82,
+  "original_total_bytes": 19557494,
+  "optimized_total_bytes": 1839660,
+  "saved_percent": 90.6,
+  "variant": "max_dimension_560_webp_quality_67",
+  "images": [
+    {
+      "file": "c01-p01.webp",
+      "bytes": 29832,
+      "width": 560,
+      "height": 420
+    },
+    {
+      "file": "c02-p01.webp",
+      "bytes": 20922,
+      "width": 560,
+      "height": 420
+    },
+    {
+      "file": "c02-p02.webp",
+      "bytes": 27276,
+      "width": 560,
+      "height": 420
+    },
+    {
+      "file": "c02-p03.webp",
+      "bytes": 23680,
+      "width": 560,
+      "height": 420
+    },
+    {
+      "file": "c02-p04.webp",
+      "bytes": 24388,
+      "width": 560,
+      "height": 420
+    },
+    {
+      "file": "c02-p05.webp",
+      "bytes": 28020,
+      "width": 560,
+      "height": 420
+    },
+    {
+      "file": "c02-p06.webp",
+      "bytes": 26082,
+      "width": 560,
+      "height": 420
+    },
+    {
+      "file": "c02-p07.webp",
+      "bytes": 22922,
+      "width": 560,
+      "height": 420
+    },
+    {
+      "file": "c02-p08.webp",
+      "bytes": 22610,
+      "width": 560,
+      "height": 420
+    },
+    {
+      "file": "c02-p09.webp",
+      "bytes": 24886,
+      "width": 560,
+      "height": 420
+    },
+    {
+      "file": "c02-p10.webp",
+      "bytes": 23910,
+      "width": 560,
+      "height": 420
+    },
+    {
+      "file": "c02-p11.webp",
+      "bytes": 24450,
+      "width": 560,
+      "height": 420
+    },
+    {
+      "file": "c02-p12.webp",
+      "bytes": 20244,
+      "width": 560,
+      "height": 420
+    },
+    {
+      "file": "c02-p13.webp",
+      "bytes": 26226,
+      "width": 560,
+      "height": 420
+    },
+    {
+      "file": "c02-p14.webp",
+      "bytes": 27662,
+      "width": 560,
+      "height": 420
+    },
+    {
+      "file": "c02-p15.webp",
+      "bytes": 31882,
+      "width": 560,
+      "height": 420
+    },
+    {
+      "file": "c03-p01.webp",
+      "bytes": 26560,
+      "width": 560,
+      "height": 420
+    },
+    {
+      "file": "c03-p02.webp",
+      "bytes": 29168,
+      "width": 560,
+      "height": 420
+    },
+    {
+      "file": "c03-p03.webp",
+      "bytes": 19734,
+      "width": 560,
+      "height": 420
+    },
+    {
+      "file": "c03-p04.webp",
+      "bytes": 22782,
+      "width": 560,
+      "height": 420
+    },
+    {
+      "file": "c03-p05.webp",
+      "bytes": 20458,
+      "width": 560,
+      "height": 420
+    },
+    {
+      "file": "c03-p06.webp",
+      "bytes": 24266,
+      "width": 560,
+      "height": 420
+    },
+    {
+      "file": "c03-p07.webp",
+      "bytes": 17340,
+      "width": 560,
+      "height": 420
+    },
+    {
+      "file": "c03-p08.webp",
+      "bytes": 21658,
+      "width": 560,
+      "height": 420
+    },
+    {
+      "file": "c03-p09.webp",
+      "bytes": 31194,
+      "width": 560,
+      "height": 420
+    },
+    {
+      "file": "c03-p10.webp",
+      "bytes": 34282,
+      "width": 560,
+      "height": 420
+    },
+    {
+      "file": "c03-p11.webp",
+      "bytes": 25632,
+      "width": 560,
+      "height": 420
+    },
+    {
+      "file": "c03-p12.webp",
+      "bytes": 28408,
+      "width": 560,
+      "height": 420
+    },
+    {
+      "file": "c03-p13.webp",
+      "bytes": 25308,
+      "width": 560,
+      "height": 420
+    },
+    {
+      "file": "c03-p14.webp",
+      "bytes": 24678,
+      "width": 560,
+      "height": 420
+    },
+    {
+      "file": "c04-p01.webp",
+      "bytes": 22410,
+      "width": 560,
+      "height": 420
+    },
+    {
+      "file": "c04-p02.webp",
+      "bytes": 20586,
+      "width": 560,
+      "height": 420
+    },
+    {
+      "file": "c04-p03.webp",
+      "bytes": 24218,
+      "width": 560,
+      "height": 420
+    },
+    {
+      "file": "c05-p01.webp",
+      "bytes": 28446,
+      "width": 560,
+      "height": 420
+    },
+    {
+      "file": "c05-p02.webp",
+      "bytes": 28128,
+      "width": 560,
+      "height": 420
+    },
+    {
+      "file": "c05-p03.webp",
+      "bytes": 29778,
+      "width": 560,
+      "height": 420
+    },
+    {
+      "file": "c05-p04.webp",
+      "bytes": 27420,
+      "width": 560,
+      "height": 420
+    },
+    {
+      "file": "c05-p05.webp",
+      "bytes": 25496,
+      "width": 560,
+      "height": 420
+    },
+    {
+      "file": "c06-p01.webp",
+      "bytes": 23384,
+      "width": 560,
+      "height": 420
+    },
+    {
+      "file": "c06-p02.webp",
+      "bytes": 23908,
+      "width": 560,
+      "height": 420
+    },
+    {
+      "file": "c06-p03.webp",
+      "bytes": 21758,
+      "width": 560,
+      "height": 420
+    },
+    {
+      "file": "c06-p04.webp",
+      "bytes": 31188,
+      "width": 560,
+      "height": 420
+    },
+    {
+      "file": "c07-p01.webp",
+      "bytes": 17330,
+      "width": 560,
+      "height": 420
+    },
+    {
+      "file": "c07-p02.webp",
+      "bytes": 24378,
+      "width": 560,
+      "height": 420
+    },
+    {
+      "file": "c07-p03.webp",
+      "bytes": 26294,
+      "width": 560,
+      "height": 420
+    },
+    {
+      "file": "c08-p01.webp",
+      "bytes": 31696,
+      "width": 560,
+      "height": 420
+    },
+    {
+      "file": "c08-p02.webp",
+      "bytes": 27574,
+      "width": 560,
+      "height": 420
+    },
+    {
+      "file": "c08-p03.webp",
+      "bytes": 26098,
+      "width": 560,
+      "height": 420
+    },
+    {
+      "file": "c08-p04.webp",
+      "bytes": 24424,
+      "width": 560,
+      "height": 420
+    },
+    {
+      "file": "c09-p01.webp",
+      "bytes": 27996,
+      "width": 560,
+      "height": 420
+    },
+    {
+      "file": "c09-p02.webp",
+      "bytes": 25698,
+      "width": 560,
+      "height": 420
+    },
+    {
+      "file": "c09-p03.webp",
+      "bytes": 28222,
+      "width": 560,
+      "height": 420
+    },
+    {
+      "file": "c10-p01.webp",
+      "bytes": 18444,
+      "width": 560,
+      "height": 420
+    },
+    {
+      "file": "c10-p02.webp",
+      "bytes": 16416,
+      "width": 560,
+      "height": 420
+    },
+    {
+      "file": "c10-p03.webp",
+      "bytes": 21226,
+      "width": 560,
+      "height": 420
+    },
+    {
+      "file": "c10-p04.webp",
+      "bytes": 20294,
+      "width": 560,
+      "height": 420
+    },
+    {
+      "file": "c10-p05.webp",
+      "bytes": 24050,
+      "width": 560,
+      "height": 420
+    },
+    {
+      "file": "c10-p06.webp",
+      "bytes": 15608,
+      "width": 560,
+      "height": 420
+    },
+    {
+      "file": "c10-p07.webp",
+      "bytes": 14032,
+      "width": 560,
+      "height": 420
+    },
+    {
+      "file": "c10-p08.webp",
+      "bytes": 16152,
+      "width": 560,
+      "height": 420
+    },
+    {
+      "file": "c10-p09.webp",
+      "bytes": 12940,
+      "width": 560,
+      "height": 420
+    },
+    {
+      "file": "c10-p10.webp",
+      "bytes": 17996,
+      "width": 560,
+      "height": 420
+    },
+    {
+      "file": "c10-p11.webp",
+      "bytes": 14922,
+      "width": 560,
+      "height": 420
+    },
+    {
+      "file": "c11-p01.webp",
+      "bytes": 22594,
+      "width": 560,
+      "height": 420
+    },
+    {
+      "file": "c11-p02.webp",
+      "bytes": 20026,
+      "width": 560,
+      "height": 420
+    },
+    {
+      "file": "c11-p03.webp",
+      "bytes": 16848,
+      "width": 560,
+      "height": 420
+    },
+    {
+      "file": "c11-p04.webp",
+      "bytes": 18282,
+      "width": 560,
+      "height": 420
+    },
+    {
+      "file": "c11-p05.webp",
+      "bytes": 15394,
+      "width": 560,
+      "height": 420
+    },
+    {
+      "file": "c11-p06.webp",
+      "bytes": 16618,
+      "width": 560,
+      "height": 420
+    },
+    {
+      "file": "c11-p07.webp",
+      "bytes": 18074,
+      "width": 560,
+      "height": 420
+    },
+    {
+      "file": "c11-p08.webp",
+      "bytes": 17748,
+      "width": 560,
+      "height": 420
+    },
+    {
+      "file": "c11-p09.webp",
+      "bytes": 16066,
+      "width": 560,
+      "height": 420
+    },
+    {
+      "file": "c11-p10.webp",
+      "bytes": 17972,
+      "width": 560,
+      "height": 420
+    },
+    {
+      "file": "c11-p11.webp",
+      "bytes": 14268,
+      "width": 560,
+      "height": 420
+    },
+    {
+      "file": "c11-p12.webp",
+      "bytes": 13678,
+      "width": 560,
+      "height": 420
+    },
+    {
+      "file": "c12-p01.webp",
+      "bytes": 14676,
+      "width": 560,
+      "height": 420
+    },
+    {
+      "file": "c12-p02.webp",
+      "bytes": 16006,
+      "width": 560,
+      "height": 420
+    },
+    {
+      "file": "c12-p03.webp",
+      "bytes": 15086,
+      "width": 560,
+      "height": 420
+    },
+    {
+      "file": "c12-p04.webp",
+      "bytes": 19470,
+      "width": 560,
+      "height": 420
+    },
+    {
+      "file": "c12-p05.webp",
+      "bytes": 18372,
+      "width": 560,
+      "height": 420
+    },
+    {
+      "file": "c12-p06.webp",
+      "bytes": 20360,
+      "width": 560,
+      "height": 420
+    },
+    {
+      "file": "c12-p07.webp",
+      "bytes": 13152,
+      "width": 560,
+      "height": 420
+    }
+  ]
+}
