@@ -282,12 +282,15 @@ assert.equal(checkout.elements.number.required,false);
 assert.equal(checkout.elements.table.required,true);
 checkout.elements.table.value='Mesa 05';
 checkout.elements.name.value='Cliente fictício'; checkout.elements.phone.value='51999999999';
+// O formulário é resetado após uma solicitação aceita; pagamento deve ser selecionado novamente.
+pixChoice.checked=true;
+pixChoice.dispatchEvent(new w.Event('change',{bubbles:true}));
 await submit();assert.equal(calls,3);assert.equal(d.querySelector('#cartEmpty').hidden,false);
 assert.equal(lastOrder.fulfillment.type,'table');
 assert.equal(lastOrder.fulfillment.table,'Mesa 05');
 assert.equal(lastOrder.fulfillment.latitude,null);
 const resFor=()=>({setHeader(){},status(n){this.code=n;return this},json(data){this.data=data;return this}});
-const request={method:'POST',body:{name:'Cliente fictício',phone:'51999999999',challenge:'fake',lines:[line],fulfillment:{type:'pickup',address:'',table:'',latitude:null,longitude:null}}};
+const request={method:'POST',body:{name:'Cliente fictício',phone:'51999999999',challenge:'fake',payment:{method:'pix',changeForCents:null},lines:[line],fulfillment:{type:'pickup',address:'',table:'',latitude:null,longitude:null}}};
 let response=resFor();await handler(request,response);assert.equal(response.code,200);assert.equal(calls,4);
 response=resFor();await handler({...request,body:{...request.body,fulfillment:{type:'delivery',street:'Rua Flores',number:'123',city:'Caxias do Sul',neighborhood:'Centro'}}},response);
 assert.equal(response.code,400);assert.equal(calls,4);
