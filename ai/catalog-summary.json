@@ -1,0 +1,71 @@
+{
+  "schema_version": "1.0.0",
+  "as_of": "2026-11-17",
+  "catalog_source_of_truth": "/api/catalog",
+  "default_static_catalog": "/cardapio.json",
+  "total_products": 82,
+  "total_categories": 12,
+  "categories": [
+    {
+      "slug": "acai",
+      "title": "AÇAÍ",
+      "products": 1
+    },
+    {
+      "slug": "panquecas-salgadas",
+      "title": "PANQUECAS SALGADAS",
+      "products": 15
+    },
+    {
+      "slug": "panquecas-doces",
+      "title": "PANQUECAS DOCES",
+      "products": 14
+    },
+    {
+      "slug": "panquecas-2-sabores",
+      "title": "PANQUECAS 2 SABORES",
+      "products": 3
+    },
+    {
+      "slug": "lasanhas-de-massa-de-panqueca",
+      "title": "LASANHAS DE MASSA DE PANQUECA",
+      "products": 5
+    },
+    {
+      "slug": "frango-frito-crocrante-no-pote",
+      "title": "FRANGO FRITO CROCRANTE NO POTE",
+      "products": 4
+    },
+    {
+      "slug": "batatas-fritas",
+      "title": "BATATAS FRITAS",
+      "products": 3
+    },
+    {
+      "slug": "massas",
+      "title": "MASSAS",
+      "products": 4
+    },
+    {
+      "slug": "paokecao",
+      "title": "PÃOKECÃO",
+      "products": 3
+    },
+    {
+      "slug": "bebidas",
+      "title": "BEBIDAS",
+      "products": 11
+    },
+    {
+      "slug": "cocktails-com-alcool",
+      "title": "COCKTAILS COM ÁLCOOL",
+      "products": 12
+    },
+    {
+      "slug": "cocktails-sem-alcool",
+      "title": "COCKTAILS SEM ÁLCOOL (MOCKTAILS)",
+      "products": 7
+    }
+  ],
+  "pricing": "Consultar API/cardápio do site; este arquivo não mantém preços nem disponibilidade em tempo real."
+}
