@@ -1,6 +1,7 @@
 const { orderPdf } = require('../lib/order-pdf');
 const { loadCatalog, CatalogUnavailableError } = require('../lib/catalog-source');
 const { randomUUID } = require('node:crypto');
+const { UUID_V4, isEnabled, initLedger, OrderLedgerUnavailable, payloadDigest, replayResponse } = require('../lib/order-idempotency');
 
 module.exports = async function handler(req, res) {
     res.setHeader('Cache-Control', 'no-store');
@@ -9,7 +10,7 @@ module.exports = async function handler(req, res) {
     if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID || !TURNSTILE_SECRET_KEY) {
         return res.status(503).json({ error: 'Pedido digital indisponível no momento. Entre em contato com a loja.' });
     }
-    const { lines, name, phone, challenge, fulfillment } = req.body || {};
+    const { lines, name, phone, challenge, fulfillment, requestId } = req.body || {};
     if (typeof name !== 'string' || !name.trim() || name.length > 80 ||
         typeof phone !== 'string' || !/^\d{10,11}$/.test(phone) ||
         typeof challenge !== 'string' || !challenge || challenge.length > 2048) {
@@ -55,9 +56,28 @@ module.exports = async function handler(req, res) {
         }
         return res.status(400).json({ error: 'Confira os itens e as opções do carrinho.' });
     }
-    const id = randomUUID().slice(0, 8);
+    let ledger = null;
+    let digest = null;
+    if (isEnabled()) {
+        if (typeof requestId !== 'string' || !UUID_V4.test(requestId)) {
+            return res.status(400).json({ error: 'Atualize o cardápio para enviar um pedido seguro.' });
+        }
+        try {
+            ledger = initLedger(); // Falha fechada se credenciais privadas ou banco estiverem indisponíveis.
+            digest = payloadDigest({ name: name.trim(), phone, items, delivery });
+            const known = replayResponse(await ledger.lookup(requestId), digest);
+            if (known) return res.status(known.httpStatus).json(known.body);
+        } catch (error) {
+            if (error instanceof OrderLedgerUnavailable) {
+                return res.status(503).json({ error: 'Pedidos temporariamente indisponíveis. Entre em contato com a loja.' });
+            }
+            throw error;
+        }
+    }
+    const id = ledger ? requestId.replace(/-/g, '').slice(0, 8) : randomUUID().slice(0, 8);
     const testMode = process.env.VERCEL_ENV !== 'production';
     const subtotal = items.reduce((total, item) => total + item.cents * item.quantity, 0);
+    let claimed = false;
     try {
         const check = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
             method: 'POST', body: new URLSearchParams({ secret: TURNSTILE_SECRET_KEY, response: challenge }),
@@ -65,6 +85,19 @@ module.exports = async function handler(req, res) {
         });
         const verified = await check.json();
         if (!verified.success) return res.status(400).json({ error: 'Refaça a verificação de segurança.' });
+        if (ledger) {
+            try {
+                claimed = await ledger.claim({ requestId, digest, orderRef: id });
+                if (!claimed) {
+                    const known = replayResponse(await ledger.lookup(requestId), digest);
+                    if (!known) throw new OrderLedgerUnavailable();
+                    return res.status(known.httpStatus).json(known.body);
+                }
+            } catch {
+                // Não enviar ao Telegram quando a persistência do pedido não é comprovada.
+                return res.status(503).json({ error: 'Não foi possível registrar o pedido com segurança. Contate a loja.' });
+            }
+        }
         const pdf = await orderPdf({ id, name: name.trim(), phone, items, subtotal, money, fulfillment: delivery, testMode });
         const form = new FormData();
         form.set('chat_id', TELEGRAM_CHAT_ID);
@@ -74,9 +107,25 @@ Aguardando confirmação da loja.`);
         const sent = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendDocument`, {
             method: 'POST', body: form, signal: AbortSignal.timeout(8000)
         });
-        if (!sent.ok || !(await sent.json()).ok) throw new Error('Telegram indisponível');
+        const telegram = await sent.json();
+        if (!sent.ok || !telegram.ok) throw new Error('Telegram indisponível');
+        if (ledger) {
+            try {
+                await ledger.finish(requestId, 'delivered', telegram.result?.message_id);
+            } catch {
+                // Telegram pode ter recebido; não reexecutar o efeito externo.
+                return res.status(202).json({ id, pending: true,
+                    error: 'A loja pode ter recebido o pedido, mas não foi possível confirmar o registro. Não reenvie.' });
+            }
+        }
         return res.status(200).json({ id, test: testMode });
     } catch {
+        if (claimed) {
+            // Falhas e timeouts do Telegram são ambíguos. Nunca tentar novamente automaticamente.
+            try { await ledger.finish(requestId, 'needs_review'); } catch { /* Reconciliação manual. */ }
+            return res.status(202).json({ id, pending: true,
+                error: 'Não foi possível confirmar o envio. Consulte a loja e não envie novamente.' });
+        }
         return res.status(502).json({ error: 'Não foi possível confirmar o envio. Fale com a loja antes de reenviar.' });
     }
 };
