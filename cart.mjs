@@ -266,7 +266,8 @@ byId('openCart').onclick = async () => {
     if (widget !== undefined) return;
     try {
         configPromise ??= fetch('/api/order-config').then(response => response.json());
-        const { siteKey, deliveryEstimateMinutes, pickupEstimateMinutes } = await configPromise;
+        const { siteKey, testMode, deliveryEstimateMinutes, pickupEstimateMinutes } = await configPromise;
+        if (testMode) byId('orderStatus').textContent = 'AMBIENTE DE TESTE: a comanda será enviada ao Telegram da loja com aviso NÃO PREPARAR.';
         estimates = { delivery: deliveryEstimateMinutes, pickup: pickupEstimateMinutes };
         updateFulfillment();
         if (!siteKey || !window.turnstile) throw new Error();
