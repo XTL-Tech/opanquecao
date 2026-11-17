@@ -110,6 +110,7 @@ function refresh() {
     byId('cartEmpty').hidden = !!cart.length;
     byId('cartSummary').hidden = !cart.length;
     byId('cartTotal').textContent = money(total);
+    if (typeof updateDeliveryFee === 'function') updateDeliveryFee();
     byId('sendOrder').disabled = !cart.length || !challenge || sending;
 
 }
@@ -258,6 +259,31 @@ byId('menuContent').addEventListener('click', event => {
 });
 
 const checkoutForm = byId('checkout');
+const orderStatus = byId('orderStatus');
+let lastInvalidInput = null;
+function fieldLabel(field) {
+    if (!field) return 'campo obrigatório';
+    if (field.name === 'consent') return 'autorização de contato';
+    return field.closest('label')?.textContent?.trim()?.replace(/\s*\*\s*/g, ' ').slice(0,80) ||
+        ({name:'nome', phone:'WhatsApp', city:'cidade', neighborhood:'bairro', street:'rua',
+            number:'número', table:'mesa'})[field.name] || 'campo obrigatório';
+}
+// O Safari impede o evento submit quando algum campo está inválido.
+// Mostrar o motivo evita a impressão de que o botão está sem funcionar.
+checkoutForm.addEventListener('invalid', event => {
+    const field = event.target;
+    if (lastInvalidInput === field) return;
+    lastInvalidInput = field;
+    orderStatus.textContent = 'Preencha ou corrija: ' + fieldLabel(field) + '. O pedido ainda NÃO foi enviado.';
+    field.setAttribute('aria-invalid', 'true');
+}, true);
+checkoutForm.addEventListener('input', event => {
+    if (event.target instanceof HTMLInputElement || event.target instanceof HTMLSelectElement ||
+        event.target instanceof HTMLTextAreaElement) {
+        event.target.removeAttribute('aria-invalid');
+        if (lastInvalidInput === event.target) lastInvalidInput = null;
+    }
+});
 let deliveryAreas;
 let deliveryAreasRequest;
 const deliveryCity = byId('deliveryCity');
@@ -299,7 +325,10 @@ function updateDeliveryFee() {
     otherNeighborhood.required = another;
     if (!another) otherNeighborhood.value = '';
     const area = deliveryAreas?.cities?.[deliveryCity.value]?.find(row => row.name === deliveryNeighborhood.value);
-    const fee = isDelivery && Number.isSafeInteger(area?.feeCents) && area.feeCents >= 0 ? area.feeCents : null;
+    // Bairros cadastrados herdam o padrão municipal; localidades fora da lista
+    // continuam sujeitas à confirmação de cobertura e taxa pela loja.
+    const rate = area ? (area.feeCents ?? deliveryAreas?.defaultFeeCents?.[deliveryCity.value]) : null;
+    const fee = isDelivery && Number.isSafeInteger(rate) && rate >= 0 && rate <= 10000 ? rate : null;
     byId('deliveryFeeStatus').textContent = fee === null
         ? 'Taxa de entrega: a confirmar pela loja antes de aceitar o pedido. O subtotal não inclui a taxa.'
         : 'Taxa de entrega: ' + money(fee) + '. Total estimado com entrega: ' +
@@ -388,16 +417,21 @@ byId('openCart').onclick = async () => {
 
 byId('checkout').onsubmit = async event => {
     event.preventDefault();
-    if (sending || !challenge) return;
+    if (sending) return;
     const form = event.currentTarget;
-    const status = byId('orderStatus');
+    const status = orderStatus;
+    if (!challenge) {
+        status.textContent = 'A verificação de segurança não foi concluída ou expirou. Aguarde e tente novamente. Nenhum pedido foi enviado.';
+        return;
+    }
+    const trace = Math.random().toString(36).slice(2, 10).padEnd(8, '0');
     sending = true;
     refresh();
     status.textContent = 'Enviando…';
     try {
         const lines = priceOrder(catalog, cart);
         const response = await fetch('/api/order', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Checkout-Trace': trace },
             body: JSON.stringify({ lines, name: form.elements.name.value,
                 phone: form.elements.phone.value.replace(/\D/g, ''), challenge,
                 fulfillment: {
@@ -415,8 +449,8 @@ byId('checkout').onsubmit = async event => {
                     longitude: byId('geoLongitude').value || null
                 } })
         });
-        const result = await response.json();
-        if (!response.ok) throw new Error(result.error);
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(result.error || 'Falha na comunicação com a loja.');
         cart.length = 0;
         form.reset();
         updateNeighborhoodList();
@@ -425,7 +459,9 @@ byId('checkout').onsubmit = async event => {
             ? 'TESTE #' + result.id + ' enviado ao grupo da loja. NÃO PREPARAR. Nenhum pedido real foi realizado.'
             : 'Solicitação #' + result.id + ' enviada à loja. Aguarde a confirmação pelo WhatsApp informado.';
     } catch (error) {
-        status.textContent = 'Confira antes de reenviar. ' + error.message;
+        status.textContent = 'Não foi possível confirmar o envio (código ' + trace +
+            '). ' + (error?.message || 'Erro de comunicação.') +
+            ' Antes de reenviar, confirme no Telegram com a loja para evitar pedidos duplicados.';
     } finally {
         sending = false;
         challenge = undefined;
