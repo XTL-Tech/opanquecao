@@ -3,6 +3,7 @@ const deliveryAreas = require('../delivery-areas.json');
 const { loadCatalog, CatalogUnavailableError } = require('../lib/catalog-source');
 const { UUID_V4, isEnabled, initLedger, OrderLedgerUnavailable, payloadDigest, replayResponse } = require('../lib/order-idempotency');
 const { randomUUID } = require('node:crypto');
+const { loadStoreStatus } = require('../lib/store-hours-source');
 
 module.exports = async function handler(req, res) {
     res.setHeader('Cache-Control', 'no-store');
@@ -24,6 +25,15 @@ module.exports = async function handler(req, res) {
     const { TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID, TURNSTILE_SECRET_KEY } = process.env;
     if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID || !TURNSTILE_SECRET_KEY) {
         return reject(503, 'Pedido digital indisponível no momento. Entre em contato com a loja.', 'configuration_missing');
+    }
+    // Não confiar somente no popup: o bloqueio real acontece antes do Telegram.
+    try {
+        const store = await loadStoreStatus();
+        if (store.enabled && !store.open) {
+            return reject(423, 'Loja fechada no momento. Consulte o cardápio e tente novamente quando abrirmos.', 'store_closed');
+        }
+    } catch {
+        return reject(503, 'Não foi possível confirmar a abertura da loja. Tente novamente mais tarde.', 'store_status_unavailable');
     }
     const { lines, name, phone, challenge, fulfillment, payment, requestId } = req.body || {};
     if (typeof name !== 'string' || !name.trim() || name.length > 80 ||
