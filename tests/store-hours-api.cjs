@@ -5,10 +5,12 @@ const {loadStoreStatus,StoreStatusUnavailable}=require('../lib/store-hours-sourc
 function res() {return {code:null,headers:{},setHeader(k,v){this.headers[k]=v},status(c){this.code=c;return this},json(v){this.body=v;return this}}}
 (async()=>{
   delete process.env.STORE_HOURS_MODE;
+  process.env.VERCEL_ENV = 'preview';
   const legacy=res();
   await handler({method:'GET'},legacy);
   assert.equal(legacy.code,200);
   assert.equal(legacy.body.enabled,false);
+  assert.equal(legacy.body.demoAvailable,true);
   process.env.STORE_HOURS_MODE='required';
   process.env.SUPABASE_URL='https://example.supabase.co';
   process.env.SUPABASE_SECRET_KEY='fake';
@@ -23,6 +25,7 @@ function res() {return {code:null,headers:{},setHeader(k,v){this.headers[k]=v},s
   assert.equal(closed.body.open,false);
   assert.equal(closed.body.reason,'manual_closed');
   assert.equal(closed.body.canSubscribe,false);
+  assert.equal(closed.body.demoAvailable,true);
   assert.equal(hits,1);
   row.manual_state='open';
   const open=res();
@@ -36,6 +39,10 @@ function res() {return {code:null,headers:{},setHeader(k,v){this.headers[k]=v},s
   assert.equal(unavailable.code,503);
   assert.equal(unavailable.body.open,false);
   assert.equal(unavailable.body.unknown,true);
+  process.env.VERCEL_ENV = 'production';
+  const production=res();
+  await handler({method:'GET'},production);
+  assert.equal(production.body.demoAvailable,false,'Modo demonstração jamais disponível em produção');
   const wrongMethod=res();
   await handler({method:'POST'},wrongMethod);
   assert.equal(wrongMethod.code,405);
