@@ -1,6 +1,6 @@
 {
-  "version": 1,
-  "description": "Bairros e localidades para seleção de entrega. Taxas null = aguardam definição comercial; não cobrar valor estimado.",
+  "version": 2,
+  "description": "Taxas padrao por cidade em centavos. feeCents por bairro null = herda o padrao municipal; valor numerico sobrescreve. Fora da lista exige confirmacao.",
   "cities": {
     "Nova Hartz": [
       {
@@ -234,5 +234,9 @@
         "feeCents": null
       }
     ]
+  },
+  "defaultFeeCents": {
+    "Nova Hartz": 700,
+    "Araricá": 1000
   }
 }
