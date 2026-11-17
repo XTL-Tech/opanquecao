@@ -2,6 +2,9 @@
   "functions": {
     "api/order.js": {
       "includeFiles": "cardapio.json"
+    },
+    "api/catalog.js": {
+      "includeFiles": "cardapio.json"
     }
   },
   "headers": [

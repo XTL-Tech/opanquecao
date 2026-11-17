@@ -15,6 +15,7 @@ const policyFor = source => {
 assert.equal(policyFor('/cardapio.json'), 'public, max-age=30, must-revalidate');
 assert.equal(policyFor('/img/(.*)'), 'public, max-age=86400, must-revalidate');
 assert.equal(policyFor('/favicons/(.*)'), 'public, max-age=86400, must-revalidate');
+assert.equal(config.functions['api/catalog.js']?.includeFiles,'cardapio.json');
 assert.equal(headers.some(item => item.source.startsWith('/api')), false,
   'APIs não podem herdar cache estático sem revisão explícita');
 
