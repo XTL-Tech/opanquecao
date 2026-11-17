@@ -179,7 +179,7 @@ assert.match(acaiForm.querySelector('.order-primary').textContent,/25,00/);
 acaiForm.onsubmit({preventDefault(){}});
 const cartText=d.querySelector('#cartLines').textContent;
 assert.match(cartText,/Complementos grátis/);assert.match(cartText,/Adicional de Nutella/);
-const {priceOrder,flavorChoices}=await import(path.resolve('order-catalog.mjs'));
+const {priceOrder,flavorChoices,orderOptions}=await import(path.resolve('order-catalog.mjs'));
 const line=JSON.parse(w.localStorage.getItem('disk-panquecao-cart-v1')).lines[0];
 assert.equal(priceOrder(catalog,[{...line,cents:1}])[0].cents,2500);
 assert.throws(()=>priceOrder(catalog,[{...line,freeExtras:['Inventado']}]));
@@ -227,7 +227,8 @@ for(const [product,first,second,leftCount,rightCount] of flavorTests) {
 }
 assert.equal(d.querySelectorAll('.category-section:not([hidden])').length,1);
 const secondOfTwo=flavorTests[0];
-assert.throws(()=>priceOrder(catalog,[{category:'panquecas-salgadas',product:'Bacon',option:'Único',quantity:1,note:'',flavors:[secondOfTwo[1],secondOfTwo[2]]}]),/não permite/);
+const baconItem=catalog.categorias.find(c=>c.id==='panquecas-salgadas').itens.find(x=>x.nome==='Bacon');
+assert.throws(()=>priceOrder(catalog,[{category:'panquecas-salgadas',product:'Bacon',option:orderOptions(baconItem)[0].label,quantity:1,note:'',flavors:[secondOfTwo[1],secondOfTwo[2]]}]),/não permite/);
 
 d.querySelector('input[name="fulfillment"][value="table"]').click();
 assert.equal(d.querySelector('#fulfillmentTable').hidden,false);
