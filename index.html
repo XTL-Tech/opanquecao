@@ -482,6 +482,11 @@
         .fulfillment-panel[hidden] { display: none; }
         .fulfillment-panel label { display: block; }
         .fulfillment-panel textarea { width: 100%; min-height: 75px; resize: vertical; }
+        .fulfillment-panel label { margin-bottom: 10px; }
+        .fulfillment-panel input:not([type="hidden"]), .fulfillment-panel select { width: 100%; min-width: 0; padding: 10px; min-height: 46px; border: 1px solid #c9aaa0; border-radius: 10px; background: #fff; color: #381d20; font: inherit; }
+        .fulfillment-panel label[hidden] { display: none; }
+        .delivery-address-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        #deliveryFeeStatus { margin: 12px 0; padding: 10px 12px; background: #fff5e4; border-radius: 9px; color: #583c2f; font-size: 13px; line-height: 1.5; }
         #captureLocation { display: inline-flex; align-items: center; justify-content: center; width: 100%; min-height: 44px; padding: 10px; margin-top: 8px; background: #f4e6dc; color: #381d20; border: 1px solid #c9b4ad; border-radius: 10px; font-weight: 700; }
         #locationStatus, #fulfillmentEstimate { font-size: 12px; line-height: 1.5; color: #705c59; margin: 8px 0; }
         #orderUnavailable { font-size: 13px; padding: 12px; border-radius: 10px; background: #fff3da; }
@@ -1085,9 +1090,37 @@ src="https://www.facebook.com/tr?id=766179976513223&ev=PageView&noscript=1"
             </div>
         </fieldset>
         <div class="fulfillment-panel" id="fulfillmentDelivery">
-            <label>Endereço de entrega (rua, número, bairro e cidade)
-                <textarea name="address" required minlength="8" maxlength="220" autocomplete="street-address" placeholder="Ex.: Rua..., 123, Centro, Nova Hartz"></textarea>
+            <label>Cidade de entrega *
+                <select name="city" id="deliveryCity" required>
+                    <option value="">Selecione a cidade</option>
+                </select>
             </label>
+            <label>Bairro ou localidade *
+                <select name="neighborhood" id="deliveryNeighborhood" required disabled>
+                    <option value="">Escolha primeiro a cidade</option>
+                </select>
+            </label>
+            <label id="otherNeighborhoodLabel" hidden>Qual bairro ou localidade? *
+                <input name="otherNeighborhood" id="otherNeighborhood" type="text" maxlength="80" minlength="3" placeholder="Informe seu bairro ou localidade" autocomplete="address-level3">
+            </label>
+            <label>Rua, avenida ou estrada *
+                <input name="street" type="text" required minlength="3" maxlength="120" autocomplete="address-line1" placeholder="Nome da rua, avenida ou estrada">
+            </label>
+            <div class="delivery-address-grid">
+                <label>Número *
+                    <input name="number" type="text" required maxlength="20" placeholder="123 ou S/N" autocomplete="off">
+                </label>
+                <label>CEP (opcional)
+                    <input name="postalCode" inputmode="numeric" type="text" maxlength="9" placeholder="00000-000" autocomplete="postal-code">
+                </label>
+            </div>
+            <label>Complemento (opcional)
+                <input name="complement" type="text" maxlength="100" placeholder="Casa, apartamento, bloco, portão...">
+            </label>
+            <label>Referência para o entregador (opcional)
+                <input name="reference" type="text" maxlength="140" placeholder="Próximo à praça, portão azul...">
+            </label>
+            <p id="deliveryFeeStatus" role="status" aria-live="polite">Taxa de entrega: a confirmar pela loja.</p>
             <button type="button" id="captureLocation">Usar minha localização atual (opcional)</button>
             <p id="locationStatus" role="status" aria-live="polite">A localização só será solicitada se você tocar no botão. Confirme também o endereço.</p>
             <input type="hidden" name="latitude" id="geoLatitude">
