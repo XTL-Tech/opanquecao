@@ -1,5 +1,5 @@
 const { orderPdf } = require('../lib/order-pdf');
-const { readFile } = require('node:fs/promises');
+const { loadCatalog, CatalogUnavailableError } = require('../lib/catalog-source');
 const { randomUUID } = require('node:crypto');
 
 module.exports = async function handler(req, res) {
@@ -47,9 +47,12 @@ module.exports = async function handler(req, res) {
     const { priceOrder, money } = await import('../order-catalog.mjs');
     let items;
     try {
-        const catalog = JSON.parse(await readFile(require('node:path').join(process.cwd(), 'cardapio.json'), 'utf8'));
+        const catalog = await loadCatalog();
         items = priceOrder(catalog, lines);
-    } catch {
+    } catch (error) {
+        if (error instanceof CatalogUnavailableError) {
+            return res.status(503).json({ error: 'Cardápio indisponível para confirmação. Tente novamente mais tarde.' });
+        }
         return res.status(400).json({ error: 'Confira os itens e as opções do carrinho.' });
     }
     const id = randomUUID().slice(0, 8);
