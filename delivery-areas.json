@@ -1,0 +1,238 @@
+{
+  "version": 1,
+  "description": "Bairros e localidades para seleção de entrega. Taxas null = aguardam definição comercial; não cobrar valor estimado.",
+  "cities": {
+    "Nova Hartz": [
+      {
+        "name": "Armando Wingert",
+        "feeCents": null
+      },
+      {
+        "name": "Arroio da Bica",
+        "feeCents": null
+      },
+      {
+        "name": "Bela Vista",
+        "feeCents": null
+      },
+      {
+        "name": "Bela Vista – Ipê",
+        "feeCents": null
+      },
+      {
+        "name": "Campo Vicente",
+        "feeCents": null
+      },
+      {
+        "name": "Campo Vicente – Augusta",
+        "feeCents": null
+      },
+      {
+        "name": "Campo Vicente – Belmonte",
+        "feeCents": null
+      },
+      {
+        "name": "Campo Vicente – Campo Pinheiro",
+        "feeCents": null
+      },
+      {
+        "name": "Campo Vicente – Nascente do Vale",
+        "feeCents": null
+      },
+      {
+        "name": "Campo Vicente – Norie",
+        "feeCents": null
+      },
+      {
+        "name": "Campo Vicente – Residencial Belmonte",
+        "feeCents": null
+      },
+      {
+        "name": "Canto Kirsch",
+        "feeCents": null
+      },
+      {
+        "name": "Canudos",
+        "feeCents": null
+      },
+      {
+        "name": "Centro",
+        "feeCents": null
+      },
+      {
+        "name": "Coopheva",
+        "feeCents": null
+      },
+      {
+        "name": "Das Rosas",
+        "feeCents": null
+      },
+      {
+        "name": "Imigrante",
+        "feeCents": null
+      },
+      {
+        "name": "Imigrante – Vicente Mello",
+        "feeCents": null
+      },
+      {
+        "name": "Integração",
+        "feeCents": null
+      },
+      {
+        "name": "Ipê",
+        "feeCents": null
+      },
+      {
+        "name": "Liberdade",
+        "feeCents": null
+      },
+      {
+        "name": "Picada Hartz",
+        "feeCents": null
+      },
+      {
+        "name": "Planasa",
+        "feeCents": null
+      },
+      {
+        "name": "Primavera",
+        "feeCents": null
+      },
+      {
+        "name": "Progresso",
+        "feeCents": null
+      },
+      {
+        "name": "Progresso – Canto Kirsch",
+        "feeCents": null
+      },
+      {
+        "name": "Progresso – Coopheva",
+        "feeCents": null
+      },
+      {
+        "name": "Progresso – Loteamento AMR",
+        "feeCents": null
+      },
+      {
+        "name": "Residencial da Bica",
+        "feeCents": null
+      },
+      {
+        "name": "Solitária",
+        "feeCents": null
+      },
+      {
+        "name": "Solitária Alta",
+        "feeCents": null
+      },
+      {
+        "name": "Três Marias",
+        "feeCents": null
+      },
+      {
+        "name": "Vila Alves",
+        "feeCents": null
+      },
+      {
+        "name": "Vila Nova",
+        "feeCents": null
+      },
+      {
+        "name": "Zona Rural",
+        "feeCents": null
+      },
+      {
+        "name": "Zona Rural – Canudos",
+        "feeCents": null
+      },
+      {
+        "name": "Zona Rural – Solitária Alta",
+        "feeCents": null
+      }
+    ],
+    "Araricá": [
+      {
+        "name": "Alto Ferrabraz",
+        "feeCents": null
+      },
+      {
+        "name": "Azaleia",
+        "feeCents": null
+      },
+      {
+        "name": "Bela Vista",
+        "feeCents": null
+      },
+      {
+        "name": "Campo da Brazina",
+        "feeCents": null
+      },
+      {
+        "name": "Centro",
+        "feeCents": null
+      },
+      {
+        "name": "Colina Verde",
+        "feeCents": null
+      },
+      {
+        "name": "Da Canoa",
+        "feeCents": null
+      },
+      {
+        "name": "Emancipação",
+        "feeCents": null
+      },
+      {
+        "name": "Estação",
+        "feeCents": null
+      },
+      {
+        "name": "Ferrabraz",
+        "feeCents": null
+      },
+      {
+        "name": "Floresta",
+        "feeCents": null
+      },
+      {
+        "name": "Ideal",
+        "feeCents": null
+      },
+      {
+        "name": "Imperatriz",
+        "feeCents": null
+      },
+      {
+        "name": "Industrial",
+        "feeCents": null
+      },
+      {
+        "name": "Integração",
+        "feeCents": null
+      },
+      {
+        "name": "Jardim",
+        "feeCents": null
+      },
+      {
+        "name": "Porto Palmeira",
+        "feeCents": null
+      },
+      {
+        "name": "São José",
+        "feeCents": null
+      },
+      {
+        "name": "Vila Rech",
+        "feeCents": null
+      },
+      {
+        "name": "Zona Rural",
+        "feeCents": null
+      }
+    ]
+  }
+}
