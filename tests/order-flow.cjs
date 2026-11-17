@@ -2,6 +2,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('n
 const {JSDOM}=require('jsdom');
 const html=fs.readFileSync('index.html','utf8');
 const catalog=JSON.parse(fs.readFileSync('cardapio.json','utf8'));
+const deliveryAreas=JSON.parse(fs.readFileSync('delivery-areas.json','utf8'));
 const dom=new JSDOM(html,{url:'https://opanquecao.vercel.app/',runScripts:'outside-only'});
 const w=dom.window,d=w.document;
 Object.assign(global,{document:d,window:w,Option:w.Option});
@@ -11,7 +12,7 @@ let lastScrolledSection = null;
 w.HTMLElement.prototype.scrollIntoView=function(){ lastScrolledSection = this.id || this.closest('[id]')?.id || null };
 Object.defineProperty(global,'navigator',{configurable:true,value:w.navigator});
 Object.defineProperty(w.navigator,'geolocation',{configurable:true,value:{getCurrentPosition(success){success({coords:{latitude:-29.585,longitude:-50.938,accuracy:18}})}}});
-let mockEnabled=false,verified=true,deliver=true,calls=0,tokenCb,lastOrder;
+let mockEnabled=false,verified=true,deliver=true,calls=0,tokenCb,lastOrder,lastTelegramCaption;
 w.turnstile={render(_,o){tokenCb=o.callback;return 1},reset(){}};
 const handler=require(path.resolve('api/order.js'));
 const {PDFDocument}=require(path.resolve('node_modules/pdf-lib'));
@@ -19,12 +20,13 @@ Object.assign(process.env,{TELEGRAM_BOT_TOKEN:'fake',TELEGRAM_CHAT_ID:'fake',TUR
 global.fetch=async (url,init)=>{
  if(url.endsWith('siteverify'))return {json:async()=>({success:verified})};
  if(url.endsWith('sendDocument')){
-  calls++; const pdf=await PDFDocument.load(await init.body.get('document').arrayBuffer());
+  calls++;lastTelegramCaption=init.body.get('caption'); const pdf=await PDFDocument.load(await init.body.get('document').arrayBuffer());
   assert.ok(Math.abs(pdf.getPage(0).getWidth()-58*72/25.4)<0.1);
   assert.match(init.body.get('caption'),/TESTE - NAO PREPARAR/);
   assert.match(init.body.get('document').name,/TESTE-nao-preparar/);
   return {ok:deliver,json:async()=>({ok:deliver})};
  }
+ if(url==='/delivery-areas.json')return {ok:true,json:async()=>deliveryAreas};
  if(url==='/api/order-config')return {json:async()=>({siteKey:mockEnabled?'fake':null,testMode:true})};
  if(url==='/api/order'){
  lastOrder=JSON.parse(init.body);
@@ -126,7 +128,17 @@ const checkout=d.querySelector('#checkout');
 checkout.elements.name.value='Cliente fictício';
 checkout.elements.phone.value='(51) 99999-9999';
 checkout.elements.consent.checked=true;
-checkout.elements.address.value='Rua das Flores, 123, Centro, Nova Hartz';
+checkout.elements.city.value='Nova Hartz';
+checkout.elements.city.dispatchEvent(new w.Event('change'));
+assert.equal(checkout.elements.neighborhood.options.length,deliveryAreas.cities['Nova Hartz'].length+2);
+checkout.elements.neighborhood.value='Centro';
+checkout.elements.neighborhood.dispatchEvent(new w.Event('change'));
+checkout.elements.street.value='Rua das Flores';
+checkout.elements.number.value='123';
+checkout.elements.postalCode.value='93890-000';
+checkout.elements.complement.value='Casa 2';
+checkout.elements.reference.value='Portão azul';
+assert.match(d.querySelector('#deliveryFeeStatus').textContent,/confirmar pela loja/);
 assert.equal(d.querySelector('#fulfillmentDelivery').hidden,false);
 assert.match(d.querySelector('#orderStatus').textContent,/AMBIENTE DE TESTE/);
 d.querySelector('#captureLocation').click();
@@ -138,7 +150,14 @@ verified=true;deliver=false;await submit();assert.equal(calls,1);assert.equal(d.
 deliver=true;await submit();assert.equal(calls,2);assert.match(d.querySelector('#orderStatus').textContent,/TESTE.*NÃO PREPARAR/);assert.equal(d.querySelector('#cartEmpty').hidden,false);
 assert.match(d.querySelector('#orderStatus').textContent,/TESTE/);
 assert.equal(lastOrder.fulfillment.type,'delivery');
-assert.equal(lastOrder.fulfillment.address,'Rua das Flores, 123, Centro, Nova Hartz');
+assert.equal(lastOrder.fulfillment.city,'Nova Hartz');
+assert.equal(lastOrder.fulfillment.neighborhood,'Centro');
+assert.equal(lastOrder.fulfillment.street,'Rua das Flores');
+assert.equal(lastOrder.fulfillment.number,'123');
+assert.equal(lastOrder.fulfillment.postalCode,'93890-000');
+assert.equal(lastOrder.fulfillment.complement,'Casa 2');
+assert.equal(lastOrder.fulfillment.reference,'Portão azul');
+assert.match(lastTelegramCaption,/Taxa: a confirmar/);
 assert.equal(lastOrder.fulfillment.latitude,'-29.585');
 assert.equal(lastOrder.fulfillment.longitude,'-50.938');
 // The full card opens exactly one form, including açaí configuration.
@@ -160,12 +179,56 @@ assert.match(acaiForm.querySelector('.order-primary').textContent,/25,00/);
 acaiForm.onsubmit({preventDefault(){}});
 const cartText=d.querySelector('#cartLines').textContent;
 assert.match(cartText,/Complementos grátis/);assert.match(cartText,/Adicional de Nutella/);
-const {priceOrder}=await import(path.resolve('order-catalog.mjs'));
+const {priceOrder,flavorChoices}=await import(path.resolve('order-catalog.mjs'));
 const line=JSON.parse(w.localStorage.getItem('disk-panquecao-cart-v1')).lines[0];
 assert.equal(priceOrder(catalog,[{...line,cents:1}])[0].cents,2500);
 assert.throws(()=>priceOrder(catalog,[{...line,freeExtras:['Inventado']}]));
 assert.throws(()=>priceOrder(catalog,[{...line,paidExtras:['Adicional de Nutella','Adicional de Nutella']}]));
 assert.throws(()=>priceOrder(catalog,[{...line,freeExtras:catalog.categorias.find(c=>c.id==='acai').itens[0].tags.slice(0,4)}]));
+// As três panquecas meio a meio exigem escolhas distintas e compatíveis com o cardápio.
+const flavorTests=[
+  ['Panqueca Meio a Meio (2 Sabores Salgados)','Bacon','Calabresa',15,15],
+  ['Panqueca Meio a Meio (2 Sabores Doces)','Banana e Canela','Chocolate Branco',14,14],
+  ['Panqueca Meio a Meio (Salgada e Doce)','Bacon','Chocolate Branco',15,14]
+];
+d.querySelector('.category-card[href="#panquecas-2-sabores"]').click();
+for(const [product,first,second,leftCount,rightCount] of flavorTests) {
+  const card=[...d.querySelectorAll('#panquecas-2-sabores .menu-item')].find(x=>x.dataset.product===product);
+  assert.ok(card,'Produto dois sabores não encontrado: '+product);
+  card.querySelector('.product-details').click();
+  const form=d.querySelector('#productDialogContent form');
+  const fields=[...form.querySelectorAll('.flavor-choices select')];
+  assert.equal(fields.length,2);
+  assert.equal(fields[0].required,true);
+  assert.equal(fields[1].required,true);
+  assert.equal(fields[0].value,'');
+  assert.equal(fields[1].value,'');
+  assert.equal(fields[0].options.length,leftCount+1);
+  assert.equal(fields[1].options.length,rightCount+1);
+  const choices=flavorChoices(catalog,'panquecas-2-sabores',product);
+  assert.equal(choices[0].options.length,leftCount);
+  assert.equal(choices[1].options.length,rightCount);
+  const fakeLine={category:'panquecas-2-sabores',product,option:'Único',quantity:1,note:'',flavors:[first,second]};
+  assert.equal(priceOrder(catalog,[fakeLine])[0].cents,4200);
+  assert.deepEqual(priceOrder(catalog,[fakeLine])[0].flavors,[first,second]);
+  assert.throws(()=>priceOrder(catalog,[{...fakeLine,flavors:[]}]),/sabores válidos/);
+  assert.throws(()=>priceOrder(catalog,[{...fakeLine,flavors:[first,first]}]),/diferentes/);
+  assert.throws(()=>priceOrder(catalog,[{...fakeLine,flavors:['Inexistente',second]}]),/sabores válidos/);
+  form.onsubmit({preventDefault(){}});
+  assert.match(form.querySelector('[role="status"]').textContent,/sabores válidos/);
+  fields[0].value=first;
+  fields[1].value=second;
+  form.onsubmit({preventDefault(){}});
+  assert.equal(d.querySelector('#productDialog').open,false);
+  const items=JSON.parse(w.localStorage.getItem('disk-panquecao-cart-v1')).lines;
+  assert.deepEqual(items.at(-1).flavors,[first,second]);
+  assert.match(d.querySelector('#cartLines').textContent,new RegExp(first));
+  assert.match(d.querySelector('#cartLines').textContent,new RegExp(second));
+}
+assert.equal(d.querySelectorAll('.category-section:not([hidden])').length,1);
+const secondOfTwo=flavorTests[0];
+assert.throws(()=>priceOrder(catalog,[{category:'panquecas-salgadas',product:'Bacon',option:'Único',quantity:1,note:'',flavors:[secondOfTwo[1],secondOfTwo[2]]}]),/não permite/);
+
 d.querySelector('input[name="fulfillment"][value="table"]').click();
 assert.equal(d.querySelector('#fulfillmentTable').hidden,false);
 assert.equal(d.querySelector('#fulfillmentDelivery').hidden,true);
@@ -180,7 +243,14 @@ assert.equal(lastOrder.fulfillment.latitude,null);
 const resFor=()=>({setHeader(){},status(n){this.code=n;return this},json(data){this.data=data;return this}});
 const request={method:'POST',body:{name:'Cliente fictício',phone:'51999999999',challenge:'fake',lines:[line],fulfillment:{type:'pickup',address:'',table:'',latitude:null,longitude:null}}};
 let response=resFor();await handler(request,response);assert.equal(response.code,200);assert.equal(calls,4);
-response=resFor();await handler({...request,body:{...request.body,fulfillment:{type:'delivery',address:'rua',table:''}}},response);
+response=resFor();await handler({...request,body:{...request.body,fulfillment:{type:'delivery',street:'Rua Flores',number:'123',city:'Caxias do Sul',neighborhood:'Centro'}}},response);
+assert.equal(response.code,400);assert.equal(calls,4);
+const deliveryBase={type:'delivery',city:'Nova Hartz',neighborhood:'Centro',street:'Rua das Flores',number:'123',postalCode:'93890-000',complement:'',reference:''};
+response=resFor();await handler({...request,body:{...request.body,fulfillment:{...deliveryBase,number:''}}},response);
+assert.equal(response.code,400);assert.equal(calls,4);
+response=resFor();await handler({...request,body:{...request.body,fulfillment:{...deliveryBase,neighborhood:'Inventado'}}},response);
+assert.equal(response.code,400);assert.equal(calls,4);
+response=resFor();await handler({...request,body:{...request.body,fulfillment:{...deliveryBase,postalCode:'inválido'}}},response);
 assert.equal(response.code,400);assert.equal(calls,4);
 response=resFor();await handler({...request,body:{...request.body,fulfillment:{type:'table',table:'',address:''}}},response);
 assert.equal(response.code,400);assert.equal(calls,4);
@@ -191,5 +261,5 @@ const config=require(path.resolve('api/order-config.js'));
 const configRes={setHeader(){},json(data){this.data=data;return this}};
 config({method:'GET'},configRes);assert.equal(configRes.data.deliveryEstimateMinutes,45);
 delete process.env.ORDER_ESTIMATE_DELIVERY_MIN;
-console.log('PASS: 12 categorias, 83 cards, personalização do açaí, carrinho, Turnstile, Telegram PDF 58 mm, entrega com GPS, retirada, mesa e validações do servidor.');
+console.log('PASS: 12 categorias, 83 cards, 3 panquecas meio a meio com 2 sabores, açaí, 2 cidades de entrega, bairros e taxas a confirmar, carrinho, Turnstile, Telegram PDF, GPS, retirada e mesa.');
 })().catch(e=>{console.error(e);process.exitCode=1});
