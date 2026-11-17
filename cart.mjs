@@ -1,4 +1,5 @@
 import { money, orderOptions, priceOrder, extraOptions, extraSummary, flavorChoices } from './order-catalog.mjs';
+import { parseCashAmount, PAYMENT_METHODS } from './payment.mjs';
 
 const byId = id => document.getElementById(id);
 const cart = [];
@@ -260,6 +261,63 @@ byId('menuContent').addEventListener('click', event => {
 });
 
 const checkoutForm = byId('checkout');
+const paymentHint = byId('paymentHint');
+const cashChangeGroup = byId('cashChangeGroup');
+const changeForField = byId('changeForField');
+const paymentChangeCheckbox = checkoutForm.elements.needsChange;
+const changeForInput = checkoutForm.elements.changeFor;
+function selectedPaymentMethod() {
+    return checkoutForm.querySelector('input[name="paymentMethod"]:checked')?.value || '';
+}
+function deliveryAmount() {
+    const subtotal = cart.reduce((sum, line) => sum + line.cents * line.quantity, 0);
+    if (selectedFulfillment() !== 'delivery') return { total: subtotal, known: true };
+    const city = byId('deliveryCity').value;
+    const area = deliveryAreas?.cities?.[city]?.find(row => row.name === byId('deliveryNeighborhood').value);
+    const rate = area ? (area.feeCents ?? deliveryAreas?.defaultFeeCents?.[city]) : null;
+    if (!Number.isSafeInteger(rate) || rate < 0 || rate > 10000) return { total: subtotal, known: false };
+    return { total: subtotal + rate, known: true };
+}
+function updatePayment() {
+    const method = selectedPaymentMethod();
+    const cash = method === 'cash';
+    cashChangeGroup.hidden = !cash;
+    if (!cash) {
+        paymentChangeCheckbox.checked = false;
+        changeForInput.value = '';
+    }
+    const needsChange = cash && paymentChangeCheckbox.checked;
+    changeForField.hidden = !needsChange;
+    changeForInput.required = needsChange;
+    if (!needsChange) changeForInput.value = '';
+    if (!method) {
+        paymentHint.textContent = 'Selecione a forma de pagamento. Nenhuma cobrança online será realizada neste momento.';
+    } else if (method === 'cash') {
+        const { total, known } = deliveryAmount();
+        if (!needsChange) {
+            paymentHint.textContent = 'Pagamento em dinheiro à loja. Se precisar, marque "Preciso de troco".';
+        } else {
+            try {
+                const amount = parseCashAmount(changeForInput.value);
+                paymentHint.textContent = amount === null ? 'Informe para quanto precisa de troco.' :
+                    amount < total ? 'O valor para troco deve ser pelo menos ' + money(total) + '.' :
+                    known ? 'Troco estimado: ' + money(amount - total) + '. Valor sujeito à confirmação da loja.' :
+                    'Troco a confirmar: a taxa de entrega desta localidade ainda será informada pela loja.';
+            } catch (e) {
+                paymentHint.textContent = e.message;
+            }
+        }
+    } else if (method === 'pix') {
+        paymentHint.textContent = 'Pix a combinar com a loja após confirmação. Não será gerado pagamento automático.';
+    } else {
+        paymentHint.textContent = PAYMENT_METHODS[method] + ': pagamento com a loja, sem cobrança no site.';
+    }
+}
+checkoutForm.querySelectorAll('input[name="paymentMethod"]').forEach(input => {
+    input.addEventListener('change', updatePayment);
+});
+paymentChangeCheckbox.addEventListener('change', updatePayment);
+changeForInput.addEventListener('input', updatePayment);
 const orderStatus = byId('orderStatus');
 let lastInvalidInput = null;
 function fieldLabel(field) {
@@ -333,6 +391,7 @@ function updateDeliveryFee() {
         ? 'Taxa de entrega: a confirmar pela loja antes de aceitar o pedido. O subtotal não inclui a taxa.'
         : 'Taxa de entrega: ' + money(fee) + '. Total estimado com entrega: ' +
             money(cart.reduce((sum, line) => sum + line.cents * line.quantity, 0) + fee);
+    updatePayment();
 }
 deliveryCity.addEventListener('change', updateNeighborhoodList);
 deliveryNeighborhood.addEventListener('change', updateDeliveryFee);
@@ -439,9 +498,18 @@ byId('checkout').onsubmit = async event => {
     status.textContent = 'Enviando…';
     try {
         const lines = priceOrder(catalog, cart);
+        const method = selectedPaymentMethod();
+        const payment = {
+            method,
+            changeForCents: method === 'cash' && paymentChangeCheckbox.checked
+                ? parseCashAmount(changeForInput.value) : null
+        };
+        if (method === 'cash' && paymentChangeCheckbox.checked && payment.changeForCents === null) {
+            throw new Error('Informe para quanto precisa de troco.');
+        }
         const response = await fetch('/api/order', {
             method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Checkout-Trace': trace },
-            body: JSON.stringify({ lines, name: form.elements.name.value,
+            body: JSON.stringify({ lines, payment, name: form.elements.name.value,
                 phone: form.elements.phone.value.replace(/\D/g, ''), challenge,
                 fulfillment: {
                     type: selectedFulfillment(),
@@ -464,6 +532,7 @@ byId('checkout').onsubmit = async event => {
         form.reset();
         updateNeighborhoodList();
         updateFulfillment();
+        updatePayment();
         status.textContent = result.test
             ? 'TESTE #' + result.id + ' enviado ao grupo da loja. NÃO PREPARAR. Nenhum pedido real foi realizado.'
             : 'Solicitação #' + result.id + ' enviada à loja. Aguarde a confirmação pelo WhatsApp informado.';
