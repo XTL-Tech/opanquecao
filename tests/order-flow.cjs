@@ -43,6 +43,20 @@ assert.equal(d.querySelectorAll('.category-card').length, catalog.categorias.len
 assert.equal(d.querySelectorAll('.category-section:not([hidden])').length,12);
 assert.equal(d.querySelectorAll('.category-section:not([hidden]) .menu-item').length,83);
 assert.equal(d.querySelectorAll('.category-card img').length,12);
+assert.equal(d.querySelectorAll('.category-card-media img').length,12);
+assert.equal(d.querySelectorAll('.category-card .category-card-title').length,12);
+assert.equal(d.querySelectorAll('.category-card .category-card-action').length,12);
+assert.equal(d.querySelectorAll('.category-switcher a').length,12);
+assert.equal(d.querySelector('#categoryHome').hidden,false);
+assert.equal(d.querySelectorAll('.category-section:not([hidden]) .menu-item').length,83);
+for (const category of catalog.categorias) {
+  const categoryLink=d.querySelector('.category-card[href="#'+category.id+'"]');
+  assert.ok(categoryLink,'Falta categoria '+category.id);
+  assert.equal(categoryLink.querySelector('.category-card-title').textContent, category.titulo);
+  assert.match(categoryLink.querySelector('.category-card-action').textContent,/Ver produtos/);
+  assert.ok(categoryLink.querySelector('.category-card-media img')?.getAttribute('src')?.startsWith('img/'),
+    'Foto ausente na categoria '+category.id);
+}
 // Header navigation: contact and directions should scroll to their own
 // sections, not reset the focus/scroll to the menu.
 const contactTab=d.querySelector('.site-tabs a[href="#contato"]');
@@ -71,7 +85,16 @@ assert.equal(d.querySelector('.site-tabs a[href="#cardapio"]').getAttribute('ari
 d.querySelector('.category-card[href="#panquecas-salgadas"]').click();
 assert.equal(d.querySelector('#panquecas-salgadas').hidden,false);
 assert.equal(d.querySelectorAll('.category-section:not([hidden])').length,1);
-d.querySelector('.category-toolbar a').click();
+assert.equal(d.querySelector('#categoryHome').hidden,true);
+assert.equal(d.querySelector('#categoryToolbar').hidden,false);
+assert.equal(d.querySelector('.category-switcher a[href="#panquecas-salgadas"]').getAttribute('aria-current'),'true');
+d.querySelector('.category-switcher a[href="#panquecas-doces"]').click();
+assert.equal(d.querySelector('#panquecas-doces').hidden,false);
+assert.equal(d.querySelector('#panquecas-salgadas').hidden,true);
+assert.equal(d.querySelectorAll('.category-section:not([hidden])').length,1);
+assert.equal(d.querySelector('.category-switcher a[href="#panquecas-doces"]').getAttribute('aria-current'),'true');
+assert.equal(d.querySelector('.category-switcher a[href="#panquecas-salgadas"]').hasAttribute('aria-current'),false);
+d.querySelector('.category-toolbar > a').click();
 assert.equal(d.querySelector('#categoryHome').hidden,false);
 assert.equal(d.querySelectorAll('.category-section:not([hidden]) .menu-item').length,83);
 d.querySelector('.category-card[href="#panquecas-salgadas"]').click();
