@@ -3,9 +3,9 @@ const {UUID_V4}=require('../lib/order-idempotency');
 const {enabled,initReviewStore,tokenMatches}=require('../lib/order-review');
 module.exports=async function handler(req,res){
  res.setHeader('Cache-Control','no-store');
- if(req.method!=='GET')return res.status(405).json({error:'Método inválido'});
+ if(req.method!=='POST')return res.status(405).json({error:'Método inválido'});
  if(!enabled())return res.status(404).json({error:'Não disponível'});
- const id=req.query?.requestId,token=req.query?.token;
+ const id=req.body?.requestId,token=req.body?.token;
  if(typeof id!=='string'||!UUID_V4.test(id)||typeof token!=='string'||!/^[A-Za-z0-9_-]{43}$/.test(token))return res.status(404).json({error:'Pedido não encontrado'});
  try{
   const row=await initReviewStore().get(id);
