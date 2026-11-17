@@ -1,0 +1,479 @@
+-- Seed fiel ao cardapio.json versionado: 12 categorias, 82 produtos.
+-- Nunca sobrescreve alterações posteriores do backoffice.
+begin;
+insert into public.restaurant_catalogs (restaurant_id,catalog)
+values ('opanquecao', $xtlfoodcatalog${
+  "categorias": [
+    {
+      "id": "acai",
+      "titulo": "AÇAÍ",
+      "itens": [
+        {
+          "nome": "Açaí Panquecão",
+          "sub": "Monte do seu jeito",
+          "tamanhos_acai": [
+            { "tamanho": "300ml", "obs": "3 complementos grátis", "preco": "R$ 20,00" },
+            { "tamanho": "500ml", "obs": "4 complementos grátis", "preco": "R$ 28,00" },
+            { "tamanho": "Adicional de Nutella", "obs": "Adicional pago", "preco": "R$ 5,00" },
+            { "tamanho": "Adicional de Banana", "obs": "Adicional pago", "preco": "R$ 5,00" },
+            { "tamanho": "Adicional de Abacaxi", "obs": "Adicional pago", "preco": "R$ 5,00" },
+            { "tamanho": "Adicional de Morango", "obs": "Adicional pago", "preco": "R$ 5,00" }
+          ],
+          "tags": [
+            "Leite Condensado",
+            "Leite Ninho",
+            "Granola",
+            "Granulado",
+            "Ovo Maltine",
+            "Confete",
+            "Paçoca",
+            "Creme de Morango",
+            "Creme de Avelã",
+            "Creme de Leite Ninho"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "panquecas-salgadas",
+      "titulo": "PANQUECAS SALGADAS",
+      "itens": [
+        {
+          "nome": "Bacon",
+          "ingredientes": "Mussarela, bacon e orégano",
+          "tamanhos": { "M": "R$ 28,00", "G": "R$ 38,00" }
+        },
+        {
+          "nome": "Brocolis e Catupiry",
+          "ingredientes": "Brocolis, mussarela, requeijão e orégano",
+          "tamanhos": { "M": "R$ 23,00", "G": "R$ 33,00" }
+        },
+        {
+          "nome": "Calabresa",
+          "ingredientes": "Calabresa, mussarela e orégano",
+          "tamanhos": { "M": "R$ 28,00", "G": "R$ 38,00" }
+        },
+        {
+          "nome": "Carne de Panela",
+          "ingredientes": "Carne de panela ao molho, mussarela e orégano",
+          "tamanhos": { "M": "R$ 30,00", "G": "R$ 40,00" }
+        },
+        {
+          "nome": "Coração",
+          "ingredientes": "Coração ao molho, mussarela e orégano",
+          "tamanhos": { "M": "R$ 28,00", "G": "R$ 38,00" }
+        },
+        {
+          "nome": "Estrogonofe de Carne",
+          "ingredientes": "Carne de panela ao molho, ketchup, creme de leite, mussarela e orégano",
+          "tamanhos": { "M": "R$ 30,00", "G": "R$ 40,00" }
+        },
+        {
+          "nome": "Estrogonofe de Frango",
+          "ingredientes": "Frango ao molho, ketchup, creme de leite, mussarela e orégano",
+          "tamanhos": { "M": "R$ 28,00", "G": "R$ 38,00" }
+        },
+        {
+          "nome": "Frango e Catupiry",
+          "ingredientes": "Frango ao molho, requeijão, mussarela e orégano",
+          "tamanhos": { "M": "R$ 28,00", "G": "R$ 38,00" }
+        },
+        {
+          "nome": "Milho e Mussarela",
+          "ingredientes": "Milho verde, mussarela e orégano",
+          "tamanhos": { "M": "R$ 23,00", "G": "R$ 33,00" }
+        },
+        {
+          "nome": "Mussarela",
+          "ingredientes": "Mussarela e orégano",
+          "tamanhos": { "M": "R$ 23,00", "G": "R$ 33,00" }
+        },
+        {
+          "nome": "Quatro Queijos",
+          "ingredientes": "Mussarela, requeijão, parmesão, cheddar e orégano",
+          "tamanhos": { "M": "R$ 28,00", "G": "R$ 38,00" }
+        },
+        {
+          "nome": "Presunto",
+          "ingredientes": "Presunto, mussarela e orégano",
+          "tamanhos": { "M": "R$ 26,00", "G": "R$ 36,00" }
+        },
+        {
+          "nome": "Panquegumes",
+          "ingredientes": "Brócolis, tomate, cebola, pimentão, milho, requeijão, mussarela e orégano",
+          "tamanhos": { "M": "R$ 28,00", "G": "R$ 38,00" }
+        },
+        {
+          "nome": "Portuguesa",
+          "ingredientes": "Presunto, cebola, tomate, azeitonas, mussarela, ovo e orégano",
+          "tamanhos": { "M": "R$ 28,00", "G": "R$ 38,00" }
+        },
+        {
+          "nome": "Panquetudo (Especial)",
+          "ingredientes": "Carne de panela ao molho, coração, frango ao molho, calabresa, bacon, mussarela, molho barbecue, batata palha, milho",
+          "tamanhos": { "M": "R$ 32,00", "G": "R$ 42,00" }
+        }
+      ]
+    },
+    {
+      "id": "panquecas-doces",
+      "titulo": "PANQUECAS DOCES",
+      "itens": [
+        {
+          "nome": "Banana e Canela",
+          "ingredientes": "Banana e canela",
+          "tamanhos": { "M": "R$ 23,00", "G": "R$ 33,00" }
+        },
+        {
+          "nome": "Banana e Canela Cremosa",
+          "ingredientes": "Banana, canela e leite condensado",
+          "tamanhos": { "M": "R$ 26,00", "G": "R$ 36,00" }
+        },
+        {
+          "nome": "Chocolate Branco",
+          "ingredientes": "Chocolate branco",
+          "tamanhos": { "M": "R$ 30,00", "G": "R$ 40,00" }
+        },
+        {
+          "nome": "Chocolate Preto",
+          "ingredientes": "Chocolate preto",
+          "tamanhos": { "M": "R$ 28,00", "G": "R$ 38,00" }
+        },
+        {
+          "nome": "Chocolate Branco e Confetes",
+          "ingredientes": "Chocolate branco e confetes",
+          "tamanhos": { "M": "R$ 30,00", "G": "R$ 40,00" }
+        },
+        {
+          "nome": "Chocolate Preto e Confetes",
+          "ingredientes": "Chocolate preto e confetes",
+          "tamanhos": { "M": "R$ 28,00", "G": "R$ 38,00" }
+        },
+        {
+          "nome": "Chocolate Branco e Morango",
+          "ingredientes": "Chocolate branco e morango",
+          "tamanhos": { "M": "R$ 30,00", "G": "R$ 40,00" }
+        },
+        {
+          "nome": "Chocolate Preto e Morango",
+          "ingredientes": "Chocolate preto e morango",
+          "tamanhos": { "M": "R$ 28,00", "G": "R$ 38,00" }
+        },
+        {
+          "nome": "Chocolate Branco e Óreo",
+          "ingredientes": "Chocolate branco e biscoito Óreo",
+          "tamanhos": { "M": "R$ 28,00", "G": "R$ 38,00" }
+        },
+        {
+          "nome": "Chocolate Preto e Óreo",
+          "ingredientes": "Chocolate preto e biscoito Óreo",
+          "tamanhos": { "M": "R$ 28,00", "G": "R$ 38,00" }
+        },
+        {
+          "nome": "Choquito Branco",
+          "ingredientes": "Chocolate branco e flocos de coco",
+          "tamanhos": { "M": "R$ 30,00", "G": "R$ 40,00" }
+        },
+        {
+          "nome": "Choquito Preto",
+          "ingredientes": "Chocolate preto e flocos de coco",
+          "tamanhos": { "M": "R$ 28,00", "G": "R$ 38,00" }
+        },
+        {
+          "nome": "Prestigio Branco",
+          "ingredientes": "Chocolate branco e coco em flocos",
+          "tamanhos": { "M": "R$ 30,00", "G": "R$ 40,00" }
+        },
+        {
+          "nome": "Prestigio Preto",
+          "ingredientes": "Chocolate preto e coco em flocos",
+          "tamanhos": { "M": "R$ 28,00", "G": "R$ 38,00" }
+        }
+      ]
+    },
+    {
+      "id": "panquecas-2-sabores",
+      "titulo": "PANQUECAS 2 SABORES",
+      "itens": [
+        {
+          "nome": "Panqueca Meio a Meio (2 Sabores Salgados)",
+          "ingredientes": "Os sabores são os mesmos do cardápio de panquecas salgadas",
+          "preco": "R$ 42,00"
+        },
+        {
+          "nome": "Panqueca Meio a Meio (2 Sabores Doces)",
+          "ingredientes": "Os sabores são os mesmos do cardápio de panquecas doces",
+          "preco": "R$ 42,00"
+        },
+        {
+          "nome": "Panqueca Meio a Meio (Salgada e Doce)",
+          "ingredientes": "Os sabores são os mesmos do cardápio de panquecas",
+          "preco": "R$ 42,00"
+        }
+      ]
+    },
+    {
+      "id": "lasanhas-de-massa-de-panqueca",
+      "titulo": "LASANHAS DE MASSA DE PANQUECA",
+      "itens": [
+        {
+          "nome": "Estrogonofe de Frango",
+          "ingredientes": "Massa espaguete, frango, creme de leite, ketchup, mussarela, batata palha e orégano",
+          "preco": "R$ 51,00"
+        },
+        {
+          "nome": "Frango e Catupiry",
+          "ingredientes": "Massa espaguete, frango, creme de leite, ketchup, mussarela, batata palha e orégano",
+          "preco": "R$ 51,00"
+        },
+        {
+          "nome": "Estrogonofe de Carne",
+          "ingredientes": "Massa espaguete, carne de panela, creme de leite, ketchup, mussarela, batata palha e orégano",
+          "preco": "R$ 54,00"
+        },
+        {
+          "nome": "Carne de Panela",
+          "ingredientes": "Massa espaguete, carne de panela, creme de leite, ketchup, mussarela, batata palha e orégano",
+          "preco": "R$ 54,00"
+        },
+        {
+          "nome": "Meio a Meio (2 Sabores)",
+          "ingredientes": "Combinação de dois sabores do cardápio",
+          "preco": "R$ 57,00"
+        }
+      ]
+    },
+    {
+      "id": "frango-frito-crocrante-no-pote",
+      "titulo": "FRANGO FRITO CROCRANTE NO POTE",
+      "itens": [
+        {
+          "nome": "Frango Frito Crocrante no Pote",
+          "ingredientes": "Filé de frango frito empanado, molho barbecue, maionese verde e maionese rosa",
+          "preco": "R$ 60,00"
+        },
+        {
+          "nome": "Frango + Polenta",
+          "ingredientes": "Filé de frango frito empanado, molho barbecue, maionese verde, maionese rosa e polenta",
+          "preco": "R$ 82,00"
+        },
+        {
+          "nome": "Frango + Batatas Fritas",
+          "ingredientes": "Filé de frango frito empanado, molho barbecue, maionese verde, maionese rosa e batatas",
+          "preco": "R$ 82,00"
+        },
+        {
+          "nome": "Frango + Batatas Fritas + Polenta",
+          "ingredientes": "Filé de frango frito empanado, molho barbecue, maionese verde, maionese rosa, batatas fritas e polenta",
+          "preco": "R$ 85,00"
+        }
+      ]
+    },
+    {
+      "id": "batatas-fritas",
+      "titulo": "BATATAS FRITAS",
+      "itens": [
+        {
+          "nome": "Batatas Fritas Simples",
+          "ingredientes": "Porção de batatas fritas",
+          "tamanhos": { "M": "R$ 27,00", "G": "R$ 37,00" }
+        },
+        {
+          "nome": "Batatas Fritas com Calabresa e Requeijão/Cheddar",
+          "ingredientes": "Porção de batatas fritas, calabresa e requeijão e/ou cheddar",
+          "tamanhos": { "M": "R$ 37,00", "G": "R$ 47,00" }
+        },
+        {
+          "nome": "Batatas Fritas com Bacon e Requeijão/Cheddar",
+          "ingredientes": "Porção de batatas fritas, bacon e requeijão e/ou cheddar",
+          "tamanhos": { "M": "R$ 37,00", "G": "R$ 47,00" }
+        }
+      ]
+    },
+    {
+      "id": "massas",
+      "titulo": "MASSAS",
+      "itens": [
+        {
+          "nome": "Massa a Carbonara",
+          "ingredientes": "Massa espaguete, bacon, gemas de ovo, parmesão e alho",
+          "preco": "R$ 47,00"
+        },
+        {
+          "nome": "Estrogonofe de Carne",
+          "ingredientes": "Massa espaguete, carne de panela, creme de leite, ketchup, mussarela, batata palha e orégano",
+          "preco": "R$ 47,00"
+        },
+        {
+          "nome": "Estrogonofe de Frango",
+          "ingredientes": "Massa espaguete, frango, creme de leite, ketchup, mussarela, batata palha e orégano",
+          "preco": "R$ 47,00"
+        },
+        {
+          "nome": "Quatro Queijos",
+          "ingredientes": "Massa espaguete, mussarela, parmesão, cheddar, catupiry e orégano",
+          "preco": "R$ 47,00"
+        }
+      ]
+    },
+    {
+      "id": "paokecao",
+      "titulo": "PÃOKECÃO",
+      "itens": [
+        {
+          "nome": "Carne de Panela",
+          "ingredientes": "Pão baguete, maionese verde, ketchup, mostarda, queijo na chapa, batata palha e carne de panela",
+          "preco": "R$ 25,00"
+        },
+        {
+          "nome": "Frango",
+          "ingredientes": "Pão baguete, maionese verde, ketchup, mostarda, queijo na chapa, batata palha e frango",
+          "preco": "R$ 25,00"
+        },
+        {
+          "nome": "Coração de Frango",
+          "ingredientes": "Pão baguete, maionese verde, ketchup, mostarda, queijo na chapa, batata palha e coração de frango",
+          "preco": "R$ 25,00"
+        }
+      ]
+    },
+    {
+      "id": "bebidas",
+      "titulo": "BEBIDAS",
+      "itens": [
+        { "nome": "Coca-Cola 2L", "preco": "R$ 16,00" },
+        { "nome": "Coca-Cola Zero 2L", "preco": "R$ 16,00" },
+        { "nome": "Coca-Cola Lata", "preco": "R$ 10,00" },
+        { "nome": "Coca-Cola Zero Lata", "preco": "R$ 10,00" },
+        { "nome": "Guaraná Lata", "preco": "R$ 8,00" },
+        { "nome": "Água Mineral 500ml", "preco": "R$ 5,00" },
+        { "nome": "Suco Natural Copo", "preco": "R$ 15,00" },
+        { "nome": "Cerveja Latão", "preco": "R$ 12,00" },
+        { "nome": "Cerveja Longneck", "preco": "R$ 12,00" },
+        { "nome": "Chopp Litro", "preco": "Consultar" },
+        { "nome": "Vinhos", "preco": "Consultar" }
+      ]
+    },
+    {
+      "id": "cocktails-com-alcool",
+      "titulo": "COCKTAILS COM ÁLCOOL",
+      "itens": [
+        {
+          "nome": "Caipira de Morango",
+          "ingredientes": "Vodka/Cachaça, morango, açúcar, leite condensado e hortelã",
+          "preco": "R$ 30,00"
+        },
+        {
+          "nome": "Caipira de Limão",
+          "ingredientes": "Vodka/Cachaça, limão, açúcar e hortelã",
+          "preco": "R$ 30,00"
+        },
+        {
+          "nome": "Sex on the Beach",
+          "ingredientes": "Vodka, groselha, suco de manga, suco de laranja e leite condensado",
+          "preco": "R$ 30,00"
+        },
+        {
+          "nome": "Mojito",
+          "ingredientes": "Rum, refrigerante de limão, limão, açúcar, hortelã e Água com gás",
+          "preco": "R$ 30,00"
+        },
+        {
+          "nome": "Vodka Sunrise",
+          "ingredientes": "Vodka, suco de laranja, groselha e hortelã",
+          "preco": "R$ 30,00"
+        },
+        {
+          "nome": "Tequila Sunrise",
+          "ingredientes": "Tequila, suco de laranja, groselha e hortelã",
+          "preco": "R$ 30,00"
+        },
+        {
+          "nome": "Sakerinha",
+          "ingredientes": "Sake, limão/morango, açúcar e leite condensado",
+          "preco": "R$ 30,00"
+        },
+        {
+          "nome": "Margarita",
+          "ingredientes": "Tequila, suco de laranja, suco de limão, sal e hortelã",
+          "preco": "R$ 30,00"
+        },
+        {
+          "nome": "Martini Spritz",
+          "ingredientes": "Vermouth, refrigerante de limão, limão e Água com gás",
+          "preco": "R$ 30,00"
+        },
+        {
+          "nome": "Lagoa Azul",
+          "ingredientes": "Vodka, Curaçau Azul, refrigerante de limão e Água com gás",
+          "preco": "R$ 30,00"
+        },
+        {
+          "nome": "Coco Splash",
+          "ingredientes": "Curaçau Azul, água de coco, suco de laranja e Água com gás",
+          "preco": "R$ 30,00"
+        },
+        {
+          "nome": "Fresh Paradise",
+          "ingredientes": "Vodka, suco de laranja, suco de manga, suco de limão e Água com gás",
+          "preco": "R$ 30,00"
+        }
+      ]
+    },
+    {
+      "id": "cocktails-sem-alcool",
+      "titulo": "COCKTAILS SEM ÁLCOOL (MOCKTAILS)",
+      "itens": [
+        {
+          "nome": "Tropical Breeze",
+          "ingredientes": "Suco de manga, suco de laranja, suco de limão e Água com gás",
+          "preco": "R$ 25,00"
+        },
+        {
+          "nome": "High Voltage",
+          "ingredientes": "Suco de laranja, suco de manga, energético e Água com gás",
+          "preco": "R$ 25,00"
+        },
+        {
+          "nome": "Mango Dawnburst",
+          "ingredientes": "Suco de laranja, suco de manga, groselha e Água com gás",
+          "preco": "R$ 25,00"
+        },
+        {
+          "nome": "Green Apple Zest",
+          "ingredientes": "Energético de maçã verde, suco de limão, açúcar e Água com gás",
+          "preco": "R$ 25,00"
+        },
+        {
+          "nome": "Fresh Lemon",
+          "ingredientes": "Limão, água, hortelã e Água com gás",
+          "preco": "R$ 25,00"
+        },
+        {
+          "nome": "Minty Splash",
+          "ingredientes": "Água com Água com gás, limão, hortelã e Água com gás",
+          "preco": "R$ 25,00"
+        },
+        {
+          "nome": "Limonada Suíça",
+          "ingredientes": "Limão, açúcar, leite condensado e Água com gás",
+          "preco": "R$ 25,00"
+        }
+      ]
+    }
+  ],
+  "observacoes": [
+    "Consulte a disponibilidade dos drinks",
+    "Todos os drinks com álcool podem ser feitos sem álcool",
+    "Entregamos em toda Nova Hartz e Araricá.",
+    "Taxa de entrega sob consulta por bairro",
+    "Tempo médio de preparo: 45 a 55 minutos",
+    "Aceitamos Cartões Alimentação, Refeição, Crédito, Débito, Pix e Dinheiro"
+  ]
+}
+$xtlfoodcatalog$::jsonb)
+on conflict (restaurant_id) do nothing;
+insert into public.restaurant_operations (restaurant_id)
+values ('opanquecao')
+on conflict (restaurant_id) do nothing;
+commit;
