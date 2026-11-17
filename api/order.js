@@ -1,4 +1,5 @@
 const { orderPdf } = require('../lib/order-pdf');
+const deliveryAreas = require('../delivery-areas.json');
 const { readFile } = require('node:fs/promises');
 const { randomUUID } = require('node:crypto');
 
@@ -19,10 +20,34 @@ module.exports = async function handler(req, res) {
     if (!['delivery', 'pickup', 'table'].includes(method)) {
         return res.status(400).json({ error: 'Selecione entrega, retirada ou mesa.' });
     }
-    const address = typeof fulfillment.address === 'string' ? fulfillment.address.trim() : '';
     const table = typeof fulfillment.table === 'string' ? fulfillment.table.trim() : '';
-    if (method === 'delivery' && (address.length < 8 || address.length > 220 || /[\x00-\x1f\x7f]/u.test(address))) {
-        return res.status(400).json({ error: 'Informe rua, número, bairro e cidade para entrega.' });
+    const clean = (value, maxLength) => typeof value === 'string' &&
+        value.trim().length <= maxLength && !/[\x00-\x1f\x7f]/u.test(value) ? value.trim() : null;
+    let deliveryDetails = { type: method, address: '', city: '', neighborhood: '', street: '',
+        number: '', postalCode: '', complement: '', reference: '', feeCents: null };
+    if (method === 'delivery') {
+        const city = clean(fulfillment.city, 40);
+        const neighborhood = clean(fulfillment.neighborhood, 100);
+        const otherNeighborhood = clean(fulfillment.otherNeighborhood ?? '', 80);
+        const street = clean(fulfillment.street, 120);
+        const number = clean(fulfillment.number, 20);
+        const postalCode = clean(fulfillment.postalCode ?? '', 9);
+        const complement = clean(fulfillment.complement ?? '', 100);
+        const reference = clean(fulfillment.reference ?? '', 140);
+        const areas = Object.hasOwn(deliveryAreas.cities, city) ? deliveryAreas.cities[city] : null;
+        const selectedArea = areas?.find(area => area.name === neighborhood);
+        const neighborhoodName = neighborhood === '__other__' ? otherNeighborhood : selectedArea?.name;
+        if (!areas || !neighborhoodName || neighborhoodName.length < 2 ||
+            (neighborhood === '__other__' && neighborhoodName.length < 3) ||
+            !street || street.length < 3 || !number || !postalCode?.match(/^(?:\d{5}-?\d{3})?$/) ||
+            complement === null || reference === null) {
+            return res.status(400).json({ error: 'Confira cidade, bairro, rua, número e demais dados de entrega.' });
+        }
+        const feeCents = selectedArea?.feeCents;
+        deliveryDetails = { ...deliveryDetails, city, neighborhood: neighborhoodName, street, number,
+            postalCode, complement, reference,
+            feeCents: Number.isSafeInteger(feeCents) && feeCents >= 0 && feeCents <= 10000 ? feeCents : null,
+            address: [street + ', ' + number, complement, neighborhoodName + ', ' + city + '/RS', postalCode].filter(Boolean).join(' - ') };
     }
     if (method === 'table' && (!table || table.length > 12 || !/^[\p{L}\p{N} -]+$/u.test(table))) {
         return res.status(400).json({ error: 'Informe a identificação da mesa.' });
@@ -42,8 +67,7 @@ module.exports = async function handler(req, res) {
         }
         location = { latitude, longitude };
     }
-    const delivery = { type: method, address: method === 'delivery' ? address : '',
-        table: method === 'table' ? table : '', location };
+    const delivery = { ...deliveryDetails, table: method === 'table' ? table : '', location };
     const { priceOrder, money } = await import('../order-catalog.mjs');
     let items;
     try {
@@ -65,7 +89,12 @@ module.exports = async function handler(req, res) {
         const pdf = await orderPdf({ id, name: name.trim(), phone, items, subtotal, money, fulfillment: delivery, testMode });
         const form = new FormData();
         form.set('chat_id', TELEGRAM_CHAT_ID);
-        form.set('caption', `${testMode ? 'TESTE - NAO PREPARAR!\n' : ''}Pré-pedido #${id} · ${name.trim()} · ${{delivery:'Entrega',pickup:'Retirada',table:'Mesa'}[method]} · ${money(subtotal)}
+        const feeDescription = method === 'delivery'
+            ? (delivery.feeCents === null ? 'Taxa: a confirmar' :
+                'Taxa: ' + money(delivery.feeCents) + ' · Total: ' + money(subtotal + delivery.feeCents))
+            : '';
+        form.set('caption', `${testMode ? 'TESTE - NAO PREPARAR!\n' : ''}Pré-pedido #${id} · ${name.trim()} · ${{delivery:'Entrega',pickup:'Retirada',table:'Mesa'}[method]}
+Produtos: ${money(subtotal)}${feeDescription ? ' · ' + feeDescription : ''}
 Aguardando confirmação da loja.`);
         form.set('document', new Blob([pdf], { type: 'application/pdf' }), `${testMode ? 'TESTE-nao-preparar-' : 'pre-pedido-'}${id}.pdf`);
         const sent = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendDocument`, {
