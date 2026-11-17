@@ -176,7 +176,7 @@ checkout.elements.reference.value='Portão azul';
 assert.match(d.querySelector('#deliveryFeeStatus').textContent,/7,00/);
 assert.match(d.querySelector('#deliveryFeeStatus').textContent,/Total estimado/);
 assert.equal(d.querySelector('#fulfillmentDelivery').hidden,false);
-assert.match(d.querySelector('#orderStatus').textContent,/AMBIENTE DE TESTE/);
+assert.match(d.querySelector('#orderStatus').textContent,/Preencha ou corrija/);
 d.querySelector('#captureLocation').click();
 assert.equal(checkout.elements.latitude.value,'-29.585');
 assert.equal(checkout.elements.longitude.value,'-50.938');
