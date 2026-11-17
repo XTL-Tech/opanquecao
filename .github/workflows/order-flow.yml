@@ -24,3 +24,5 @@ jobs:
         run: npm ci
       - name: Testar cardápio e checkout (sem pedidos reais)
         run: npm test
+      - name: Validar cache e orçamento de imagens
+        run: node tests/cache-policy.cjs
