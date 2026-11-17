@@ -1,0 +1,333 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Disk Panquecão — prévia completa do fluxo de pedidos</title>
+<meta name="robots" content="noindex,nofollow,noarchive">
+<meta name="theme-color" content="#741c2d">
+<style>
+:root { font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; color:#301c21; background:#f8f2eb; font-synthesis:none; }
+*,*::before,*::after {box-sizing:border-box;}
+body{margin:0;min-height:100vh;}
+button,input,select,textarea{font:inherit;}
+button{cursor:pointer;touch-action:manipulation;}
+button:disabled{cursor:not-allowed;opacity:.5;}
+[hidden]{display:none !important;}
+a{color:#741c2d;}
+header{background:#411621;color:#fff;display:flex;align-items:center;gap:15px;padding:17px max(18px,calc((100vw - 1060px)/2));flex-wrap:wrap;}
+header img{height:68px;max-width:70px;object-fit:contain;}
+header h1{font-size:clamp(20px,3vw,30px);margin:0;}
+header p{margin:3px 0 0;color:#ffe6d1;font-size:13px;}
+.preview-tag{display:inline-block;background:#ffe6d1;color:#6d2533;font-weight:800;border-radius:99px;font-size:12px;padding:7px 10px;margin-left:auto;}
+main{max-width:1120px;margin:auto;padding:20px 15px 70px;}
+.notice{background:#fff4df;border:1px solid #e9c78c;border-radius:14px;padding:13px 17px;line-height:1.5;margin-bottom:16px;font-size:14px;}
+h2{margin:0 0 10px;font-size:19px;}h3{margin:0 0 10px;font-size:16px;}
+p{line-height:1.52;}
+.layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;align-items:start;}
+.panel{background:#fff;border-radius:20px;box-shadow:0 5px 25px #48242012;border:1px solid #eaded6;overflow:hidden;}
+.panel-heading{padding:18px 20px;background:#faf3ed;border-bottom:1px solid #eaded6;}
+.panel-heading p{font-size:13px;margin:3px 0 0;color:#72595f;}
+.panel-body{padding:19px 20px;}
+.field{display:block;margin:13px 0;font-weight:700;font-size:13px;}
+.field input,.field select,.field textarea{display:block;width:100%;min-height:47px;border:1px solid #bca39a;border-radius:10px;padding:10px 12px;margin-top:6px;background:#fff;color:#301c21;}
+.field textarea{min-height:85px;resize:vertical;}
+button.primary,button.secondary,button.danger,button.success,button.outline{min-height:46px;border-radius:11px;font-weight:750;border:1px solid transparent;padding:10px 15px;}
+.primary{background:#741c2d;color:#fff;}
+button.secondary{background:#f4e8dc;color:#4c222b;border-color:#dfcabb;}
+button.outline{background:#fff;color:#741c2d;border-color:#741c2d;}
+button.danger{background:#9e2636;color:#fff;}
+button.success{background:#17653e;color:#fff;}
+.actions{display:flex;flex-wrap:wrap;gap:9px;margin:12px 0;}
+.actions button{flex:1 1 140px;}
+.state{border-radius:12px;padding:12px 14px;margin:12px 0;font-weight:750;}
+.state.closed{background:#fff0eb;color:#9f2436;}
+.state.open{background:#e9f7ef;color:#185e39;}
+.state.pending{background:#fff6e0;color:#79530c;}
+.state.rejected{background:#ffeded;color:#94172c;}
+.state.approved{background:#e9f7ef;color:#17653e;}
+.small{font-size:13px;color:#63575b;font-weight:400;}
+.subtle{border-top:1px solid #eee1d9;margin:17px 0;}
+.switchline{display:flex;gap:9px;align-items:flex-start;line-height:1.5;font-size:14px;}
+.switchline input{width:20px;height:20px;margin-top:2px;flex:0 0 20px;}
+.tg-header{border-radius:12px 12px 0 0;background:#2c6177;color:#fff;padding:11px 13px;font-weight:750;}
+.tg-body{background:#ecf5fa;border:1px solid #cce0e9;border-top:0;border-radius:0 0 12px 12px;padding:13px;}
+.tg-body p{margin:6px 0;font-size:14px;}
+.mono{font-family:ui-monospace,monospace;font-size:13px;overflow-wrap:anywhere;}
+.message{white-space:pre-wrap;background:#f7f4f0;border-radius:12px;padding:14px;border:1px solid #e4dcd6;font-size:13px;line-height:1.6;}
+.toast{position:fixed;top:10px;left:50%;transform:translateX(-50%);width:min(94vw,470px);border-radius:14px;padding:15px 18px;box-shadow:0 12px 45px #0004;background:#fff;border:2px solid #236c45;z-index:5;}
+dialog{border:0;border-radius:20px;padding:24px;max-width:470px;width:min(94vw,470px);box-shadow:0 22px 60px #0003;color:#351c21;}
+dialog::backdrop{background:rgba(35,12,22,.65);}
+dialog h2{font-size:25px;}
+dialog p{margin:10px 0 15px;}
+footer{text-align:center;margin:18px 0 0;color:#6e5960;font-size:13px;}
+:focus-visible{outline:3px solid #d5a140;outline-offset:3px;}
+@media(max-width:760px){.layout{grid-template-columns:1fr;}header{padding:16px 15px;}.preview-tag{margin-left:0;}.panel-body{padding:15px;}}
+</style>
+</head>
+<body>
+<header>
+<img src="/img/logo-disk-panquecao.webp" alt="Disk Panquecão" width="70" height="68">
+<div><h1>Fluxo completo de pedidos</h1><p>Visão do cliente + simulação da loja e do bot Telegram</p></div>
+<span class="preview-tag">DEMONSTRAÇÃO — NÃO ENVIA PEDIDOS</span>
+</header>
+<main>
+<div class="notice"><strong>Importante:</strong> esta tela serve para testar a experiência. A aprovação, rejeição, WhatsApp e notificação de reabertura são <strong>simulados nesta página</strong>; não há Telegram real, banco, notificações do sistema ou pedidos enviados. Nenhuma mudança foi feita na operação pública.</div>
+<div class="layout">
+<section class="panel" aria-labelledby="clientTitle">
+<div class="panel-heading"><h2 id="clientTitle">1. O que o cliente vê</h2><p>Site/app do Panquecão — simulação interativa</p></div>
+<div class="panel-body">
+  <div class="state closed" id="clientStoreStatus" role="status" aria-live="polite">Loja fechada no momento</div>
+  <div id="closedCallout">
+    <p>Você pode ver o cardápio, mas ainda não podemos receber o pré-pedido.</p>
+    <button class="outline" id="showClosedPopup" type="button">Ver aviso de loja fechada</button>
+    <p class="small" id="subscriptionStatus">Avisos de reabertura não habilitados nesta demonstração.</p>
+    <button class="secondary" type="button" id="toggleSubscription">Simular inscrição para avisos</button>
+  </div>
+  <div id="openCheckout" hidden>
+    <h3>Enviar pré-pedido para análise</h3>
+    <p class="small">O envio é simulado e só cria um cartão fictício para a loja aprovar ou rejeitar.</p>
+    <label class="field">Nome do cliente
+      <input id="customerName" value="Cliente de teste" maxlength="60" autocomplete="off">
+    </label>
+    <label class="field">Produto de demonstração
+      <select id="demoProduct">
+        <option>Panqueca de teste</option>
+        <option>Baguete Carne de Panela</option>
+        <option>Baguete Frango</option>
+      </select>
+    </label>
+    <label class="field">WhatsApp (opcional, só para testar o botão)
+      <input id="customerPhone" placeholder="Seu número com DDD" inputmode="tel" maxlength="18" autocomplete="off">
+    </label>
+    <button id="sendDemoOrder" type="button" class="primary">Enviar pré-pedido de teste</button>
+  </div>
+  <div class="subtle"></div>
+  <h3>Andamento do meu pedido</h3>
+  <div id="clientOrderStatus" class="state pending" role="status" aria-live="polite">Nenhum pré-pedido de teste enviado.</div>
+  <p class="small" id="clientOrderDetail">Quando a loja tomar uma decisão, ela aparecerá aqui com o motivo, se houver rejeição.</p>
+  <p class="small">O alerta aqui aparece somente nesta página aberta. Na versão definitiva, o status será consultado por um identificador privado e as notificações dependerão de permissão.</p>
+</div>
+</section>
+<section class="panel" aria-labelledby="adminTitle">
+<div class="panel-heading"><h2 id="adminTitle">2. O que a loja vê</h2><p>Simulação do backoffice e do bot Telegram</p></div>
+<div class="panel-body">
+  <h3>Controle administrativo da loja</h3>
+  <div class="state closed" id="adminStoreStatus" role="status">Fechada — simulação</div>
+  <div class="actions">
+    <button class="success" id="openStore" type="button">Abrir agora</button>
+    <button class="danger" id="closeStore" type="button">Fechar agora</button>
+    <button class="secondary" id="autoStore" type="button">Modo automático</button>
+  </div>
+  <p class="small" id="modeNote">Fora do expediente (simulado). A agenda real ainda será definida no painel administrativo.</p>
+  <div class="subtle"></div>
+  <h3>Comanda recebida no Telegram</h3>
+  <div class="tg-header">Telegram • Disk Panquecão • DEMO</div>
+  <div class="tg-body" id="telegramCard" role="region" aria-label="Pedido de demonstração">
+    <p id="telegramSummary">Nenhum pré-pedido pendente.</p>
+    <div class="actions" id="reviewButtons" hidden>
+      <button class="success" id="approveOrder" type="button">Aprovar pedido</button>
+      <button class="danger" id="rejectOrder" type="button">Rejeitar pedido</button>
+    </div>
+    <div id="rejectionForm" hidden>
+      <label class="field">Motivo da rejeição (obrigatório)
+        <select id="rejectionReason">
+          <option value="">Escolha um motivo</option>
+          <option>Produto indisponível</option>
+          <option>Endereço fora da área de entrega</option>
+          <option>Loja sem capacidade para atender</option>
+          <option>Outro motivo</option>
+        </select>
+      </label>
+      <label class="field" id="customReasonBlock" hidden>Explique o motivo
+        <textarea id="customReason" maxlength="220" placeholder="Informe o motivo da rejeição"></textarea>
+      </label>
+      <button class="danger" type="button" id="confirmReject">Confirmar rejeição</button>
+      <button class="secondary" type="button" id="cancelReject">Voltar</button>
+      <p class="small" id="reasonError" role="alert"></p>
+    </div>
+    <div id="approvedWhatsApp" hidden>
+      <h3>Atendimento rápido após aprovação</h3>
+      <p class="small">Texto preparado para o atendente usar no WhatsApp:</p>
+      <p id="whatsAppDraft" class="message"></p>
+      <div class="actions">
+        <button class="secondary" type="button" id="copyMessage">Copiar mensagem</button>
+        <button class="success" type="button" id="openWhatsApp" disabled>Abrir WhatsApp</button>
+      </div>
+      <label class="switchline"><input id="confirmPhone" type="checkbox"><span>Confirmo que o número informado é meu ou autorizado para este teste externo.</span></label>
+      <p class="small" id="whatsAppHelp">Para abrir o WhatsApp, informe seu número no pedido e marque a confirmação acima. O texto não é enviado automaticamente.</p>
+    </div>
+  </div>
+  <div class="subtle"></div>
+  <button id="restartDemo" type="button" class="outline">Reiniciar demonstração</button>
+</div>
+</section>
+</div>
+<footer>Ambiente de demonstração XTL Food. Sem conexão a Telegram, banco ou clientes reais.</footer>
+</main>
+<dialog id="closedDialog" aria-labelledby="closedTitle" aria-describedby="closedText">
+  <h2 id="closedTitle">Loja fechada no momento</h2>
+  <p id="closedText">Estamos fora do expediente. Você pode consultar o cardápio enquanto isso.</p>
+  <p class="small">Deseja receber um aviso quando abrirmos? Na demonstração você verá o alerta somente nesta página, sem ativar notificações reais.</p>
+  <div class="actions">
+    <button class="primary" type="button" id="subscribeFromDialog">Quero simular o aviso</button>
+    <button class="secondary" type="button" id="dismissClosedDialog">Continuar navegando</button>
+  </div>
+</dialog>
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+<script>
+(function(){
+"use strict";
+const $=id=>document.getElementById(id);
+const state={open:false,mode:"manual_closed",subscribed:false,order:null,count:0};
+let toastHandle;
+function showDialog(){
+ const d=$("closedDialog");
+ if(typeof d.showModal==="function" && !d.open)d.showModal();
+ else d.setAttribute("open","");
+}
+function hideDialog(){
+ const d=$("closedDialog");
+ if(typeof d.close==="function" && d.open)d.close();
+ else d.removeAttribute("open");
+}
+function toast(message){
+ const n=$("toast");n.textContent=message;n.hidden=false;
+ if(toastHandle)clearTimeout(toastHandle);
+ toastHandle=setTimeout(()=>{n.hidden=true;},7000);
+}
+function createWhatsAppMessage(){
+ const o=state.order;
+ return "Olá, "+o.name+"! Aqui é do Disk Panquecão. Seu pré-pedido "+o.id+" foi aprovado pela nossa equipe. Vamos confirmar os detalhes do atendimento. Ficou com alguma dúvida ou deseja nos informar algo mais?";
+}
+function phoneDigits(){
+ const digits=(state.order?.phone||"").replace(/\D/g,"");
+ return /^(?:[1-9]{2})9?\d{8}$/.test(digits)?digits:null;
+}
+function updateWhatsApp(){
+ if(!state.order || state.order.status!=="approved")return;
+ $("whatsAppDraft").textContent=createWhatsAppMessage();
+ const enabled=!!phoneDigits() && $("confirmPhone").checked;
+ $("openWhatsApp").disabled=!enabled;
+ $("whatsAppHelp").textContent=!phoneDigits()?
+   "Informe seu próprio WhatsApp com DDD no pedido de teste para habilitar o atalho.":
+   enabled?"O botão abrirá o WhatsApp com a mensagem preenchida, sem enviar automaticamente.":
+   "Confirme que o número é seu ou autorizado. Nenhuma mensagem será enviada automaticamente.";
+}
+function render(){
+ const status=state.open?"Loja aberta":"Loja fechada";
+ $("clientStoreStatus").textContent=status+(state.mode==="auto"?" • horário automático demonstrativo":" • controle administrativo");
+ $("adminStoreStatus").textContent=status+(state.mode==="auto"?" • modo automático":" • alteração manual");
+ $("clientStoreStatus").className="state "+(state.open?"open":"closed");
+ $("adminStoreStatus").className="state "+(state.open?"open":"closed");
+ $("modeNote").textContent=state.mode==="auto"?
+  "Automático: fora do expediente (simulado). Horários reais serão configurados pela loja.":
+  state.open?"Abertura excepcional de demonstração; não altera a loja real.":"Fechamento manual de demonstração; não altera a loja real.";
+ $("closedCallout").hidden=state.open;
+ $("openCheckout").hidden=!state.open || !!state.order;
+ $("subscriptionStatus").textContent=state.subscribed?
+  "Aviso de reabertura ativado SOMENTE nesta página de demonstração.":
+  "Nenhuma notificação real foi ativada.";
+ $("toggleSubscription").textContent=state.subscribed?"Cancelar aviso simulado":"Simular inscrição para avisos";
+ const o=state.order;
+ $("reviewButtons").hidden=!o||o.status!=="pending";
+ $("rejectionForm").hidden=!o||o.status!=="pending"||$("rejectionForm").dataset.visible!=="true";
+ $("approvedWhatsApp").hidden=!o||o.status!=="approved";
+ if(!o){
+   $("clientOrderStatus").className="state pending";
+   $("clientOrderStatus").textContent="Nenhum pré-pedido de teste enviado.";
+   $("clientOrderDetail").textContent="Aguardando uma ação de teste.";
+   $("telegramSummary").textContent="Nenhum pré-pedido pendente.";
+ }else{
+   const labels={pending:"Aguardando aprovação da loja",approved:"Pedido APROVADO pela loja",rejected:"Pedido REJEITADO pela loja"};
+   $("clientOrderStatus").className="state "+(o.status==="pending"?"pending":o.status);
+   $("clientOrderStatus").textContent=labels[o.status]+" • "+o.id;
+   $("clientOrderDetail").textContent=o.status==="rejected"?
+     "Motivo informado pela loja: "+o.reason:
+     o.status==="approved"?"A loja aprovou seu pré-pedido. Aguarde o contato ou fale com o atendimento. Nenhum pagamento foi realizado.":
+     "A loja recebeu a solicitação fictícia e ainda precisa analisar. Não preparar antes de aprovar.";
+   $("telegramSummary").textContent="Pré-pedido "+o.id+" • "+o.name+" • "+o.product+
+     " • Status: "+(o.status==="pending"?"PENDENTE":o.status==="approved"?"APROVADO":"REJEITADO");
+   if(o.status==="rejected")$("telegramSummary").textContent+=" • Motivo: "+o.reason;
+   if(o.status==="approved")updateWhatsApp();
+ }
+}
+function setStore(open,mode){
+ const prior=state.open;
+ state.open=open;state.mode=mode;render();
+ if(!open && prior){showDialog();}
+ if(open){
+   hideDialog();
+   if(!prior && state.subscribed)toast("NOTIFICAÇÃO SIMULADA: O Disk Panquecão abriu! O cardápio está disponível.");
+ }
+}
+$("openStore").addEventListener("click",()=>setStore(true,"manual_open"));
+$("closeStore").addEventListener("click",()=>setStore(false,"manual_closed"));
+$("autoStore").addEventListener("click",()=>setStore(false,"auto"));
+$("showClosedPopup").addEventListener("click",showDialog);
+$("dismissClosedDialog").addEventListener("click",hideDialog);
+$("subscribeFromDialog").addEventListener("click",()=>{state.subscribed=true;hideDialog();render();toast("Inscrição simulada. Nenhuma permissão real foi solicitada.");});
+$("toggleSubscription").addEventListener("click",()=>{state.subscribed=!state.subscribed;render();toast(state.subscribed?"Aviso simulado ativo":"Aviso simulado cancelado");});
+$("sendDemoOrder").addEventListener("click",()=>{
+ if(!state.open || state.order)return;
+ const name=$("customerName").value.trim();
+ if(name.length<2){toast("Informe o nome de teste.");return;}
+ const phone=$("customerPhone").value.replace(/\D/g,"");
+ if(phone.length && !/^(?:[1-9]{2})9?\d{8}$/.test(phone)){toast("Confira o número com DDD ou deixe em branco.");return;}
+ state.count+=1;
+ state.order={id:"DEMO-"+String(state.count).padStart(3,"0"),name,phone,product:$("demoProduct").value,status:"pending",reason:null};
+ $("rejectionForm").dataset.visible="false";
+ $("confirmPhone").checked=false;
+ render();toast("Pré-pedido de demonstração recebido. Agora aprove ou rejeite na coluna da loja.");
+});
+$("approveOrder").addEventListener("click",()=>{
+ if(!state.order || state.order.status!=="pending")return;
+ state.order.status="approved";
+ $("rejectionForm").dataset.visible="false";
+ render();toast("Cliente informado nesta tela: pedido aprovado.");
+});
+$("rejectOrder").addEventListener("click",()=>{
+ if(!state.order || state.order.status!=="pending")return;
+ $("rejectionForm").dataset.visible="true";render();
+ $("rejectionReason").focus();
+});
+$("cancelReject").addEventListener("click",()=>{$("rejectionForm").dataset.visible="false";$("reasonError").textContent="";render();});
+$("rejectionReason").addEventListener("change",()=>{
+ $("customReasonBlock").hidden=$("rejectionReason").value!=="Outro motivo";
+});
+$("confirmReject").addEventListener("click",()=>{
+ if(!state.order || state.order.status!=="pending")return;
+ let reason=$("rejectionReason").value;
+ if(reason==="Outro motivo")reason=$("customReason").value.trim();
+ if(!reason || reason==="Outro motivo" || reason.length<5){
+   $("reasonError").textContent="Informe um motivo claro antes de rejeitar.";return;
+ }
+ state.order.status="rejected";state.order.reason=reason.slice(0,220);
+ $("reasonError").textContent="";$("rejectionForm").dataset.visible="false";render();
+ toast("Cliente informado nesta tela: pedido rejeitado com motivo.");
+});
+$("confirmPhone").addEventListener("change",updateWhatsApp);
+$("copyMessage").addEventListener("click",()=>{
+ const msg=createWhatsAppMessage();
+ if(navigator.clipboard?.writeText)navigator.clipboard.writeText(msg).then(()=>toast("Mensagem copiada.")).catch(()=>toast("Não foi possível copiar. Selecione o texto manualmente."));
+ else toast("Selecione e copie o texto da mensagem acima.");
+});
+$("openWhatsApp").addEventListener("click",()=>{
+ if(!$("confirmPhone").checked || !state.order || state.order.status!=="approved")return;
+ const phone=phoneDigits();
+ if(!phone)return;
+ const url="https://wa.me/55"+phone+"?text="+encodeURIComponent(createWhatsAppMessage());
+ window.open(url,"_blank","noopener,noreferrer");
+});
+$("restartDemo").addEventListener("click",()=>{
+ state.open=false;state.mode="manual_closed";state.subscribed=false;state.order=null;
+ $("rejectionReason").value="";$("customReason").value="";
+ $("rejectionForm").dataset.visible="false";$("confirmPhone").checked=false;
+ render();showDialog();
+});
+render();
+showDialog();
+})();
+</script>
+</body>
+</html>
