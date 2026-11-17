@@ -674,7 +674,7 @@
     try { consent = window.localStorage.getItem(key); } catch { consent = null; }
 
     function enableAnalytics() {
-        if (window.fbq) return;
+        if (window.fbq) { window.fbq('consent', 'grant'); return; }
         !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
         n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
         n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
@@ -684,7 +684,7 @@
         fbq('track', 'PageView');
         fbq('track', 'ViewContent');
         document.addEventListener('click', function(event) {
-            if (event.target.closest('a.whatsapp-float')) {
+            if (consent === 'accepted' && event.target.closest('a.whatsapp-float')) {
                 fbq('track', 'Contact', {content_category:'pedido_whatsapp',
                     content_name:'Botão Flutuante WhatsApp', value:0, currency:'BRL'});
             }
@@ -692,19 +692,20 @@
     }
 
     function initAnalyticsNotice() {
-        if (consent === 'accepted') { enableAnalytics(); return; }
-        if (consent === 'rejected') return;
         const notice = document.getElementById('analyticsNotice');
         if (!notice) return;
-        notice.hidden = false;
         function choose(value) {
             consent = value;
             try { window.localStorage.setItem(key, value); } catch {}
             notice.hidden = true;
             if (value === 'accepted') enableAnalytics();
+            else if (window.fbq) window.fbq('consent', 'revoke');
         }
         document.getElementById('analyticsAccept').addEventListener('click', () => choose('accepted'));
         document.getElementById('analyticsReject').addEventListener('click', () => choose('rejected'));
+        document.getElementById('analyticsManage').addEventListener('click', () => { notice.hidden = false; });
+        if (consent === 'accepted') enableAnalytics();
+        else if (consent !== 'rejected') notice.hidden = false;
     }
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', initAnalyticsNotice, {once:true});
@@ -761,7 +762,7 @@
 </dialog>
 
 <footer>
-    <p><a href="/privacidade.html" style="color:inherit;text-decoration:underline">Privacidade e dados pessoais</a></p>
+    <p><a href="/privacidade.html" style="color:inherit;text-decoration:underline">Privacidade e dados pessoais</a> · <button type="button" id="analyticsManage" style="border:0;background:none;color:inherit;text-decoration:underline;cursor:pointer;font:inherit">Preferências de privacidade</button></p>
     <div class="container">
         <section class="footer-info" id="contato" aria-labelledby="titulo-contato">
             <h2 id="titulo-contato">Contato</h2>
