@@ -131,8 +131,26 @@ checkout.elements.consent.checked=true;
 checkout.elements.city.value='Nova Hartz';
 checkout.elements.city.dispatchEvent(new w.Event('change'));
 assert.equal(checkout.elements.neighborhood.options.length,deliveryAreas.cities['Nova Hartz'].length+2);
+assert.ok(deliveryAreas.cities['Nova Hartz'].length>=30);
+assert.ok(deliveryAreas.cities['Araricá'].length>=15);
+assert.ok(Object.values(deliveryAreas.cities).every(areas=>areas.every(a=>a.feeCents===null)));
+checkout.elements.city.value='Araricá';
+checkout.elements.city.dispatchEvent(new w.Event('change'));
+assert.equal(checkout.elements.neighborhood.options.length,deliveryAreas.cities['Araricá'].length+2);
+checkout.elements.city.value='Nova Hartz';
+checkout.elements.city.dispatchEvent(new w.Event('change'));
+assert.equal(checkout.elements.neighborhood.value,'');
 checkout.elements.neighborhood.value='Centro';
 checkout.elements.neighborhood.dispatchEvent(new w.Event('change'));
+checkout.elements.neighborhood.value='__other__';
+checkout.elements.neighborhood.dispatchEvent(new w.Event('change'));
+assert.equal(d.querySelector('#otherNeighborhoodLabel').hidden,false);
+assert.equal(checkout.elements.otherNeighborhood.required,true);
+checkout.elements.otherNeighborhood.value='Localidade informal';
+checkout.elements.neighborhood.value='Centro';
+checkout.elements.neighborhood.dispatchEvent(new w.Event('change'));
+assert.equal(d.querySelector('#otherNeighborhoodLabel').hidden,true);
+assert.equal(checkout.elements.otherNeighborhood.required,false);
 checkout.elements.street.value='Rua das Flores';
 checkout.elements.number.value='123';
 checkout.elements.postalCode.value='93890-000';
@@ -260,6 +278,21 @@ response=resFor();await handler({...request,body:{...request.body,fulfillment:{t
 assert.equal(response.code,400);assert.equal(calls,4);
 response=resFor();await handler({...request,body:{...request.body,fulfillment:{...deliveryBase,latitude:'999',longitude:'0'}}},response);
 assert.equal(response.code,400);assert.equal(calls,4);
+// O valor por bairro só é cobrado quando definido na tabela do servidor.
+// O cliente nunca fornece o preço; a API recalcula o frete.
+const serverAreas=require(path.resolve('delivery-areas.json'));
+const centerArea=serverAreas.cities['Nova Hartz'].find(a=>a.name==='Centro');
+assert.equal(centerArea.feeCents,null);
+centerArea.feeCents=450;
+try {
+ response=resFor();await handler({...request,body:{...request.body,fulfillment:{...deliveryBase,feeCents:0}}},response);
+ assert.equal(response.code,200);assert.equal(calls,5);
+ assert.match(lastTelegramCaption,/Taxa:.*4,50/);
+ assert.match(lastTelegramCaption,/Total:/);
+} finally { centerArea.feeCents=null; }
+response=resFor();await handler({...request,body:{...request.body,fulfillment:{...deliveryBase,neighborhood:'__other__',otherNeighborhood:'Estrada particular'}}},response);
+assert.equal(response.code,200);assert.equal(calls,6);
+assert.match(lastTelegramCaption,/Taxa: a confirmar/);
 process.env.ORDER_ESTIMATE_DELIVERY_MIN='45';
 const config=require(path.resolve('api/order-config.js'));
 const configRes={setHeader(){},json(data){this.data=data;return this}};
