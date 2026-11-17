@@ -135,7 +135,7 @@ assert.equal(checkout.elements.longitude.value,'-50.938');
 async function submit(){tokenCb('fake');await checkout.onsubmit({preventDefault(){},currentTarget:checkout})}
 verified=false;await submit();assert.equal(calls,0);
 verified=true;deliver=false;await submit();assert.equal(calls,1);assert.equal(d.querySelector('.cart-stepper span').textContent,'2');
-deliver=true;await submit();assert.equal(calls,2);assert.match(d.querySelector('#orderStatus').textContent,/Aguarde a confirmação/);assert.equal(d.querySelector('#cartEmpty').hidden,false);
+deliver=true;await submit();assert.equal(calls,2);assert.match(d.querySelector('#orderStatus').textContent,/TESTE.*NÃO PREPARAR/);assert.equal(d.querySelector('#cartEmpty').hidden,false);
 assert.match(d.querySelector('#orderStatus').textContent,/TESTE/);
 assert.equal(lastOrder.fulfillment.type,'delivery');
 assert.equal(lastOrder.fulfillment.address,'Rua das Flores, 123, Centro, Nova Hartz');
