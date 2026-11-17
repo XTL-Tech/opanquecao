@@ -40,9 +40,20 @@ Os testes simulam Telegram e Turnstile; não enviam pedidos reais. Servir soment
 
 No ambiente Vercel correto, cadastrar `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`, `TURNSTILE_SECRET_KEY` e `TURNSTILE_SITE_KEY`. Nunca versionar valores. `ORDER_PRINT_WIDTH_MM` é opcional: padrão 58; suporta 40–210 mm ou `a4`. Validar no equipamento real antes de uso operacional.
 
-Sem configuração completa, o usuário continua pelo WhatsApp. Abrir o WhatsApp não equivale a enviar: o cliente deve enviar a mensagem e a loja confirmar o pedido. A mensagem não inclui subtotal.
+Sem configuração completa, o checkout digital fica indisponível e informa que nenhuma solicitação foi enviada. O carrinho deixa de enviar pedidos via WhatsApp. A loja continua responsável por confirmar disponibilidade, taxa e prazo.
 
 O carrinho fica somente no navegador por até 24 horas após a última atualização. Ao restaurar, produtos/opções são validados e preços recalculados pelo catálogo atual. Nome/telefone não são persistidos. Armazenamento bloqueado ou inválido não impede o pedido.
+
+## Checkout: entrega, retirada e mesa (branch feat/checkout-entrega-retirada-mesa)
+
+- O carrinho oferece **Entrega**, **Retirada** ou **Comer no local**. Entrega requer endereço completo; mesa exige identificação. Não são cobradas taxas inventadas.
+- Para entrega, o cliente pode tocar em **Usar minha localização atual**: o navegador solicita permissão na hora e, se autorizada, envia coordenadas GPS junto ao endereço para a comanda Telegram. Não há captura automática. Precisão do GPS é aproximada.
+- Pedidos digitais são enviados à loja por Telegram com PDF de 58 mm (largura configurável); a tela informa que se trata de um **pré-pedido**, aguardando confirmação pelo WhatsApp fornecido. O sistema **não envia mensagens automáticas de WhatsApp**.
+- Sem Turnstile ou Telegram configurados, o carrinho indica indisponibilidade, **sem criar pedido ou mandar carrinho via WhatsApp**. O link genérico de contato, em outras áreas do site, não faz parte do checkout.
+- A API valida o tipo de atendimento, endereço, mesa e latitude/longitude no servidor. Retirada e mesa não transmitem GPS.
+- `ORDER_ESTIMATE_DELIVERY_MIN` e `ORDER_ESTIMATE_PICKUP_MIN` (opcionais, inteiros de 5 a 240) permitem à **loja** declarar prazo estimado exibido ao cliente. Se não forem configurados, o site informa que o prazo será confirmado pela loja. Nunca inventar previsão nem prometer prazo fixo.
+- Testes automatizados: `npm ci && npm test`. O workflow GitHub Actions `.github/workflows/order-flow.yml` roda a suíte nas branches `feat/**` e nos PRs para `main`, sem credenciais reais.
+- Antes de ativar os pedidos: configurar os tokens do Telegram e Turnstile no ambiente Vercel correto, realizar envio de TESTE para chat de homologação e validar PDF na impressora física. Confirmar com a loja os prazos, taxas e raio de entrega.
 
 ## UX desta branch
 
@@ -62,7 +73,7 @@ Fotos antigas na raiz de `img/` e favicon legado serão removidos apenas após c
 
 ## Limites e pendências
 
-Entrega/retirada/mesa, endereço, pagamento, edição de observações no carrinho e revisão final ainda precisam ser implementados. Telegram real, prevenção de duplicidades e impressão física aguardam validação. A fase 1 ainda não está encerrada. Não exibir avaliações, escassez ou selos de popularidade sem dados reais.
+Entrega/retirada/mesa e endereço já estão implementados nesta branch. Pagamento, edição de observações no carrinho e revisão final seguem pendentes. Telegram real, prevenção de duplicidades e impressão física aguardam validação. A fase 1 ainda não está encerrada. Não exibir avaliações, escassez ou selos de popularidade sem dados reais.
 
 ## Publicação e recuperação
 
@@ -74,7 +85,7 @@ O card inteiro abre a configuração, além do botão de adicionar. Os complemen
 
 Para outros produtos, o catálogo ainda não fornece uma tabela comercial de adicionais. Não há cobrança inventada: o modelo de grupos poderá ser ampliado após definição de ingredientes, preços, limites e elegibilidade. Não usar o campo de observações como autorização automática de adicionais pagos.
 
-## Validação do preview — 15/11/2026
+## Validação histórica do preview — 15/11/2026
 
 Deploy `a5d8896c9c42157332ff4debf7498f18b7b71bbf` confirmado como concluído no GitHub/Vercel. Acesso autenticado ao preview validado pelo navegador.
 
