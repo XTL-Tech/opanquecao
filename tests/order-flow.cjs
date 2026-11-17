@@ -15,12 +15,14 @@ let mockEnabled=false,verified=true,deliver=true,calls=0,tokenCb,lastOrder;
 w.turnstile={render(_,o){tokenCb=o.callback;return 1},reset(){}};
 const handler=require(path.resolve('api/order.js'));
 const {PDFDocument}=require(path.resolve('node_modules/pdf-lib'));
-Object.assign(process.env,{TELEGRAM_BOT_TOKEN:'fake',TELEGRAM_CHAT_ID:'fake',TURNSTILE_SECRET_KEY:'fake'});
+Object.assign(process.env,{TELEGRAM_BOT_TOKEN:'fake',TELEGRAM_CHAT_ID:'fake',TURNSTILE_SECRET_KEY:'fake',VERCEL_ENV:'preview'});
 global.fetch=async (url,init)=>{
  if(url.endsWith('siteverify'))return {json:async()=>({success:verified})};
  if(url.endsWith('sendDocument')){
   calls++; const pdf=await PDFDocument.load(await init.body.get('document').arrayBuffer());
   assert.ok(Math.abs(pdf.getPage(0).getWidth()-58*72/25.4)<0.1);
+  assert.match(init.body.get('caption'),/TESTE - NAO PREPARAR/);
+  assert.match(init.body.get('document').name,/TESTE-nao-preparar/);
   return {ok:deliver,json:async()=>({ok:deliver})};
  }
  if(url==='/api/order-config')return {json:async()=>({siteKey:mockEnabled?'fake':null})};
@@ -133,6 +135,7 @@ async function submit(){tokenCb('fake');await checkout.onsubmit({preventDefault(
 verified=false;await submit();assert.equal(calls,0);
 verified=true;deliver=false;await submit();assert.equal(calls,1);assert.equal(d.querySelector('.cart-stepper span').textContent,'2');
 deliver=true;await submit();assert.equal(calls,2);assert.match(d.querySelector('#orderStatus').textContent,/Aguarde a confirmação/);assert.equal(d.querySelector('#cartEmpty').hidden,false);
+assert.match(d.querySelector('#orderStatus').textContent,/TESTE/);
 assert.equal(lastOrder.fulfillment.type,'delivery');
 assert.equal(lastOrder.fulfillment.address,'Rua das Flores, 123, Centro, Nova Hartz');
 assert.equal(lastOrder.fulfillment.latitude,'-29.585');
