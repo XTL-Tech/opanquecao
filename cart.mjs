@@ -285,13 +285,11 @@ async function loadDeliveryAreas() {
     await deliveryAreasRequest;
 }
 function updateNeighborhoodList() {
-    const oldSelection = deliveryNeighborhood.value;
     deliveryNeighborhood.replaceChildren(new Option('Selecione o bairro', ''));
     const areas = deliveryAreas?.cities?.[deliveryCity.value] || [];
     for (const area of areas) deliveryNeighborhood.add(new Option(area.name, area.name));
     if (areas.length) deliveryNeighborhood.add(new Option('Outro bairro / localidade', notListedValue));
     deliveryNeighborhood.disabled = !areas.length;
-    if (areas.some(area => area.name === oldSelection)) deliveryNeighborhood.value = oldSelection;
     updateDeliveryFee();
 }
 function updateDeliveryFee() {
