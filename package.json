@@ -6,6 +6,6 @@
     "jsdom": "^31.0.1"
   },
   "scripts": {
-    "test": "node tests/order-flow.cjs && node tests/supabase-health.cjs"
+    "test": "node tests/order-flow.cjs && node tests/catalog-source.cjs && node tests/supabase-health.cjs"
   }
 }
