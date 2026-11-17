@@ -25,6 +25,21 @@ Cardápio e pré-pedido do Disk Panquecão, Nova Hartz/RS. HTML, CSS e JavaScrip
 | tests/order-flow.cjs | Testes funcionais com serviços simulados |
 | docs/ROADMAP.md | Histórico do roadmap e pendências |
 
+## Entregas por cidade, bairro e taxa (branch feat/panquecas-dois-sabores-selecao)
+
+- O cliente escolhe somente **Nova Hartz/RS** ou **Araricá/RS**. Cidade, bairro/localidade, rua/estrada e número são obrigatórios em **Entrega**. CEP, complemento, ponto de referência e GPS são opcionais (o GPS continua condicionado à permissão explícita).
+- As opções de bairro/localidade são carregadas de `delivery-areas.json`, filtradas pela cidade. **Outro bairro / localidade** permite informar regiões que não constem da lista, sempre sujeitas à confirmação manual.
+- Cadastro inicial: localidades identificadas por fontes municipais e bases públicas (algumas são **loteamentos e comunidades rurais**, não bairros administrativos). Araricá: [Plano Diretor municipal](https://ararica.rs.gov.br/uploads/legislacao/59/f_uCdK2QK_Lv9eBhp9vbxLdMQP1_9hal.pdf) e [Plano Municipal de Cultura](https://snc.cultura.gov.br/media/docs/plano/2137/ilovepdf_merged-2_vhVX78U.pdf); Nova Hartz: [cadastro municipal por região](https://vet.novahartz.rs.gov.br/) e [notícia sobre bairros atendidos](https://www.correiodopovo.com.br/not%C3%ADcias/cidades/entregue-primeira-etapa-da-obra-de-implanta%C3%A7%C3%A3o-do-sistema-de-abastecimento-de-%C3%A1gua-em-nova-hartz-1.1560001). **A lista e o raio efetivo de atendimento precisam de validação comercial da loja.**
+- Cada entrada possui `feeCents`. Enquanto for `null`, **não há taxa definida**, o cliente vê "Taxa de entrega: a confirmar", e a comanda Telegram exibe a mesma informação. Não somar taxa desconhecida ao subtotal.
+- Para configurar futuramente uma taxa de **R$ 5,00** para um bairro: trocar o respectivo `"feeCents": null` por `"feeCents": 500` em `delivery-areas.json`, via Pull Request aprovado. `0` representa entrega grátis. Nunca colocar preços em reais decimais: os valores são em centavos.
+- A API verifica cidade/bairro no catálogo do servidor, recalcula o valor e o inclui na comanda. Nunca confiar em cidade, taxa ou subtotal enviados pelo cliente. Localidade não cadastrada requer revisão humana, sem cobrança automática.
+- Antes de ativar qualquer taxa, a gerência deve aprovar a tabela comercial e as exceções de área de cobertura. O pré-pedido não representa aceitação automática nem cobrança final.
+
+## Panquecas meio a meio
+
+- Cada panqueca 2 sabores exige seleção de **duas metades diferentes**. Nos dois salgados, a escolha vem do cardápio de panquecas salgadas; nos dois doces, das doces; na mista, a primeira salgada e a segunda doce.
+- As escolhas são validadas no servidor e impressas separadamente na comanda. O preço atual de **R$ 42,00** é preservado.
+
 ## Instalação e testes
 
 Use Node.js 22.13+ (ou versão compatível com as dependências do lockfile).
