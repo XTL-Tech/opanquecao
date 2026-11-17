@@ -463,6 +463,21 @@
         #cartTotal { font-size: 21px; color: #381d20; }
         .cart-disclaimer, .cart-next { font-size: 12px; line-height: 1.5; color: #705c59; margin: 8px 0 0; }
         .cart-next { text-align: center; }
+        .fulfillment-options { border: 0; padding: 0; margin: 12px 0 14px; }
+        .fulfillment-options legend { font-weight: 700; font-size: 15px; margin-bottom: 10px; }
+        .fulfillment-choices { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 7px; }
+        .fulfillment-choices label { display: flex; gap: 6px; justify-content: center; align-items: center; flex-wrap: wrap; padding: 10px 5px; border: 1px solid #c9b4ad; border-radius: 10px; text-align: center; font-weight: 700; font-size: 12px; line-height: 1.4; cursor: pointer; background: #fff; }
+        .fulfillment-choices input { width: 18px; height: 18px; min-height: 18px; flex: 0 0 18px; accent-color: #741c2d; }
+        .fulfillment-choices label:has(input:checked) { border-color: #741c2d; background: #fff1e9; box-shadow: inset 0 0 0 1px #741c2d; }
+        .fulfillment-panel { border: 1px solid #ecdcd5; border-radius: 12px; padding: 12px; margin: 0 0 12px; }
+        .fulfillment-panel[hidden] { display: none; }
+        .fulfillment-panel label { display: block; }
+        .fulfillment-panel textarea { width: 100%; min-height: 75px; resize: vertical; }
+        #captureLocation { display: inline-flex; align-items: center; justify-content: center; width: 100%; min-height: 44px; padding: 10px; margin-top: 8px; background: #f4e6dc; color: #381d20; border: 1px solid #c9b4ad; border-radius: 10px; font-weight: 700; }
+        #locationStatus, #fulfillmentEstimate { font-size: 12px; line-height: 1.5; color: #705c59; margin: 8px 0; }
+        #orderUnavailable { font-size: 13px; padding: 12px; border-radius: 10px; background: #fff3da; }
+        @media (max-width: 370px) { .fulfillment-choices { grid-template-columns: 1fr; } .fulfillment-choices label { justify-content: flex-start; } }
+
         #cartWhatsApp { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 52px; padding: 12px; margin-top: 16px; border-radius: 12px; background: #14733b; color: white; font-size: 15px; font-weight: 700; text-decoration: none; text-align: center; }
         #cartDialog [hidden] { display: none; }
         #orderStatus:not(:empty) { margin-top: 12px; padding: 12px; border-radius: 10px; background: #fff3da; font-size: 14px; }
@@ -983,15 +998,41 @@ src="https://www.facebook.com/tr?id=766179976513223&ev=PageView&noscript=1"
         <p class="cart-disclaimer">Entrega e adicionais serão combinados com a loja.</p>
     </div>
     <form id="checkout" class="order-form" hidden>
+        <fieldset class="fulfillment-options">
+            <legend>Como deseja receber?</legend>
+            <div class="fulfillment-choices">
+                <label><input type="radio" name="fulfillment" value="delivery" required checked> Entrega</label>
+                <label><input type="radio" name="fulfillment" value="pickup" required> Retirada</label>
+                <label><input type="radio" name="fulfillment" value="table" required> Comer no local</label>
+            </div>
+        </fieldset>
+        <div class="fulfillment-panel" id="fulfillmentDelivery">
+            <label>Endereço de entrega (rua, número, bairro e cidade)
+                <textarea name="address" required minlength="8" maxlength="220" autocomplete="street-address" placeholder="Ex.: Rua..., 123, Centro, Nova Hartz"></textarea>
+            </label>
+            <button type="button" id="captureLocation">Usar minha localização atual (opcional)</button>
+            <p id="locationStatus" role="status" aria-live="polite">A localização só será solicitada se você tocar no botão. Confirme também o endereço.</p>
+            <input type="hidden" name="latitude" id="geoLatitude">
+            <input type="hidden" name="longitude" id="geoLongitude">
+        </div>
+        <div class="fulfillment-panel" id="fulfillmentPickup" hidden>
+            <p>Retirada no estabelecimento. A loja confirmará quando o pedido estará pronto.</p>
+        </div>
+        <div class="fulfillment-panel" id="fulfillmentTable" hidden>
+            <label>Número ou identificação da mesa
+                <input name="table" type="text" minlength="1" maxlength="12" autocomplete="off" placeholder="Ex.: 05">
+            </label>
+        </div>
+        <p id="fulfillmentEstimate" role="status" aria-live="polite">O prazo será informado pela loja na confirmação.</p>
         <label>Nome <input name="name" required maxlength="80" autocomplete="name"></label>
         <label>WhatsApp com DDD <input name="phone" type="tel" required maxlength="20" autocomplete="tel"></label>
-        <label><span><input name="consent" type="checkbox" required style="width:auto; min-height:auto"> Aceito que a loja use meu telefone para responder a este pedido.</span></label>
+        <label><span><input name="consent" type="checkbox" required style="width:auto; min-height:auto"> Autorizo a loja a usar meu contato exclusivamente para atender e confirmar este pedido.</span></label>
         <div id="orderChallenge"></div>
-        <button id="sendOrder" disabled>Enviar pedido à loja</button>
+        <button id="sendOrder" disabled>Enviar solicitação à loja</button>
     </form>
     <p id="orderStatus" role="status" aria-live="polite"></p>
-    <a id="cartWhatsApp" class="cart-whatsapp" hidden target="_blank" rel="noopener noreferrer"><i class="fab fa-whatsapp" aria-hidden="true"></i> Enviar pedido pelo WhatsApp <span aria-hidden="true">→</span></a>
-    <p class="cart-next">O WhatsApp abrirá com seus itens. Toque em enviar na conversa; a loja confirmará o pedido.</p>
+    <p id="orderUnavailable" hidden role="status">O envio digital está indisponível no momento. Não foi enviado nenhum pedido. Entre em contato com a loja para atendimento.</p>
+    <p class="cart-next">Este é um pré-pedido. A loja confirmará o atendimento e o prazo pelo WhatsApp informado.</p>
     </footer>
 </dialog>
 <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async></script>
