@@ -258,7 +258,57 @@ byId('menuContent').addEventListener('click', event => {
 });
 
 const checkoutForm = byId('checkout');
+let deliveryAreas;
+let deliveryAreasRequest;
+const deliveryCity = byId('deliveryCity');
+const deliveryNeighborhood = byId('deliveryNeighborhood');
+const otherNeighborhood = byId('otherNeighborhood');
+const notListedValue = '__other__';
+const deliveryFields = ['city', 'neighborhood', 'street', 'number'];
 let estimates = {};
+
+async function loadDeliveryAreas() {
+    if (deliveryAreas) return;
+    deliveryAreasRequest ??= fetch('/delivery-areas.json', { cache: 'no-store' }).then(async response => {
+        if (!response.ok) throw new Error('Não foi possível carregar as áreas de entrega.');
+        const data = await response.json();
+        if (!data || !data.cities || !Array.isArray(data.cities['Nova Hartz']) || !Array.isArray(data.cities['Araricá'])) {
+            throw new Error('Cadastro de bairros indisponível.');
+        }
+        deliveryAreas = data;
+        deliveryCity.replaceChildren(new Option('Selecione a cidade', ''));
+        for (const city of Object.keys(data.cities)) {
+            deliveryCity.add(new Option(city, city));
+        }
+        updateNeighborhoodList();
+    }).catch(error => { deliveryAreasRequest = undefined; throw error; });
+    await deliveryAreasRequest;
+}
+function updateNeighborhoodList() {
+    const oldSelection = deliveryNeighborhood.value;
+    deliveryNeighborhood.replaceChildren(new Option('Selecione o bairro', ''));
+    const areas = deliveryAreas?.cities?.[deliveryCity.value] || [];
+    for (const area of areas) deliveryNeighborhood.add(new Option(area.name, area.name));
+    if (areas.length) deliveryNeighborhood.add(new Option('Outro bairro / localidade', notListedValue));
+    deliveryNeighborhood.disabled = !areas.length;
+    if (areas.some(area => area.name === oldSelection)) deliveryNeighborhood.value = oldSelection;
+    updateDeliveryFee();
+}
+function updateDeliveryFee() {
+    const isDelivery = selectedFulfillment() === 'delivery';
+    const another = isDelivery && deliveryNeighborhood.value === notListedValue;
+    byId('otherNeighborhoodLabel').hidden = !another;
+    otherNeighborhood.required = another;
+    if (!another) otherNeighborhood.value = '';
+    const area = deliveryAreas?.cities?.[deliveryCity.value]?.find(row => row.name === deliveryNeighborhood.value);
+    const fee = isDelivery && Number.isSafeInteger(area?.feeCents) && area.feeCents >= 0 ? area.feeCents : null;
+    byId('deliveryFeeStatus').textContent = fee === null
+        ? 'Taxa de entrega: a confirmar pela loja antes de aceitar o pedido. O subtotal não inclui a taxa.'
+        : 'Taxa de entrega: ' + money(fee) + '. Total estimado com entrega: ' +
+            money(cart.reduce((sum, line) => sum + line.cents * line.quantity, 0) + fee);
+}
+deliveryCity.addEventListener('change', updateNeighborhoodList);
+deliveryNeighborhood.addEventListener('change', updateDeliveryFee);
 function selectedFulfillment() {
     return checkoutForm.querySelector('input[name="fulfillment"]:checked')?.value || '';
 }
@@ -267,8 +317,9 @@ function updateFulfillment() {
     for (const [type, id] of [['delivery', 'fulfillmentDelivery'], ['pickup', 'fulfillmentPickup'], ['table', 'fulfillmentTable']]) {
         byId(id).hidden = type !== mode;
     }
-    checkoutForm.elements.address.required = mode === 'delivery';
+    for (const key of deliveryFields) checkoutForm.elements[key].required = mode === 'delivery';
     checkoutForm.elements.table.required = mode === 'table';
+    updateDeliveryFee();
     if (mode !== 'delivery') {
         byId('geoLatitude').value = '';
         byId('geoLongitude').value = '';
@@ -307,6 +358,11 @@ let configPromise;
 byId('openCart').onclick = async () => {
     refresh();
     byId('cartDialog').showModal();
+    try {
+        await loadDeliveryAreas();
+    } catch (error) {
+        byId('deliveryFeeStatus').textContent = error.message + ' Escolha retirada ou tente novamente.';
+    }
     if (widget !== undefined) return;
     try {
         configPromise ??= fetch('/api/order-config').then(response => response.json());
@@ -348,7 +404,14 @@ byId('checkout').onsubmit = async event => {
                 phone: form.elements.phone.value.replace(/\D/g, ''), challenge,
                 fulfillment: {
                     type: selectedFulfillment(),
-                    address: form.elements.address.value.trim(),
+                    city: form.elements.city.value,
+                    neighborhood: form.elements.neighborhood.value,
+                    otherNeighborhood: otherNeighborhood.value.trim(),
+                    street: form.elements.street.value.trim(),
+                    number: form.elements.number.value.trim(),
+                    postalCode: form.elements.postalCode.value.trim(),
+                    complement: form.elements.complement.value.trim(),
+                    reference: form.elements.reference.value.trim(),
                     table: form.elements.table.value.trim(),
                     latitude: byId('geoLatitude').value || null,
                     longitude: byId('geoLongitude').value || null
@@ -358,6 +421,7 @@ byId('checkout').onsubmit = async event => {
         if (!response.ok) throw new Error(result.error);
         cart.length = 0;
         form.reset();
+        updateNeighborhoodList();
         updateFulfillment();
         status.textContent = result.test
             ? 'TESTE #' + result.id + ' enviado ao grupo da loja. NÃO PREPARAR. Nenhum pedido real foi realizado.'
