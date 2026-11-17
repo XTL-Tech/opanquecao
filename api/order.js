@@ -53,6 +53,7 @@ module.exports = async function handler(req, res) {
         return res.status(400).json({ error: 'Confira os itens e as opções do carrinho.' });
     }
     const id = randomUUID().slice(0, 8);
+    const testMode = process.env.VERCEL_ENV !== 'production';
     const subtotal = items.reduce((total, item) => total + item.cents * item.quantity, 0);
     try {
         const check = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
@@ -61,17 +62,17 @@ module.exports = async function handler(req, res) {
         });
         const verified = await check.json();
         if (!verified.success) return res.status(400).json({ error: 'Refaça a verificação de segurança.' });
-        const pdf = await orderPdf({ id, name: name.trim(), phone, items, subtotal, money, fulfillment: delivery });
+        const pdf = await orderPdf({ id, name: name.trim(), phone, items, subtotal, money, fulfillment: delivery, testMode });
         const form = new FormData();
         form.set('chat_id', TELEGRAM_CHAT_ID);
-        form.set('caption', `Pré-pedido #${id} · ${name.trim()} · ${{delivery:'Entrega',pickup:'Retirada',table:'Mesa'}[method]} · ${money(subtotal)}
+        form.set('caption', `${testMode ? 'TESTE - NAO PREPARAR!\n' : ''}Pré-pedido #${id} · ${name.trim()} · ${{delivery:'Entrega',pickup:'Retirada',table:'Mesa'}[method]} · ${money(subtotal)}
 Aguardando confirmação da loja.`);
-        form.set('document', new Blob([pdf], { type: 'application/pdf' }), `pre-pedido-${id}.pdf`);
+        form.set('document', new Blob([pdf], { type: 'application/pdf' }), `${testMode ? 'TESTE-nao-preparar-' : 'pre-pedido-'}${id}.pdf`);
         const sent = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendDocument`, {
             method: 'POST', body: form, signal: AbortSignal.timeout(8000)
         });
         if (!sent.ok || !(await sent.json()).ok) throw new Error('Telegram indisponível');
-        return res.status(200).json({ id });
+        return res.status(200).json({ id, test: testMode });
     } catch {
         return res.status(502).json({ error: 'Não foi possível confirmar o envio. Fale com a loja antes de reenviar.' });
     }
