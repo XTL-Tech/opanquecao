@@ -478,6 +478,20 @@
         .fulfillment-choices label { display: flex; gap: 6px; justify-content: center; align-items: center; flex-wrap: wrap; padding: 10px 5px; border: 1px solid #c9b4ad; border-radius: 10px; text-align: center; font-weight: 700; font-size: 12px; line-height: 1.4; cursor: pointer; background: #fff; }
         .fulfillment-choices input { width: 18px; height: 18px; min-height: 18px; flex: 0 0 18px; accent-color: #741c2d; }
         .fulfillment-choices label:has(input:checked) { border-color: #741c2d; background: #fff1e9; box-shadow: inset 0 0 0 1px #741c2d; }
+        .payment-options { border: 1px solid #ecdcd5; border-radius: 14px; padding: 13px; margin: 12px 0; }
+        .payment-options > legend { font-weight: 800; padding: 0 5px; color: #381d20; }
+        .payment-choices { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; margin: 10px 0; }
+        .payment-choices label { display: flex; align-items: center; gap: 8px; padding: 12px 9px; min-height: 49px; border: 1px solid #dac5b8; border-radius: 11px; background: #fff; font-size: 13px; font-weight: 700; cursor: pointer; }
+        .payment-choices label:has(input:checked) { background: #fff1e9; border-color: #741c2d; box-shadow: inset 0 0 0 1px #741c2d; }
+        .payment-choices input { accent-color: #741c2d; width: 18px; height: 18px; min-height: 18px; flex: 0 0 18px; }
+        #cashChangeGroup[hidden], #changeForField[hidden] { display: none; }
+        #cashChangeGroup { margin-top: 12px; padding: 11px; border-radius: 10px; background: #fff8ef; }
+        #cashChangeGroup label.change-toggle { display: flex; gap: 9px; align-items: center; min-height: 42px; font-weight: 700; }
+        #cashChangeGroup label.change-toggle input { width: 18px; height: 18px; min-height: 18px; accent-color: #741c2d; }
+        #changeForField { display: block; margin: 6px 0 4px; font-weight: 700; }
+        #changeForField input { display: block; margin-top: 6px; width: 100%; min-height: 46px; font: inherit; border: 1px solid #c9aaa0; border-radius: 10px; padding: 10px; background: white; color: #381d20; }
+        #paymentHint { font-size: 12px; color: #705c59; line-height: 1.5; padding: 4px 0; }
+        @media (max-width: 360px) { .payment-choices { grid-template-columns: 1fr; } }
         .fulfillment-panel { border: 1px solid #ecdcd5; border-radius: 12px; padding: 12px; margin: 0 0 12px; }
         .fulfillment-panel[hidden] { display: none; }
         .fulfillment-panel label { display: block; }
@@ -1137,6 +1151,22 @@ src="https://www.facebook.com/tr?id=766179976513223&ev=PageView&noscript=1"
         <p id="fulfillmentEstimate" role="status" aria-live="polite">O prazo será informado pela loja na confirmação.</p>
         <label>Nome <input name="name" required maxlength="80" autocomplete="name"></label>
         <label>WhatsApp com DDD <input name="phone" type="tel" required maxlength="20" autocomplete="tel"></label>
+        <fieldset class="payment-options" id="paymentOptions">
+            <legend>Como deseja pagar? *</legend>
+            <div class="payment-choices">
+                <label><input type="radio" name="paymentMethod" value="cash" required> Dinheiro</label>
+                <label><input type="radio" name="paymentMethod" value="credit" required> Cartão de crédito</label>
+                <label><input type="radio" name="paymentMethod" value="debit" required> Cartão de débito</label>
+                <label><input type="radio" name="paymentMethod" value="pix" required> Pix</label>
+            </div>
+            <div id="cashChangeGroup" hidden>
+                <label class="change-toggle"><input name="needsChange" type="checkbox"> Preciso de troco</label>
+                <label id="changeForField" hidden>Troco para quanto? (R$) *
+                    <input name="changeFor" type="text" inputmode="decimal" maxlength="12" placeholder="Ex.: 50,00" autocomplete="off" aria-describedby="paymentHint">
+                </label>
+            </div>
+            <p id="paymentHint" role="status" aria-live="polite">Escolha a forma de pagamento. Não há cobrança online nesta etapa.</p>
+        </fieldset>
         <label><span><input name="consent" type="checkbox" required style="width:auto; min-height:auto"> Autorizo a loja a usar meu contato exclusivamente para atender e confirmar este pedido.</span></label>
         <div id="orderChallenge"></div>
         <button id="sendOrder" disabled>Enviar solicitação à loja</button>
