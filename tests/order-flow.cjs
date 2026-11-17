@@ -25,7 +25,7 @@ global.fetch=async (url,init)=>{
   assert.match(init.body.get('document').name,/TESTE-nao-preparar/);
   return {ok:deliver,json:async()=>({ok:deliver})};
  }
- if(url==='/api/order-config')return {json:async()=>({siteKey:mockEnabled?'fake':null})};
+ if(url==='/api/order-config')return {json:async()=>({siteKey:mockEnabled?'fake':null,testMode:true})};
  if(url==='/api/order'){
  lastOrder=JSON.parse(init.body);
  const res={setHeader(){},status(n){this.code=n;return this},json(data){this.data=data;return this}};
@@ -128,6 +128,7 @@ checkout.elements.phone.value='(51) 99999-9999';
 checkout.elements.consent.checked=true;
 checkout.elements.address.value='Rua das Flores, 123, Centro, Nova Hartz';
 assert.equal(d.querySelector('#fulfillmentDelivery').hidden,false);
+assert.match(d.querySelector('#orderStatus').textContent,/AMBIENTE DE TESTE/);
 d.querySelector('#captureLocation').click();
 assert.equal(checkout.elements.latitude.value,'-29.585');
 assert.equal(checkout.elements.longitude.value,'-50.938');
