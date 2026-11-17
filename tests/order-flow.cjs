@@ -233,7 +233,10 @@ assert.throws(()=>priceOrder(catalog,[{category:'panquecas-salgadas',product:'Ba
 d.querySelector('input[name="fulfillment"][value="table"]').click();
 assert.equal(d.querySelector('#fulfillmentTable').hidden,false);
 assert.equal(d.querySelector('#fulfillmentDelivery').hidden,true);
-assert.equal(checkout.elements.address.required,false);
+assert.equal(checkout.elements.city.required,false);
+assert.equal(checkout.elements.neighborhood.required,false);
+assert.equal(checkout.elements.street.required,false);
+assert.equal(checkout.elements.number.required,false);
 assert.equal(checkout.elements.table.required,true);
 checkout.elements.table.value='Mesa 05';
 checkout.elements.name.value='Cliente fictício'; checkout.elements.phone.value='51999999999';
@@ -255,7 +258,7 @@ response=resFor();await handler({...request,body:{...request.body,fulfillment:{.
 assert.equal(response.code,400);assert.equal(calls,4);
 response=resFor();await handler({...request,body:{...request.body,fulfillment:{type:'table',table:'',address:''}}},response);
 assert.equal(response.code,400);assert.equal(calls,4);
-response=resFor();await handler({...request,body:{...request.body,fulfillment:{type:'delivery',address:'Rua das Flores, 123, Centro',latitude:'999',longitude:'0'}}},response);
+response=resFor();await handler({...request,body:{...request.body,fulfillment:{...deliveryBase,latitude:'999',longitude:'0'}}},response);
 assert.equal(response.code,400);assert.equal(calls,4);
 process.env.ORDER_ESTIMATE_DELIVERY_MIN='45';
 const config=require(path.resolve('api/order-config.js'));
