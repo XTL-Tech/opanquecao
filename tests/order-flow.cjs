@@ -137,7 +137,7 @@ const mandatoryCity=checkout.elements.city;
 mandatoryCity.dispatchEvent(new w.Event('invalid',{cancelable:true}));
 assert.match(d.querySelector('#orderStatus').textContent,/Preencha ou corrija/);
 assert.match(d.querySelector('#orderStatus').textContent,/NÃO foi enviado/);
-mandatoryCity.dispatchEvent(new w.Event('input'));
+mandatoryCity.dispatchEvent(new w.Event('input',{bubbles:true}));
 assert.equal(mandatoryCity.getAttribute('aria-invalid'),null);
 checkout.elements.name.value='Cliente fictício';
 checkout.elements.phone.value='(51) 99999-9999';
