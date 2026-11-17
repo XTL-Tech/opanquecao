@@ -1,0 +1,36 @@
+# Disk Panquecão — Referência ampliada
+
+## Empresa
+Nome de atendimento: Disk Panquecão, também O Panquecão. Serviço de alimentação em Nova Hartz, RS, Brasil. O site informa atuação desde 2017, sem comprovação independente nesta referência.
+Cardápio: https://opanquecao.vercel.app/#cardapio. Contato: (51) 9 9738-3849. Referência espacial exibida: Praça do Trabalhador.
+
+## Horário (informativo, não operacional)
+Um diretório comercial público exibe quarta, quinta, sexta, sábado e domingo, 19h–23h; segunda e terça fechadas.
+Fonte consultada: https://es.restaurantguru.com/Disk-Panquecao-Nova-Hartz
+Status: NÃO confirmado pelo responsável em 17/11/2026. Não usar esses horários para ativar/bloquear checkout, prometer entrega ou marcar aberto/fechado em tempo real.
+
+## Categorias do cardápio (12 categorias, 82 produtos na data de revisão)
+- AÇAÍ — 1 produto(s)
+- PANQUECAS SALGADAS — 15 produto(s)
+- PANQUECAS DOCES — 14 produto(s)
+- PANQUECAS 2 SABORES — 3 produto(s)
+- LASANHAS DE MASSA DE PANQUECA — 5 produto(s)
+- FRANGO FRITO CROCRANTE NO POTE — 4 produto(s)
+- BATATAS FRITAS — 3 produto(s)
+- MASSAS — 4 produto(s)
+- PÃOKECÃO — 3 produto(s)
+- BEBIDAS — 11 produto(s)
+- COCKTAILS COM ÁLCOOL — 12 produto(s)
+- COCKTAILS SEM ÁLCOOL (MOCKTAILS) — 7 produto(s)
+
+## Atendimento
+Entrega: Nova Hartz e Araricá, com cobertura a confirmar.
+Taxas de referência informadas pela gestão: Nova Hartz R$ 7,00 e Araricá R$ 10,00. A versão pública original não calcula frete por bairro; confirmar valor final.
+Retirada: o cliente escolhe retirada e aguarda confirmação.
+Consumo local: há opção de mesa; a confirmação cabe à loja.
+Meios informados no cardápio: cartões Alimentação/Refeição/Crédito/Débito, Pix e Dinheiro. Confirmar com a loja; o site não seleciona nem cobra pagamento online.
+Pré-pedido: enviado do site ao Telegram interno do estabelecimento, que responde ao cliente pelo WhatsApp. Pedido só é aceito após confirmação humana.
+
+## Cuidados com a informação
+Não inferir preços atuais a partir deste documento: consultar /cardapio.json e validação do servidor. Não divulgar dados pessoais, credenciais ou canais internos.
+Endereços de diretórios externos não estão consistentes; confirmar a rua/número com a loja antes de indicar rotas. Não confundir ponto de referência com endereço legal.

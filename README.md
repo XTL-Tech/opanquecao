@@ -104,3 +104,11 @@ Configurar as quatro variáveis citadas acima no projeto existente, inicialmente
 ## Atualização — açaí e carregamento
 
 Açaí 300 ml e 500 ml aparecem em cards separados, com tamanho fixo, preços e limites originais. O JSON comercial permanece inalterado; ambos usam a fotografia aprovada. O carrinho mantém os tamanhos distintos. O catálogo começa a carregar sem aguardar Turnstile; falhas exibem opção de tentar novamente.
+
+## Arquivos públicos de referência para IA (hotfix de produção)
+
+- `llms.txt`, `llms-full.txt`, `ai/business.json`, `ai/catalog-summary.json`, `ai/agents.md`, `ai/faq.md`, `robots.txt`, `sitemap.xml`.
+- HTML inclui metadados públicos e JSON-LD sem elementos visuais adicionais. Cabeçalho não repete contato/localização do rodapé.
+- Horários consultados em diretório externo: qua–dom 19–23h, seg/ter fechados, **não confirmados pelo proprietário**. Endereço exato também pendente de confirmação.
+- Não atualiza checkout, taxas dinâmicas, pagamentos ou fontes Supabase: hotfix sobre o commit de produção antigo, sem migração.
+- Ao evoluir para `main`, aplicar a implementação revisada na PR #11 e revalidar ambiente de produção.
