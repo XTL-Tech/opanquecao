@@ -7,6 +7,7 @@ let widget;
 let challenge;
 let sending = false;
 let digitalAvailable = false;
+let areaUiReady = false;
 
 const storageKey = 'disk-panquecao-cart-v1';
 let feedbackTimer;
@@ -110,7 +111,7 @@ function refresh() {
     byId('cartEmpty').hidden = !!cart.length;
     byId('cartSummary').hidden = !cart.length;
     byId('cartTotal').textContent = money(total);
-    if (typeof updateDeliveryFee === 'function') updateDeliveryFee();
+    if (areaUiReady) updateDeliveryFee();
     byId('sendOrder').disabled = !cart.length || !challenge || sending;
 
 }
@@ -278,8 +279,7 @@ checkoutForm.addEventListener('invalid', event => {
     field.setAttribute('aria-invalid', 'true');
 }, true);
 checkoutForm.addEventListener('input', event => {
-    if (event.target instanceof HTMLInputElement || event.target instanceof HTMLSelectElement ||
-        event.target instanceof HTMLTextAreaElement) {
+    if (event.target?.matches?.('input, select, textarea')) {
         event.target.removeAttribute('aria-invalid');
         if (lastInvalidInput === event.target) lastInvalidInput = null;
     }
@@ -362,6 +362,7 @@ checkoutForm.querySelectorAll('input[name="fulfillment"]').forEach(radio => {
     radio.addEventListener('change', updateFulfillment);
 });
 updateFulfillment();
+areaUiReady = true;
 byId('captureLocation').onclick = () => {
     const status = byId('locationStatus');
     if (selectedFulfillment() !== 'delivery') return;
