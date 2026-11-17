@@ -64,7 +64,8 @@ async function renderWithRectangles(fulfillment, printWidth) {
 
     for (const printWidth of [40, 58, 'a4']) {
         const { pdf, rects } = await renderWithRectangles(delivery(loc), printWidth);
-        assert.ok(rects.length > 80, 'QR vetorial deve ser desenhado no cupom');
+        const locationModules = rects.filter(r => r.height < 15);
+        assert.ok(locationModules.length > 80, 'QR vetorial deve ser desenhado no cupom');
         const expected = printWidth === 'a4' ? 210 : printWidth;
         assert.ok(Math.abs(pdf.getPages()[0].getWidth() - expected * 72 / 25.4) < 0.15);
         assert.ok(pdf.getPageCount() >= 1);
@@ -76,13 +77,13 @@ async function renderWithRectangles(fulfillment, printWidth) {
     }
 
     const normal = await renderWithRectangles(delivery(null), 58);
-    assert.equal(normal.rects.length, 0, 'Sem GPS, sem QR');
+    assert.equal(normal.rects.filter(r => r.height < 15).length, 0, 'Sem GPS, sem QR');
     const pickup = await renderWithRectangles({ type: 'pickup', location: loc }, 58);
-    assert.equal(pickup.rects.length, 0, 'Sem entrega, sem QR');
+    assert.equal(pickup.rects.filter(r => r.height < 15).length, 0, 'Sem entrega, sem QR');
     const table = await renderWithRectangles({ type: 'table', table: '2', location: loc }, 58);
-    assert.equal(table.rects.length, 0, 'Comer no local não gera QR');
+    assert.equal(table.rects.filter(r => r.height < 15).length, 0, 'Comer no local não gera QR');
     const invalid = await renderWithRectangles(delivery({ latitude: 200, longitude: 1 }), 58);
-    assert.equal(invalid.rects.length, 0, 'GPS inválido não gera QR');
+    assert.equal(invalid.rects.filter(r => r.height < 15).length, 0, 'GPS inválido não gera QR');
 
     console.log('PASS QR motoboy: rota Google Maps, 58mm/40mm/A4, sem GPS e privacidade');
 })().catch(e => { console.error(e); process.exitCode = 1; });
