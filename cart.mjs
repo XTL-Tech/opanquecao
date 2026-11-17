@@ -8,6 +8,9 @@ let widget;
 let challenge;
 let sending = false;
 let digitalAvailable = false;
+const initialStoreStatus = window.storeOperationStatus;
+let storeOpenForOrders = !initialStoreStatus?.enabled ||
+    (initialStoreStatus.open === true && initialStoreStatus.simulated !== true);
 let areaUiReady = false;
 
 const storageKey = 'disk-panquecao-cart-v1';
@@ -113,9 +116,19 @@ function refresh() {
     byId('cartSummary').hidden = !cart.length;
     byId('cartTotal').textContent = money(total);
     if (areaUiReady) updateDeliveryFee();
-    byId('sendOrder').disabled = !cart.length || !challenge || sending;
+    byId('sendOrder').disabled = !cart.length || !challenge || sending || !storeOpenForOrders;
 
 }
+
+document.addEventListener('store-operation-status', event => {
+    const {enabled,open} = event.detail || {};
+    storeOpenForOrders = !enabled || (open === true && event.detail.simulated !== true);
+    if (!storeOpenForOrders) {
+        const status = byId('orderStatus');
+        if (status) status.textContent = event.detail.simulated ? 'Modo de demonstração: o envio de pedidos está desativado.' : 'Loja fechada ou temporariamente indisponível. Você pode consultar o cardápio, mas não enviar novos pré-pedidos.';
+    }
+    refresh();
+});
 
 byId('menuContent').addEventListener('click', event => {
     const button = event.target.closest('.product-details');
