@@ -20,6 +20,8 @@ assert.equal(header('Referrer-Policy'), 'strict-origin-when-cross-origin');
 assert.match(html, /href="\/privacidade\.html"/);
 assert.match(html, /id="analyticsAccept"/);
 assert.match(html, /id="analyticsReject"/);
+assert.match(html, /id="analyticsManage"/);
+assert.match(html, /if \(consent === 'accepted' && event\.target\.closest/);
 assert.doesNotMatch(html, /<noscript>[\s\S]*?facebook\.com\/tr\?/);
 assert.match(html, /function escapeHtml\(value\)/);
 assert.doesNotMatch(html, /li\.innerHTML\s*=\s*`[^`]*\$\{obs\}/);
