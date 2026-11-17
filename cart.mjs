@@ -26,7 +26,9 @@ if (window.menuCatalog) initializeCatalog(window.menuCatalog);
 
 function refresh() {
     try { window.localStorage.setItem(storageKey, JSON.stringify({version: 1, updatedAt: Date.now(), lines: cart})); } catch {}
-    byId('checkout').hidden = !digitalAvailable || !cart.length;
+    // Allow visual inspection of the checkout when integrations are offline;
+    // the send button stays disabled until Turnstile issues a challenge.
+    byId('checkout').hidden = !cart.length;
     byId('orderUnavailable').hidden = digitalAvailable || !cart.length;
     const rows = byId('cartLines');
     rows.replaceChildren();
@@ -280,7 +282,7 @@ byId('openCart').onclick = async () => {
         configPromise = undefined;
         byId('orderStatus').textContent = '';
     } finally {
-        byId('checkout').hidden = !digitalAvailable;
+        byId('checkout').hidden = !cart.length;
         refresh();
     }
 };
