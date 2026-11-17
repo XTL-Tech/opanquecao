@@ -142,6 +142,11 @@ assert.equal(mandatoryCity.getAttribute('aria-invalid'),null);
 checkout.elements.name.value='Cliente fictício';
 checkout.elements.phone.value='(51) 99999-9999';
 checkout.elements.consent.checked=true;
+// O checkout agora exige forma de pagamento; usar Pix fictício sem cobrança.
+const pixChoice=checkout.querySelector('input[name="paymentMethod"][value="pix"]');
+assert.ok(pixChoice,'Opção Pix de teste deve existir');
+pixChoice.checked=true;
+pixChoice.dispatchEvent(new w.Event('change',{bubbles:true}));
 checkout.elements.city.value='Nova Hartz';
 checkout.elements.city.dispatchEvent(new w.Event('change'));
 assert.equal(checkout.elements.neighborhood.options.length,deliveryAreas.cities['Nova Hartz'].length+2);
