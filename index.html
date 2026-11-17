@@ -1312,6 +1312,10 @@
         </section>
     </form>
     <p id="orderStatus" role="status" aria-live="polite"></p>
+    <div id="reviewStatusPanel" hidden aria-live="polite" style="background:#fff8e6;border:2px solid #cba861;padding:13px;border-radius:12px;margin-top:12px;">
+      <strong id="reviewHeadline"></strong>
+      <p id="reviewDescription" style="margin:5px 0 0;font-size:14px;"></p>
+    </div>
     <p id="orderUnavailable" hidden role="status">O envio digital está indisponível no momento. Não foi enviado nenhum pedido. Entre em contato com a loja para atendimento.</p>
     <p class="cart-next">Este é um pré-pedido. A loja confirmará o atendimento e o prazo pelo WhatsApp informado.</p>
     </footer>
@@ -1336,5 +1340,6 @@
 <script type="module" src="store-hours-client.mjs"></script>
 <!-- Turnstile é carregado apenas na abertura do carrinho pelo cart.mjs. -->
 <script type="module" src="cart.mjs"></script>
+<script type="module" src="order-review-client.mjs"></script>
 </body>
 </html>
