@@ -1,5 +1,36 @@
 {
   "functions": {
-    "api/order.js": { "includeFiles": "cardapio.json" }
-  }
+    "api/order.js": {
+      "includeFiles": "cardapio.json"
+    }
+  },
+  "headers": [
+    {
+      "source": "/cardapio.json",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=30, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/img/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=86400, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/favicons/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=86400, must-revalidate"
+        }
+      ]
+    }
+  ]
 }
