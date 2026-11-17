@@ -6,6 +6,6 @@
     "jsdom": "^31.0.1"
   },
   "scripts": {
-    "test": "node tests/order-flow.cjs && node tests/catalog-source.cjs && node tests/supabase-health.cjs && node tests/order-idempotency.cjs && node tests/ai-discovery.cjs && node tests/order-qr.cjs && node tests/order-barcode.cjs && node tests/checkout-steps.cjs"
+    "test": "node tests/order-flow.cjs && node tests/catalog-source.cjs && node tests/supabase-health.cjs && node tests/order-idempotency.cjs && node tests/ai-discovery.cjs && node tests/order-qr.cjs && node tests/order-barcode.cjs && node tests/checkout-steps.cjs && node tests/delivery-triage.cjs"
   }
 }
