@@ -120,10 +120,10 @@ function refresh() {
 
 document.addEventListener('store-operation-status', event => {
     const {enabled,open} = event.detail || {};
-    storeOpenForOrders = !enabled || open === true;
+    storeOpenForOrders = !enabled || (open === true && event.detail.simulated !== true);
     if (!storeOpenForOrders) {
         const status = byId('orderStatus');
-        if (status) status.textContent = 'Loja fechada ou temporariamente indisponível. Você pode consultar o cardápio, mas não enviar novos pré-pedidos.';
+        if (status) status.textContent = event.detail.simulated ? 'Modo de demonstração: o envio de pedidos está desativado.' : 'Loja fechada ou temporariamente indisponível. Você pode consultar o cardápio, mas não enviar novos pré-pedidos.';
     }
     refresh();
 });
