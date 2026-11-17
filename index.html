@@ -372,6 +372,15 @@
             gap: 10px;
             margin-top: 16px;
         }
+        .site-tabs a[aria-current="page"] {
+            background: #ffdba5;
+            color: #381d20;
+            box-shadow: inset 0 0 0 2px #c58c43;
+        }
+        .site-tabs a:focus-visible, .info-actions a:focus-visible {
+            outline: 3px solid #ffd080;
+            outline-offset: 3px;
+        }
         .site-tabs a, .info-actions a {
             display: inline-flex;
             align-items: center;
@@ -634,7 +643,7 @@ src="https://www.facebook.com/tr?id=766179976513223&ev=PageView&noscript=1"
             <h2 id="titulo-local">Como chegar</h2>
             <p>Ponto de referência: Praça do Trabalhador · Nova Hartz/RS</p>
             <div class="info-actions">
-                <a href="https://share.google/2TydxIHz4v5C73a7x" target="_blank" rel="noopener noreferrer">Ver local e avaliações no Google Maps</a>
+                <a href="https://www.google.com/maps/search/?api=1&amp;query=O%20PANQUEC%C3%83O%20DISKPANQUEC%C3%83O%20Nova%20Hartz%20RS" target="_blank" rel="noopener noreferrer">Ver local e avaliações no Google Maps</a>
                 <a href="https://www.google.com/maps/dir/?api=1&amp;destination=O%20PANQUEC%C3%83O%20DISKPANQUEC%C3%83O%20-%20NOVA%20HARTZ%2C%20RS&amp;dir_action=navigate" target="_blank" rel="noopener noreferrer">Traçar rota até o restaurante</a>
             </div>
         </section>
@@ -935,19 +944,47 @@ src="https://www.facebook.com/tr?id=766179976513223&ev=PageView&noscript=1"
             }
             if (selected) lastCategory = selected;
         }
+        // The main navigation and category cards share the URL hash.
+        // Info links must not be interpreted as "return to the menu".
+        const infoSections = new Set(['contato', 'como-chegar']);
+        function showRoute(focus = false) {
+            const id = window.location.hash.slice(1);
+            const destination = infoSections.has(id) ? document.getElementById(id) : null;
+            document.querySelectorAll('.site-tabs a[href^="#"]').forEach(link => {
+                const selected = (destination ? link.hash === '#' + id : link.hash === '#cardapio');
+                if (selected) link.setAttribute('aria-current', 'page');
+                else link.removeAttribute('aria-current');
+            });
+            if (destination) {
+                // Keep all products available when returning to the catalog.
+                showCategory('', false);
+                if (focus) {
+                    const heading = destination.querySelector('h2');
+                    if (heading) {
+                        heading.setAttribute('tabindex', '-1');
+                        heading.focus({preventScroll: true});
+                    }
+                }
+                destination.scrollIntoView({block: 'start', behavior: 'instant'});
+                return;
+            }
+            showCategory(id, focus);
+        }
         document.addEventListener('click', event => {
             const link = event.target.closest('a[href^="#"]');
             if (!link || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
             const id = link.hash.slice(1);
-            if (id !== 'cardapio' && !titles.has(id)) return;
+            if (id !== 'cardapio' && !titles.has(id) && !infoSections.has(id)) return;
             event.preventDefault();
-            window.history.pushState(null, '', '#' + id);
-            showCategory(id, true);
+            if (window.location.hash !== '#' + id) {
+                window.history.pushState(null, '', '#' + id);
+            }
+            showRoute(true);
         });
-        window.addEventListener('hashchange', () => showCategory(window.location.hash.slice(1), true));
-        window.addEventListener('popstate', () => showCategory(window.location.hash.slice(1), true));
+        window.addEventListener('hashchange', () => showRoute(true));
+        window.addEventListener('popstate', () => showRoute(true));
         document.body.classList.add('category-navigation');
-        showCategory(window.location.hash.slice(1));
+        showRoute();
 
     }
 
