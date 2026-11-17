@@ -265,7 +265,7 @@ let lastInvalidInput = null;
 function fieldLabel(field) {
     if (!field) return 'campo obrigatório';
     if (field.name === 'consent') return 'autorização de contato';
-    return field.closest('label')?.textContent?.trim()?.replace(/\s*\*\s*/g, ' ').slice(0,80) ||
+    return field.closest('label')?.firstChild?.textContent?.trim()?.replace(/\s*\*\s*/g, ' ').slice(0,80) ||
         ({name:'nome', phone:'WhatsApp', city:'cidade', neighborhood:'bairro', street:'rua',
             number:'número', table:'mesa'})[field.name] || 'campo obrigatório';
 }
