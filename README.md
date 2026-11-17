@@ -30,10 +30,18 @@ Cardápio e pré-pedido do Disk Panquecão, Nova Hartz/RS. HTML, CSS e JavaScrip
 - O cliente escolhe somente **Nova Hartz/RS** ou **Araricá/RS**. Cidade, bairro/localidade, rua/estrada e número são obrigatórios em **Entrega**. CEP, complemento, ponto de referência e GPS são opcionais (o GPS continua condicionado à permissão explícita).
 - As opções de bairro/localidade são carregadas de `delivery-areas.json`, filtradas pela cidade. **Outro bairro / localidade** permite informar regiões que não constem da lista, sempre sujeitas à confirmação manual.
 - Cadastro inicial: localidades identificadas por fontes municipais e bases públicas (algumas são **loteamentos e comunidades rurais**, não bairros administrativos). Araricá: [Plano Diretor municipal](https://ararica.rs.gov.br/uploads/legislacao/59/f_uCdK2QK_Lv9eBhp9vbxLdMQP1_9hal.pdf) e [Plano Municipal de Cultura](https://snc.cultura.gov.br/media/docs/plano/2137/ilovepdf_merged-2_vhVX78U.pdf); Nova Hartz: [cadastro municipal por região](https://vet.novahartz.rs.gov.br/) e [notícia sobre bairros atendidos](https://www.correiodopovo.com.br/not%C3%ADcias/cidades/entregue-primeira-etapa-da-obra-de-implanta%C3%A7%C3%A3o-do-sistema-de-abastecimento-de-%C3%A1gua-em-nova-hartz-1.1560001). **A lista e o raio efetivo de atendimento precisam de validação comercial da loja.**
-- Cada entrada possui `feeCents`. Enquanto for `null`, **não há taxa definida**, o cliente vê "Taxa de entrega: a confirmar", e a comanda Telegram exibe a mesma informação. Não somar taxa desconhecida ao subtotal.
-- Para configurar futuramente uma taxa de **R$ 5,00** para um bairro: trocar o respectivo `"feeCents": null` por `"feeCents": 500` em `delivery-areas.json`, via Pull Request aprovado. `0` representa entrega grátis. Nunca colocar preços em reais decimais: os valores são em centavos.
+- Taxa padrão por cidade no arquivo `delivery-areas.json`: **Nova Hartz R$ 7,00** e **Araricá R$ 10,00**. O campo `defaultFeeCents` é expresso em centavos e só se aplica aos bairros cadastrados da cidade. A interface e a comanda Telegram mostram o valor e o subtotal com entrega. Em "Outro bairro/localidade", a cobertura e taxa seguem **a confirmar**.
+- Para configurar exceções de preço por bairro, trocar o respectivo `"feeCents": null` por `"feeCents": 500` para R$ 5,00, via Pull Request aprovado. `null` herda a taxa padrão da cidade; `0` representa entrega gratuita. Nunca registrar reais decimais: os valores são em centavos.
 - A API verifica cidade/bairro no catálogo do servidor, recalcula o valor e o inclui na comanda. Nunca confiar em cidade, taxa ou subtotal enviados pelo cliente. Localidade não cadastrada requer revisão humana, sem cobrança automática.
-- Antes de ativar qualquer taxa, a gerência deve aprovar a tabela comercial e as exceções de área de cobertura. O pré-pedido não representa aceitação automática nem cobrança final.
+- Taxas padrão municipais informadas pela gestão. A loja deve homologar a área real de cobertura, conferir exceções, e confirmar o pedido antes de cobrar. O pré-pedido não representa aceitação automática nem cobrança final.
+
+## Diagnóstico de falha no iPhone / Safari
+
+- Antes desta melhoria, não havia logs suficientes para diferenciar validação HTML bloqueada de erro no Telegram, nem mensagens claras quando Turnstile não carregava. Logs antigos não podem ser reconstruídos.
+- Os novos envios à `/api/order` usam o cabeçalho `X-Checkout-Trace` com um identificador aleatório de oito caracteres. O servidor registra somente `event: checkout`, `trace`, `step`, ambiente e código HTTP (sem nome, telefone, endereço, token ou conteúdo da comanda).
+- Caso o navegador bloqueie campos obrigatórios, o cliente vê "Preencha ou corrija" com indicação do campo. Se a API falhar, a mensagem exibe o código de diagnóstico para buscar nos logs Vercel.
+- **Sem confirmação explícita do Telegram, não é seguro reenviar automaticamente:** o pedido pode ter chegado e a resposta se perdido. Oriente verificar com a loja antes de reenviar.
+- Testes automatizados de JSDOM não substituem homologação em Safari iOS real. Antes do merge, testar preenchimento completo e Turnstile no iPhone, em Preview, usando dados fictícios e marcando TESTE — NÃO PREPARAR.
 
 ## Panquecas meio a meio
 
