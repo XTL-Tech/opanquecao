@@ -8,7 +8,9 @@ let widget;
 let challenge;
 let sending = false;
 let digitalAvailable = false;
-let storeOpenForOrders = true;
+const initialStoreStatus = window.storeOperationStatus;
+let storeOpenForOrders = !initialStoreStatus?.enabled ||
+    (initialStoreStatus.open === true && initialStoreStatus.simulated !== true);
 let areaUiReady = false;
 
 const storageKey = 'disk-panquecao-cart-v1';
