@@ -9,6 +9,7 @@ module.exports = function handler(req, res) {
     const siteKey = TELEGRAM_BOT_TOKEN && TELEGRAM_CHAT_ID && TURNSTILE_SECRET_KEY && TURNSTILE_SITE_KEY;
     return res.json({
         siteKey: siteKey || null,
+        testMode: process.env.VERCEL_ENV !== 'production',
         deliveryEstimateMinutes: estimateMinutes(process.env.ORDER_ESTIMATE_DELIVERY_MIN),
         pickupEstimateMinutes: estimateMinutes(process.env.ORDER_ESTIMATE_PICKUP_MIN)
     });
