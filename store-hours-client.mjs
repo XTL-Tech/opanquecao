@@ -19,7 +19,14 @@ dismiss.addEventListener('click',() => dialog.close());
 async function refreshStatus() {
   try {
     const response = await fetch('/api/store-status',{cache:'no-store'});
-    const data = await response.json();
+    let data = await response.json();
+    const demoMode = new URLSearchParams(window.location.search).get('xtl_demo_loja');
+    if (data.demoAvailable && ['aberta','fechada'].includes(demoMode)) {
+      data = {
+        enabled:true, open:demoMode === 'aberta', reason:'demo_'+demoMode,
+        date:'demonstracao', canSubscribe:false, simulated:true
+      };
+    }
     if (!data.enabled) {
       label.hidden = true;
       document.dispatchEvent(new CustomEvent('store-operation-status',{detail:{enabled:false,open:true}}));
@@ -27,13 +34,13 @@ async function refreshStatus() {
     }
     label.hidden = false;
     const open = response.ok && data.open === true;
-    document.dispatchEvent(new CustomEvent('store-operation-status',{detail:{enabled:true,open,unknown:!!data.unknown}}));
+    document.dispatchEvent(new CustomEvent('store-operation-status',{detail:{enabled:true,open,unknown:!!data.unknown,simulated:!!data.simulated}}));
     if (data.unknown || !response.ok) {
       label.textContent = 'Não foi possível confirmar o horário da loja. Pedidos temporariamente indisponíveis.';
     } else if (open) {
-      label.textContent = 'Loja aberta • pré-pedidos sujeitos à confirmação';
+      label.textContent = data.simulated ? 'DEMONSTRAÇÃO: loja aberta (simulada) • envio de pedidos desativado' : 'Loja aberta • pré-pedidos sujeitos à confirmação';
     } else {
-      label.textContent = 'Loja fechada no momento • você pode consultar o cardápio';
+      label.textContent = data.simulated ? 'DEMONSTRAÇÃO: loja fechada (simulada) • envio de pedidos desativado' : 'Loja fechada no momento • você pode consultar o cardápio';
     }
     if (open) {
       previousOpen = true;
@@ -44,7 +51,7 @@ async function refreshStatus() {
     if (data.unknown || !response.ok) {
       description.textContent = 'Não foi possível confirmar se a loja está aberta. Tente novamente mais tarde.';
     } else {
-      description.textContent = 'Estamos fora do horário de atendimento. Você pode navegar pelo cardápio, mas novos pré-pedidos não serão recebidos até a reabertura.';
+      description.textContent = data.simulated ? 'TESTE DE INTERFACE: simulamos a loja fechada. Os horários reais não estão configurados. Você pode navegar pelo cardápio, mas não enviar pedidos nesta demonstração.' : 'Estamos fora do horário de atendimento. Você pode navegar pelo cardápio, mas novos pré-pedidos não serão recebidos até a reabertura.';
     }
     alertNote.textContent = data.canSubscribe
       ? 'Você poderá ativar avisos com sua permissão. Nunca habilitamos notificações sem sua escolha.'
