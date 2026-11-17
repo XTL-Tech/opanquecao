@@ -1167,6 +1167,7 @@ src="https://www.facebook.com/tr?id=766179976513223&ev=PageView&noscript=1"
     initMenu();
 </script>
 
+<p id="storeOpenStatus" role="status" aria-live="polite" hidden></p>
 <p id="cartFeedback" role="status" aria-live="polite"></p>
 <button type="button" id="openCart" class="whatsapp-float cart-trigger">Ver pedido · 0 itens</button>
 <dialog class="product-dialog" id="cartDialog" aria-labelledby="cartTitle">
@@ -1292,6 +1293,24 @@ src="https://www.facebook.com/tr?id=766179976513223&ev=PageView&noscript=1"
     <p class="cart-next">Este é um pré-pedido. A loja confirmará o atendimento e o prazo pelo WhatsApp informado.</p>
     </footer>
 </dialog>
+<style>
+  #storeOpenStatus { width:min(90%, 720px); margin:12px auto; padding:10px 16px; text-align:center;
+    border:1px solid #c9a5a4; border-radius:10px; background:#fffaf3; color:#381d20; }
+  #storeClosedDialog { max-width:min(92vw, 480px); width:100%; margin:auto; border:1px solid #c9a5a4;
+    border-radius:16px; padding:24px; background:#fffaf3; color:#381d20; }
+  #storeClosedDialog::backdrop { background:rgba(30,14,17,.62); }
+  #storeClosedDialog h2 { margin-bottom:12px; }
+  #storeClosedDialog p { margin-bottom:12px; }
+  #dismissStoreClosed { min-height:44px; padding:10px 16px; border:0; border-radius:9px;
+    background:#741c2d; color:white; font:inherit; font-weight:700; cursor:pointer; }
+</style>
+<dialog id="storeClosedDialog" aria-labelledby="storeClosedTitle" aria-describedby="storeClosedDescription">
+  <h2 id="storeClosedTitle">Loja fechada no momento</h2>
+  <p id="storeClosedDescription">Estamos fora do expediente. Consulte o cardápio e volte quando abrirmos.</p>
+  <p id="storeAlertNote">Alertas de reabertura estão em preparação.</p>
+  <button type="button" id="dismissStoreClosed">Entendi, continuar vendo o cardápio</button>
+</dialog>
+<script type="module" src="store-hours-client.mjs"></script>
 <!-- Turnstile é carregado apenas na abertura do carrinho pelo cart.mjs. -->
 <script type="module" src="cart.mjs"></script>
 </body>
