@@ -24,7 +24,7 @@ module.exports = async function handler(req, res) {
     if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID || !TURNSTILE_SECRET_KEY) {
         return reject(503, 'Pedido digital indisponível no momento. Entre em contato com a loja.', 'configuration_missing');
     }
-    const { lines, name, phone, challenge, fulfillment } = req.body || {};
+    const { lines, name, phone, challenge, fulfillment, payment } = req.body || {};
     if (typeof name !== 'string' || !name.trim() || name.length > 80 ||
         typeof phone !== 'string' || !/^\d{10,11}$/.test(phone) ||
         typeof challenge !== 'string' || !challenge || challenge.length > 2048) {
@@ -96,6 +96,15 @@ module.exports = async function handler(req, res) {
     const id = randomUUID().slice(0, 8);
     const testMode = process.env.VERCEL_ENV !== 'production';
     const subtotal = items.reduce((total, item) => total + item.cents * item.quantity, 0);
+    const { validatePayment } = await import('../payment.mjs');
+    let validatedPayment;
+    try {
+        const totalKnown = method !== 'delivery' || delivery.feeCents !== null;
+        const amountDue = subtotal + (delivery.feeCents ?? 0);
+        validatedPayment = validatePayment(payment, amountDue, totalKnown);
+    } catch (e) {
+        return reject(400, e.message, 'payment_fields');
+    }
     let stage = 'turnstile';
     let telegramStatus = null;
     try {
@@ -106,16 +115,19 @@ module.exports = async function handler(req, res) {
         const verified = await check.json();
         if (!verified.success) return reject(400, 'Refaça a verificação de segurança.', 'turnstile_rejected');
         stage = 'pdf';
-        const pdf = await orderPdf({ id, name: name.trim(), phone, items, subtotal, money, fulfillment: delivery, testMode });
+        const pdf = await orderPdf({ id, name: name.trim(), phone, items, subtotal, money, fulfillment: delivery, payment: validatedPayment, testMode });
         const form = new FormData();
         form.set('chat_id', TELEGRAM_CHAT_ID);
         const feeDescription = method === 'delivery'
             ? (delivery.feeCents === null ? 'Taxa: a confirmar' :
                 'Taxa: ' + money(delivery.feeCents) + ' · Total: ' + money(subtotal + delivery.feeCents))
             : '';
+        const changeDescription = validatedPayment.changeForCents !== null
+            ? ' · Troco para: ' + money(validatedPayment.changeForCents) : '';
         form.set('caption', `${testMode ? 'TESTE - NAO PREPARAR!\n' : ''}Pré-pedido #${id} · ${name.trim()} · ${{delivery:'Entrega',pickup:'Retirada',table:'Mesa'}[method]}
 Produtos: ${money(subtotal)}${feeDescription ? ' · ' + feeDescription : ''}
-Aguardando confirmação da loja.`);
+Pagamento previsto: ${validatedPayment.label}${changeDescription}
+Aguardando confirmação da loja. PAGAMENTO PENDENTE.`);
         form.set('document', new Blob([pdf], { type: 'application/pdf' }), `${testMode ? 'TESTE-nao-preparar-' : 'pre-pedido-'}${id}.pdf`);
         stage = 'telegram';
         const sent = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendDocument`, {
