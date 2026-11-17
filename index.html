@@ -706,9 +706,9 @@ src="https://www.facebook.com/tr?id=766179976513223&ev=PageView&noscript=1"
      */
     async function initMenu() {
         try {
-            // Tenta carregar o ficheiro JSON externo
-            const response = await fetch('cardapio.json', { signal: AbortSignal.timeout(15000) });
-            if (!response.ok) throw new Error("Não foi possível carregar o cardapio.json");
+            // Lê sempre a API do catálogo; antes da migração a API redireciona para o JSON original
+            const response = await fetch('/api/catalog', { cache: 'no-store', signal: AbortSignal.timeout(15000) });
+            if (!response.ok) throw new Error("Não foi possível carregar o cardápio do servidor");
             const data = await response.json();
             document.getElementById("menuContent").replaceChildren();
             renderMenu(data);

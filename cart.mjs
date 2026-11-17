@@ -441,6 +441,45 @@ byId('captureLocation').onclick = () => {
     }, { enableHighAccuracy: true, maximumAge: 0, timeout: 12000 });
 };
 
+const pendingOrderKey = 'disk-panquecao-order-intent-v1';
+let fallbackAttempt;
+function freshRequestId() {
+    const bytes = new Uint8Array(16);
+    if (!window.crypto?.getRandomValues) throw new Error('Este navegador não permite criar um identificador seguro de pedido.');
+    window.crypto.getRandomValues(bytes);
+    bytes[6] = (bytes[6] & 15) | 64;
+    bytes[8] = (bytes[8] & 63) | 128;
+    const hex = [...bytes].map(value => value.toString(16).padStart(2, '0')).join('');
+    return [hex.slice(0,8), hex.slice(8,12), hex.slice(12,16), hex.slice(16,20), hex.slice(20)].join('-');
+}
+async function getRequestId(payload) {
+    // Turnstile é descartado da assinatura; não persistir nome, telefone ou endereço.
+    const { challenge: ignored, ...orderData } = payload;
+    const serialized = JSON.stringify(orderData);
+    let fingerprint;
+    try {
+        if (window.crypto?.subtle) {
+            const digest = await window.crypto.subtle.digest('SHA-256', new TextEncoder().encode(serialized));
+            fingerprint = [...new Uint8Array(digest)].map(n => n.toString(16).padStart(2, '0')).join('');
+        }
+    } catch { /* Ambiente sem WebCrypto sutil usa somente memória. */ }
+    if (fingerprint) {
+        try {
+            const previous = JSON.parse(window.sessionStorage.getItem(pendingOrderKey));
+            if (previous?.fingerprint === fingerprint && Date.now() - previous.time < 1800000 &&
+                /^[0-9a-f-]{36}$/i.test(previous.id)) return previous.id;
+        } catch {}
+        const id = freshRequestId();
+        try { window.sessionStorage.setItem(pendingOrderKey,
+            JSON.stringify({ id, fingerprint, time: Date.now() })); } catch {}
+        return id;
+    }
+    if (fallbackAttempt?.serialized === serialized) return fallbackAttempt.id;
+    fallbackAttempt = { serialized, id: freshRequestId() };
+    return fallbackAttempt.id;
+}
+
+
 let configPromise;
 byId('openCart').onclick = async () => {
     refresh();
@@ -507,9 +546,7 @@ byId('checkout').onsubmit = async event => {
         if (method === 'cash' && paymentChangeCheckbox.checked && payment.changeForCents === null) {
             throw new Error('Informe para quanto precisa de troco.');
         }
-        const response = await fetch('/api/order', {
-            method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Checkout-Trace': trace },
-            body: JSON.stringify({ lines, payment, name: form.elements.name.value,
+        const payload = { lines, payment, name: form.elements.name.value,
                 phone: form.elements.phone.value.replace(/\D/g, ''), challenge,
                 fulfillment: {
                     type: selectedFulfillment(),
@@ -524,10 +561,21 @@ byId('checkout').onsubmit = async event => {
                     table: form.elements.table.value.trim(),
                     latitude: byId('geoLatitude').value || null,
                     longitude: byId('geoLongitude').value || null
-                } })
+                } };
+        payload.requestId = await getRequestId(payload);
+        const response = await fetch('/api/order', {
+            method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Checkout-Trace': trace },
+            body: JSON.stringify(payload)
         });
         const result = await response.json().catch(() => ({}));
+        if (response.status === 202 || result.pending) {
+            status.textContent = (result.error || 'Pedido aguardando conferência.') +
+                ' Referência #' + (result.id || 'indisponível') + '. Consulte a loja pelo WhatsApp.';
+            return;
+        }
         if (!response.ok) throw new Error(result.error || 'Falha na comunicação com a loja.');
+        fallbackAttempt = undefined;
+        try { window.sessionStorage.removeItem(pendingOrderKey); } catch {}
         cart.length = 0;
         form.reset();
         updateNeighborhoodList();

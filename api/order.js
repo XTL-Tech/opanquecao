@@ -1,6 +1,7 @@
 const { orderPdf } = require('../lib/order-pdf');
 const deliveryAreas = require('../delivery-areas.json');
-const { readFile } = require('node:fs/promises');
+const { loadCatalog, CatalogUnavailableError } = require('../lib/catalog-source');
+const { UUID_V4, isEnabled, initLedger, OrderLedgerUnavailable, payloadDigest, replayResponse } = require('../lib/order-idempotency');
 const { randomUUID } = require('node:crypto');
 
 module.exports = async function handler(req, res) {
@@ -24,7 +25,7 @@ module.exports = async function handler(req, res) {
     if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID || !TURNSTILE_SECRET_KEY) {
         return reject(503, 'Pedido digital indisponível no momento. Entre em contato com a loja.', 'configuration_missing');
     }
-    const { lines, name, phone, challenge, fulfillment, payment } = req.body || {};
+    const { lines, name, phone, challenge, fulfillment, payment, requestId } = req.body || {};
     if (typeof name !== 'string' || !name.trim() || name.length > 80 ||
         typeof phone !== 'string' || !/^\d{10,11}$/.test(phone) ||
         typeof challenge !== 'string' || !challenge || challenge.length > 2048) {
@@ -88,12 +89,12 @@ module.exports = async function handler(req, res) {
     const { priceOrder, money } = await import('../order-catalog.mjs');
     let items;
     try {
-        const catalog = JSON.parse(await readFile(require('node:path').join(process.cwd(), 'cardapio.json'), 'utf8'));
+        const catalog = await loadCatalog();
         items = priceOrder(catalog, lines);
-    } catch {
+    } catch (error) {
+        if (error instanceof CatalogUnavailableError) return reject(503, 'Cardápio indisponível para confirmação. Tente novamente mais tarde.', 'catalog_unavailable');
         return reject(400, 'Confira os itens e as opções do carrinho.', 'cart_validation');
     }
-    const id = randomUUID().slice(0, 8);
     const testMode = process.env.VERCEL_ENV !== 'production';
     const subtotal = items.reduce((total, item) => total + item.cents * item.quantity, 0);
     const { validatePayment } = await import('../payment.mjs');
@@ -105,6 +106,31 @@ module.exports = async function handler(req, res) {
     } catch (e) {
         return reject(400, e.message, 'payment_fields');
     }
+    // Registrar idempotência APÓS todas as validações comerciais. Não gerar
+    // efeito externo se o ledger obrigatório estiver indisponível.
+    let ledger = null;
+    let digest = null;
+    if (isEnabled()) {
+        if (typeof requestId !== 'string' || !UUID_V4.test(requestId)) {
+            return reject(400, 'Atualize o cardápio para enviar um pedido seguro.', 'request_id');
+        }
+        try {
+            ledger = initLedger();
+            digest = payloadDigest({ name: name.trim(), phone, items, delivery, payment: validatedPayment });
+            const known = replayResponse(await ledger.lookup(requestId), digest);
+            if (known) {
+                log('ledger_replay', { httpStatus: known.httpStatus });
+                return res.status(known.httpStatus).json({ ...known.body, trace });
+            }
+        } catch (error) {
+            if (error instanceof OrderLedgerUnavailable) {
+                return reject(503, 'Pedidos temporariamente indisponíveis. Entre em contato com a loja.', 'ledger_unavailable');
+            }
+            throw error;
+        }
+    }
+    const id = ledger ? requestId.replace(/-/g, '').slice(0, 8) : randomUUID().slice(0, 8);
+    let claimed = false;
     let stage = 'turnstile';
     let telegramStatus = null;
     try {
@@ -114,6 +140,20 @@ module.exports = async function handler(req, res) {
         });
         const verified = await check.json();
         if (!verified.success) return reject(400, 'Refaça a verificação de segurança.', 'turnstile_rejected');
+        if (ledger) {
+            stage = 'ledger';
+            try {
+                claimed = await ledger.claim({ requestId, digest, orderRef: id });
+                if (!claimed) {
+                    const known = replayResponse(await ledger.lookup(requestId), digest);
+                    if (!known) throw new OrderLedgerUnavailable('Registro concorrente não encontrado');
+                    log('ledger_replay', { httpStatus: known.httpStatus });
+                    return res.status(known.httpStatus).json({ ...known.body, trace });
+                }
+            } catch {
+                return reject(503, 'Não foi possível registrar o pedido com segurança. Contate a loja.', 'ledger_claim_failed');
+            }
+        }
         stage = 'pdf';
         const pdf = await orderPdf({ id, name: name.trim(), phone, items, subtotal, money, fulfillment: delivery, payment: validatedPayment, testMode });
         const form = new FormData();
@@ -134,10 +174,27 @@ Aguardando confirmação da loja. PAGAMENTO PENDENTE.`);
             method: 'POST', body: form, signal: AbortSignal.timeout(8000)
         });
         telegramStatus = Number.isInteger(sent.status) ? sent.status : null;
-        if (!sent.ok || !(await sent.json()).ok) throw new Error('Telegram indisponível');
+        const telegram = await sent.json();
+        if (!sent.ok || !telegram.ok) throw new Error('Telegram indisponível');
+        if (ledger) {
+            stage = 'ledger_finish';
+            try {
+                await ledger.finish(requestId, 'delivered', telegram.result?.message_id);
+            } catch {
+                log('ledger_confirmation_pending', { httpStatus: 202 });
+                return res.status(202).json({ id, pending: true, trace,
+                    error: 'A loja pode ter recebido o pedido, mas não foi possível confirmar o registro. Não reenvie.' });
+            }
+        }
         log('sent', { httpStatus: 200 });
         return res.status(200).json({ id, test: testMode, trace });
     } catch (error) {
+        if (claimed) {
+            try { await ledger.finish(requestId, 'needs_review'); } catch { /* Reconciliar manualmente. */ }
+            log('delivery_uncertain', { httpStatus: 202, stage, telegramStatus });
+            return res.status(202).json({ id, pending: true, trace,
+                error: 'Não foi possível confirmar o envio. Consulte a loja e não envie novamente.' });
+        }
         log('failed', { httpStatus: 502, stage, telegramStatus,
             reason: ['TimeoutError', 'AbortError'].includes(error?.name) ? 'timeout' : 'other' });
         return res.status(502).json({

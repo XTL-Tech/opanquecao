@@ -1,0 +1,20 @@
+{
+  "schema_version": "1.0",
+  "service_id": "opanquecao",
+  "repository": "XTL-Tech/opanquecao",
+  "domain": "food-pilot",
+  "lane": "P0",
+  "data_class": "restricted",
+  "trust_model": "public-checkout-admin",
+  "canonical_identity_authority": "XTL-Tech/xtl-mvp",
+  "contract_source": "https://github.com/XTL-Tech/xtl-foundations/pull/2",
+  "contract_version": "1.0.0-draft",
+  "planned_dependencies": [
+    "xtl-foundations",
+    "xtl-food",
+    "xtl-mvp"
+  ],
+  "tenant_resolution": "from_trusted_server_context_only",
+  "runtime_integration_state": "not_activated",
+  "note": "Draft declaration only: no network connectivity, DB data sharing, permissions, or production deploy is enabled."
+}
