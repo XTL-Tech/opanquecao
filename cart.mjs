@@ -26,7 +26,10 @@ if (window.menuCatalog) initializeCatalog(window.menuCatalog);
 
 function refresh() {
     try { window.localStorage.setItem(storageKey, JSON.stringify({version: 1, updatedAt: Date.now(), lines: cart})); } catch {}
-    byId('checkout').hidden = !digitalAvailable || !cart.length;
+    // Allow visual inspection of the checkout when integrations are offline;
+    // the send button stays disabled until Turnstile issues a challenge.
+    byId('checkout').hidden = !cart.length;
+    byId('orderUnavailable').hidden = digitalAvailable || !cart.length;
     const rows = byId('cartLines');
     rows.replaceChildren();
     let total = 0;
@@ -100,11 +103,7 @@ function refresh() {
     byId('cartSummary').hidden = !cart.length;
     byId('cartTotal').textContent = money(total);
     byId('sendOrder').disabled = !cart.length || !challenge || sending;
-    const fallback = byId('cartWhatsApp');
-    fallback.hidden = !cart.length || sending;
-    const summary = cart.map(line => [`${line.quantity} × ${line.product} (${line.option})`, ...extraSummary(line), line.note ? 'Observação: ' + line.note : ''].filter(Boolean).join('\n  '));
-    fallback.href = 'https://wa.me/5551997383849?text=' +
-        encodeURIComponent(['Olá! Quero pedir:', ...summary].join('\n'));
+
 }
 
 byId('menuContent').addEventListener('click', event => {
@@ -214,6 +213,52 @@ byId('menuContent').addEventListener('click', event => {
     byId('productDialogContent').append(form);
 });
 
+const checkoutForm = byId('checkout');
+let estimates = {};
+function selectedFulfillment() {
+    return checkoutForm.querySelector('input[name="fulfillment"]:checked')?.value || '';
+}
+function updateFulfillment() {
+    const mode = selectedFulfillment();
+    for (const [type, id] of [['delivery', 'fulfillmentDelivery'], ['pickup', 'fulfillmentPickup'], ['table', 'fulfillmentTable']]) {
+        byId(id).hidden = type !== mode;
+    }
+    checkoutForm.elements.address.required = mode === 'delivery';
+    checkoutForm.elements.table.required = mode === 'table';
+    if (mode !== 'delivery') {
+        byId('geoLatitude').value = '';
+        byId('geoLongitude').value = '';
+        byId('locationStatus').textContent = 'A localização só será solicitada se você tocar no botão. Confirme também o endereço.';
+    }
+    const minutes = mode === 'delivery' ? estimates.delivery : mode === 'pickup' ? estimates.pickup : null;
+    byId('fulfillmentEstimate').textContent = Number.isInteger(minutes) && minutes >= 5 && minutes <= 240
+        ? 'Previsão informada pela loja: cerca de ' + minutes + ' minutos, sujeita à confirmação.'
+        : mode === 'table' ? 'O atendimento será confirmado pela loja.'
+        : 'O prazo será informado pela loja na confirmação.';
+}
+checkoutForm.querySelectorAll('input[name="fulfillment"]').forEach(radio => {
+    radio.addEventListener('change', updateFulfillment);
+});
+updateFulfillment();
+byId('captureLocation').onclick = () => {
+    const status = byId('locationStatus');
+    if (selectedFulfillment() !== 'delivery') return;
+    if (!navigator.geolocation) {
+        status.textContent = 'Seu navegador não oferece localização. Informe o endereço manualmente.';
+        return;
+    }
+    status.textContent = 'Solicitando sua localização, mediante autorização do navegador…';
+    navigator.geolocation.getCurrentPosition(position => {
+        if (selectedFulfillment() !== 'delivery') return;
+        byId('geoLatitude').value = String(position.coords.latitude);
+        byId('geoLongitude').value = String(position.coords.longitude);
+        status.textContent = 'Localização registrada (precisão aproximada de ' +
+            Math.round(position.coords.accuracy || 0) + ' m). Confirme também o endereço.';
+    }, () => {
+        status.textContent = 'Localização não disponível ou não autorizada. Informe o endereço manualmente.';
+    }, { enableHighAccuracy: true, maximumAge: 0, timeout: 12000 });
+};
+
 let configPromise;
 byId('openCart').onclick = async () => {
     refresh();
@@ -221,7 +266,10 @@ byId('openCart').onclick = async () => {
     if (widget !== undefined) return;
     try {
         configPromise ??= fetch('/api/order-config').then(response => response.json());
-        const { siteKey } = await configPromise;
+        const { siteKey, testMode, deliveryEstimateMinutes, pickupEstimateMinutes } = await configPromise;
+        if (testMode) byId('orderStatus').textContent = 'AMBIENTE DE TESTE: a comanda será enviada ao Telegram da loja com aviso NÃO PREPARAR.';
+        estimates = { delivery: deliveryEstimateMinutes, pickup: pickupEstimateMinutes };
+        updateFulfillment();
         if (!siteKey || !window.turnstile) throw new Error();
         if (widget !== undefined) return;
         widget = window.turnstile.render('#orderChallenge', {
@@ -235,7 +283,7 @@ byId('openCart').onclick = async () => {
         configPromise = undefined;
         byId('orderStatus').textContent = '';
     } finally {
-        byId('checkout').hidden = !digitalAvailable;
+        byId('checkout').hidden = !cart.length;
         refresh();
     }
 };
@@ -253,19 +301,29 @@ byId('checkout').onsubmit = async event => {
         const response = await fetch('/api/order', {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ lines, name: form.elements.name.value,
-                phone: form.elements.phone.value.replace(/\D/g, ''), challenge })
+                phone: form.elements.phone.value.replace(/\D/g, ''), challenge,
+                fulfillment: {
+                    type: selectedFulfillment(),
+                    address: form.elements.address.value.trim(),
+                    table: form.elements.table.value.trim(),
+                    latitude: byId('geoLatitude').value || null,
+                    longitude: byId('geoLongitude').value || null
+                } })
         });
         const result = await response.json();
         if (!response.ok) throw new Error(result.error);
         cart.length = 0;
         form.reset();
-        status.textContent = 'Solicitação #' + result.id + ' enviada. Aguarde a confirmação da loja.';
+        updateFulfillment();
+        status.textContent = result.test
+            ? 'TESTE #' + result.id + ' enviado ao grupo da loja. NÃO PREPARAR. Nenhum pedido real foi realizado.'
+            : 'Solicitação #' + result.id + ' enviada à loja. Aguarde a confirmação pelo WhatsApp informado.';
     } catch (error) {
         status.textContent = 'Confira antes de reenviar. ' + error.message;
     } finally {
         sending = false;
         challenge = undefined;
-        window.turnstile.reset(widget);
+        if (widget !== undefined && window.turnstile) window.turnstile.reset(widget);
         refresh();
     }
 };

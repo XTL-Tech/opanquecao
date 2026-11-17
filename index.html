@@ -372,6 +372,15 @@
             gap: 10px;
             margin-top: 16px;
         }
+        .site-tabs a[aria-current="page"] {
+            background: #ffdba5;
+            color: #381d20;
+            box-shadow: inset 0 0 0 2px #c58c43;
+        }
+        .site-tabs a:focus-visible, .info-actions a:focus-visible {
+            outline: 3px solid #ffd080;
+            outline-offset: 3px;
+        }
         .site-tabs a, .info-actions a {
             display: inline-flex;
             align-items: center;
@@ -463,6 +472,21 @@
         #cartTotal { font-size: 21px; color: #381d20; }
         .cart-disclaimer, .cart-next { font-size: 12px; line-height: 1.5; color: #705c59; margin: 8px 0 0; }
         .cart-next { text-align: center; }
+        .fulfillment-options { border: 0; padding: 0; margin: 12px 0 14px; }
+        .fulfillment-options legend { font-weight: 700; font-size: 15px; margin-bottom: 10px; }
+        .fulfillment-choices { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 7px; }
+        .fulfillment-choices label { display: flex; gap: 6px; justify-content: center; align-items: center; flex-wrap: wrap; padding: 10px 5px; border: 1px solid #c9b4ad; border-radius: 10px; text-align: center; font-weight: 700; font-size: 12px; line-height: 1.4; cursor: pointer; background: #fff; }
+        .fulfillment-choices input { width: 18px; height: 18px; min-height: 18px; flex: 0 0 18px; accent-color: #741c2d; }
+        .fulfillment-choices label:has(input:checked) { border-color: #741c2d; background: #fff1e9; box-shadow: inset 0 0 0 1px #741c2d; }
+        .fulfillment-panel { border: 1px solid #ecdcd5; border-radius: 12px; padding: 12px; margin: 0 0 12px; }
+        .fulfillment-panel[hidden] { display: none; }
+        .fulfillment-panel label { display: block; }
+        .fulfillment-panel textarea { width: 100%; min-height: 75px; resize: vertical; }
+        #captureLocation { display: inline-flex; align-items: center; justify-content: center; width: 100%; min-height: 44px; padding: 10px; margin-top: 8px; background: #f4e6dc; color: #381d20; border: 1px solid #c9b4ad; border-radius: 10px; font-weight: 700; }
+        #locationStatus, #fulfillmentEstimate { font-size: 12px; line-height: 1.5; color: #705c59; margin: 8px 0; }
+        #orderUnavailable { font-size: 13px; padding: 12px; border-radius: 10px; background: #fff3da; }
+        @media (max-width: 370px) { .fulfillment-choices { grid-template-columns: 1fr; } .fulfillment-choices label { justify-content: flex-start; } }
+
         #cartWhatsApp { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 52px; padding: 12px; margin-top: 16px; border-radius: 12px; background: #14733b; color: white; font-size: 15px; font-weight: 700; text-decoration: none; text-align: center; }
         #cartDialog [hidden] { display: none; }
         #orderStatus:not(:empty) { margin-top: 12px; padding: 12px; border-radius: 10px; background: #fff3da; font-size: 14px; }
@@ -479,16 +503,25 @@
         .category-kicker { font-size: 11px; font-weight: 800; letter-spacing: .14em; color: #9b273b; }
         .category-home h2 { font-size: clamp(25px, 5vw, 36px); margin: 8px 0; }
         .category-home > p:not(.category-kicker) { color: #705c59; margin-bottom: 22px; font-size: 15px; }
-        .category-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
-        .category-card { display: block; position: relative; aspect-ratio: 4/5; overflow: hidden; border-radius: 18px; background: #530c18; box-shadow: 0 6px 18px #3d0b1822; color: #fff; text-decoration: none; }
-        .category-card img { width: 100%; height: 100%; object-fit: cover; }
-        .category-card > span { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: end; padding: 16px 12px; background: linear-gradient(transparent 22%, #230308e8 100%); }
-        .category-card strong { font-size: clamp(16px, 3.5vw, 23px); line-height: 1.15; text-transform: capitalize; }
-        .category-card small { font-size: 12px; margin-top: 7px; color: #ffdc95; }
-        .category-card:focus-visible, .product-details:focus-visible { outline: 3px solid #c88b16; outline-offset: 4px; }
-        .category-toolbar { padding: 16px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; scroll-margin-top: 12px; }
-        .category-toolbar a { display: inline-flex; align-items: center; min-height: 44px; padding: 8px 14px; border: 1px solid #d7b5a8; border-radius: 12px; color: #81172a; font-weight: 700; text-decoration: none; }
-        .category-toolbar span { font-size: 12px; color: #705c59; }
+        /* Categorias como cartões de produto: imagem separada, nome e CTA visível. */
+        .category-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; width: 100%; margin: 8px 0 18px; }
+        .category-card { display: flex; flex-direction: column; min-width: 0; overflow: hidden; border-radius: 16px; background: #fff; border: 1px solid #e7d5c8; box-shadow: 0 5px 15px #3d0b1817; color: var(--secondary); text-decoration: none; transition: transform .16s ease, box-shadow .16s ease; }
+        .category-card:hover { transform: translateY(-2px); box-shadow: 0 10px 22px #3d0b1825; }
+        .category-card-media { display: block; width: 100%; aspect-ratio: 4 / 3; overflow: hidden; background: #efdfd1; margin: 0; }
+        .category-card-media img { display: block; width: 100%; height: 100%; object-fit: cover; }
+        .category-card-copy { display: flex; flex: 1; flex-direction: column; align-items: stretch; gap: 6px; padding: 12px; }
+        .category-card-title { display: block; font-family: 'Montserrat', sans-serif; font-weight: 800; font-size: clamp(14px, 2.6vw, 19px); line-height: 1.25; overflow-wrap: anywhere; }
+        .category-card-count { display: block; color: #705c59; font-size: 12px; }
+        .category-card-action { display: flex; align-items: center; justify-content: center; margin-top: auto; min-height: 40px; padding: 9px 8px; border-radius: 10px; background: #9c1830; color: #fff; font-size: 13px; font-weight: 800; text-align: center; }
+        .category-card:focus-visible, .category-switcher a:focus-visible, .product-details:focus-visible { outline: 3px solid #c88b16; outline-offset: 4px; }
+        .category-toolbar { display: flex; flex-direction: column; align-items: flex-start; padding: 16px; gap: 10px; scroll-margin-top: 16px; width: 100%; }
+        .category-toolbar > a { display: inline-flex; align-items: center; min-height: 44px; padding: 8px 14px; border: 1px solid #d7b5a8; border-radius: 12px; color: #81172a; font-weight: 800; text-decoration: none; }
+        .category-toolbar #categoryCurrent { font-family: 'Montserrat', sans-serif; font-weight: 800; font-size: 19px; color: var(--secondary); }
+        .category-switcher { display: flex; align-items: center; gap: 8px; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: thin; width: 100%; padding: 4px 1px 10px; }
+        .category-switcher a { display: inline-flex; justify-content: center; align-items: center; flex: 0 0 auto; min-height: 44px; padding: 9px 12px; border-radius: 12px; border: 1px solid #d7b5a8; color: #6a2734; background: #fff; font-size: 13px; font-weight: 700; text-decoration: none; white-space: nowrap; }
+        .category-switcher a[aria-current="true"] { color: #fff; border-color: #94172c; background: #94172c; }
+        @media (min-width: 600px) { .category-cards { gap: 16px; } }
+        @media (max-width: 370px) { .category-card-copy { padding: 10px; } .category-card-action { font-size: 12px; } }
         .category-section[hidden], .category-home[hidden], .category-toolbar[hidden] { display: none; }
         .menu-item .product-details { background: #9c1830; color: white; font-weight: 700; border: 0; border-radius: 12px; display: flex; align-items: center; justify-content: center; gap: 8px; }
         .product-details span { font-size: 26px; line-height: 1; }
@@ -590,11 +623,15 @@ src="https://www.facebook.com/tr?id=766179976513223&ev=PageView&noscript=1"
 <main class="main-content" id="cardapio" style="scroll-margin-top: 84px">
     <section class="category-home container" id="categoryHome" aria-labelledby="categoriesTitle">
         <p class="category-kicker">FEITO PARA A SUA FOME</p>
-        <h2 id="categoriesTitle" tabindex="-1">O que vamos pedir hoje?</h2>
-        <p>Explore as categorias ou veja todos os produtos abaixo.</p>
-        <div id="categoryCards" class="category-cards"></div>
+        <h2 id="categoriesTitle" tabindex="-1">Escolha uma categoria</h2>
+        <p>Toque em um card para ver os produtos daquela categoria. O cardápio completo também está logo abaixo.</p>
+        <div id="categoryCards" class="category-cards" aria-label="Categorias do cardápio"></div>
     </section>
-    <div class="category-toolbar container" id="categoryToolbar" hidden><a href="#cardapio">← Voltar às categorias</a><span id="categoryCurrent"></span></div>
+    <div class="category-toolbar container" id="categoryToolbar" hidden>
+        <a href="#cardapio">← Todas as categorias</a>
+        <span id="categoryCurrent" role="heading" aria-level="2"></span>
+        <nav class="category-switcher" id="categorySwitcher" aria-label="Trocar de categoria"></nav>
+    </div>
     <div class="container" id="menuContent">
         <p id="menuLoading" role="status">Carregando cardápio…</p>
     </div>
@@ -619,7 +656,7 @@ src="https://www.facebook.com/tr?id=766179976513223&ev=PageView&noscript=1"
             <h2 id="titulo-local">Como chegar</h2>
             <p>Ponto de referência: Praça do Trabalhador · Nova Hartz/RS</p>
             <div class="info-actions">
-                <a href="https://share.google/2TydxIHz4v5C73a7x" target="_blank" rel="noopener noreferrer">Ver local e avaliações no Google Maps</a>
+                <a href="https://www.google.com/maps/search/?api=1&amp;query=O%20PANQUEC%C3%83O%20DISKPANQUEC%C3%83O%20Nova%20Hartz%20RS" target="_blank" rel="noopener noreferrer">Ver local e avaliações no Google Maps</a>
                 <a href="https://www.google.com/maps/dir/?api=1&amp;destination=O%20PANQUEC%C3%83O%20DISKPANQUEC%C3%83O%20-%20NOVA%20HARTZ%2C%20RS&amp;dir_action=navigate" target="_blank" rel="noopener noreferrer">Traçar rota até o restaurante</a>
             </div>
         </section>
@@ -882,27 +919,46 @@ src="https://www.facebook.com/tr?id=766179976513223&ev=PageView&noscript=1"
         const home = document.getElementById('categoryHome');
         const cards = document.getElementById('categoryCards');
         const toolbar = document.getElementById('categoryToolbar');
+        const switcher = document.getElementById('categorySwitcher');
         const titles = new Map(data.categorias.map(c => [c.id, c.titulo]));
-        for (const category of data.categorias) {
+        for (const [index, category] of data.categorias.entries()) {
             const section = document.getElementById(category.id);
             const link = document.createElement('a');
             link.className = 'category-card';
             link.href = '#' + category.id;
+            link.setAttribute('aria-label', 'Ver produtos de ' + category.titulo);
+
+            const media = document.createElement('figure');
+            media.className = 'category-card-media';
             const image = section.querySelector('.item-photo img');
             if (image) {
                 const cover = image.cloneNode();
                 cover.alt = '';
-                link.append(cover);
+                cover.loading = index < 4 ? 'eager' : 'lazy';
+                media.append(cover);
             }
-            const label = document.createElement('span');
+            link.append(media);
+
+            const copy = document.createElement('span');
+            copy.className = 'category-card-copy';
             const title = document.createElement('strong');
-            title.textContent = category.titulo.toLocaleLowerCase('pt-BR');
+            title.className = 'category-card-title';
+            title.textContent = category.titulo;
             const count = document.createElement('small');
+            count.className = 'category-card-count';
             const itemCount = section.querySelectorAll('.menu-item').length;
-            count.textContent = itemCount + (itemCount === 1 ? ' opção →' : ' opções →');
-            label.append(title, count);
-            link.append(label);
+            count.textContent = itemCount + (itemCount === 1 ? ' produto' : ' produtos');
+            const action = document.createElement('span');
+            action.className = 'category-card-action';
+            action.textContent = 'Ver produtos →';
+            copy.append(title, count, action);
+            link.append(copy);
             cards.append(link);
+
+            const quickLink = document.createElement('a');
+            quickLink.href = '#' + category.id;
+            quickLink.textContent = category.titulo;
+            switcher.append(quickLink);
         }
         let lastCategory;
         function showCategory(id, focus = false) {
@@ -912,6 +968,10 @@ src="https://www.facebook.com/tr?id=766179976513223&ev=PageView&noscript=1"
             document.getElementById('categoryCurrent').textContent = titles.get(selected) || '';
             for (const section of content.querySelectorAll('.category-section')) section.hidden = selected !== null && section.id !== selected;
             picker.value = selected || '';
+            for (const link of switcher.querySelectorAll('a')) {
+                if (link.hash === '#' + selected) link.setAttribute('aria-current', 'true');
+                else link.removeAttribute('aria-current');
+            }
             if (focus) {
                 const target = selected ? document.querySelector('#' + selected + ' h2') : cards.querySelector('a[href="#' + lastCategory + '"]') || document.getElementById('categoriesTitle');
                 target.setAttribute('tabindex', '-1');
@@ -920,19 +980,47 @@ src="https://www.facebook.com/tr?id=766179976513223&ev=PageView&noscript=1"
             }
             if (selected) lastCategory = selected;
         }
+        // The main navigation and category cards share the URL hash.
+        // Info links must not be interpreted as "return to the menu".
+        const infoSections = new Set(['contato', 'como-chegar']);
+        function showRoute(focus = false) {
+            const id = window.location.hash.slice(1);
+            const destination = infoSections.has(id) ? document.getElementById(id) : null;
+            document.querySelectorAll('.site-tabs a[href^="#"]').forEach(link => {
+                const selected = (destination ? link.hash === '#' + id : link.hash === '#cardapio');
+                if (selected) link.setAttribute('aria-current', 'page');
+                else link.removeAttribute('aria-current');
+            });
+            if (destination) {
+                // Keep all products available when returning to the catalog.
+                showCategory('', false);
+                if (focus) {
+                    const heading = destination.querySelector('h2');
+                    if (heading) {
+                        heading.setAttribute('tabindex', '-1');
+                        heading.focus({preventScroll: true});
+                    }
+                }
+                destination.scrollIntoView({block: 'start', behavior: 'instant'});
+                return;
+            }
+            showCategory(id, focus);
+        }
         document.addEventListener('click', event => {
             const link = event.target.closest('a[href^="#"]');
             if (!link || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
             const id = link.hash.slice(1);
-            if (id !== 'cardapio' && !titles.has(id)) return;
+            if (id !== 'cardapio' && !titles.has(id) && !infoSections.has(id)) return;
             event.preventDefault();
-            window.history.pushState(null, '', '#' + id);
-            showCategory(id, true);
+            if (window.location.hash !== '#' + id) {
+                window.history.pushState(null, '', '#' + id);
+            }
+            showRoute(true);
         });
-        window.addEventListener('hashchange', () => showCategory(window.location.hash.slice(1), true));
-        window.addEventListener('popstate', () => showCategory(window.location.hash.slice(1), true));
+        window.addEventListener('hashchange', () => showRoute(true));
+        window.addEventListener('popstate', () => showRoute(true));
         document.body.classList.add('category-navigation');
-        showCategory(window.location.hash.slice(1));
+        showRoute();
 
     }
 
@@ -983,15 +1071,41 @@ src="https://www.facebook.com/tr?id=766179976513223&ev=PageView&noscript=1"
         <p class="cart-disclaimer">Entrega e adicionais serão combinados com a loja.</p>
     </div>
     <form id="checkout" class="order-form" hidden>
+        <fieldset class="fulfillment-options">
+            <legend>Como deseja receber?</legend>
+            <div class="fulfillment-choices">
+                <label><input type="radio" name="fulfillment" value="delivery" required checked> Entrega</label>
+                <label><input type="radio" name="fulfillment" value="pickup" required> Retirada</label>
+                <label><input type="radio" name="fulfillment" value="table" required> Comer no local</label>
+            </div>
+        </fieldset>
+        <div class="fulfillment-panel" id="fulfillmentDelivery">
+            <label>Endereço de entrega (rua, número, bairro e cidade)
+                <textarea name="address" required minlength="8" maxlength="220" autocomplete="street-address" placeholder="Ex.: Rua..., 123, Centro, Nova Hartz"></textarea>
+            </label>
+            <button type="button" id="captureLocation">Usar minha localização atual (opcional)</button>
+            <p id="locationStatus" role="status" aria-live="polite">A localização só será solicitada se você tocar no botão. Confirme também o endereço.</p>
+            <input type="hidden" name="latitude" id="geoLatitude">
+            <input type="hidden" name="longitude" id="geoLongitude">
+        </div>
+        <div class="fulfillment-panel" id="fulfillmentPickup" hidden>
+            <p>Retirada no estabelecimento. A loja confirmará quando o pedido estará pronto.</p>
+        </div>
+        <div class="fulfillment-panel" id="fulfillmentTable" hidden>
+            <label>Número ou identificação da mesa
+                <input name="table" type="text" minlength="1" maxlength="12" autocomplete="off" placeholder="Ex.: 05">
+            </label>
+        </div>
+        <p id="fulfillmentEstimate" role="status" aria-live="polite">O prazo será informado pela loja na confirmação.</p>
         <label>Nome <input name="name" required maxlength="80" autocomplete="name"></label>
         <label>WhatsApp com DDD <input name="phone" type="tel" required maxlength="20" autocomplete="tel"></label>
-        <label><span><input name="consent" type="checkbox" required style="width:auto; min-height:auto"> Aceito que a loja use meu telefone para responder a este pedido.</span></label>
+        <label><span><input name="consent" type="checkbox" required style="width:auto; min-height:auto"> Autorizo a loja a usar meu contato exclusivamente para atender e confirmar este pedido.</span></label>
         <div id="orderChallenge"></div>
-        <button id="sendOrder" disabled>Enviar pedido à loja</button>
+        <button id="sendOrder" disabled>Enviar solicitação à loja</button>
     </form>
     <p id="orderStatus" role="status" aria-live="polite"></p>
-    <a id="cartWhatsApp" class="cart-whatsapp" hidden target="_blank" rel="noopener noreferrer"><i class="fab fa-whatsapp" aria-hidden="true"></i> Enviar pedido pelo WhatsApp <span aria-hidden="true">→</span></a>
-    <p class="cart-next">O WhatsApp abrirá com seus itens. Toque em enviar na conversa; a loja confirmará o pedido.</p>
+    <p id="orderUnavailable" hidden role="status">O envio digital está indisponível no momento. Não foi enviado nenhum pedido. Entre em contato com a loja para atendimento.</p>
+    <p class="cart-next">Este é um pré-pedido. A loja confirmará o atendimento e o prazo pelo WhatsApp informado.</p>
     </footer>
 </dialog>
 <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async></script>
