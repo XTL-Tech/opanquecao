@@ -321,17 +321,17 @@ values ('opanquecao', $xtlfoodcatalog${
       "titulo": "PÃOKECÃO",
       "itens": [
         {
-          "nome": "Carne de Panela",
+          "nome": "Baguete Carne de Panela",
           "ingredientes": "Pão baguete, maionese verde, ketchup, mostarda, queijo na chapa, batata palha e carne de panela",
           "preco": "R$ 25,00"
         },
         {
-          "nome": "Frango",
+          "nome": "Baguete Frango",
           "ingredientes": "Pão baguete, maionese verde, ketchup, mostarda, queijo na chapa, batata palha e frango",
           "preco": "R$ 25,00"
         },
         {
-          "nome": "Coração de Frango",
+          "nome": "Baguete Coração de Frango",
           "ingredientes": "Pão baguete, maionese verde, ketchup, mostarda, queijo na chapa, batata palha e coração de frango",
           "preco": "R$ 25,00"
         }
