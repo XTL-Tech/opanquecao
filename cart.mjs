@@ -1,4 +1,4 @@
-import { money, orderOptions, priceOrder, extraOptions, extraSummary } from './order-catalog.mjs';
+import { money, orderOptions, priceOrder, extraOptions, extraSummary, flavorChoices } from './order-catalog.mjs';
 
 const byId = id => document.getElementById(id);
 const cart = [];
@@ -48,6 +48,14 @@ function refresh() {
         price.className = 'cart-item-price';
         price.textContent = money(line.cents * line.quantity);
         info.append(title, option, price);
+        if (line.flavors?.length === 2) {
+            for (const [i, flavor] of line.flavors.entries()) {
+                const detail = document.createElement('p');
+                detail.className = 'cart-note';
+                detail.textContent = 'Sabor ' + (i + 1) + ': ' + flavor;
+                info.append(detail);
+            }
+        }
         for (const description of extraSummary(line)) {
             const extra = document.createElement('p'); extra.className = 'cart-note'; extra.textContent = description; info.append(extra);
         }
@@ -139,7 +147,42 @@ byId('menuContent').addEventListener('click', event => {
         const text = document.createElement('span'); text.textContent = option.label + ' · ' + money(option.cents);
         label.append(radio, text); form.querySelector('fieldset').append(label);
     });
-    if (card.dataset.option) form.querySelector('fieldset').hidden = true;
+    if (card.dataset.option || options.length === 1) form.querySelector('fieldset').hidden = true;
+    // Cada metade deve ser escolhida separadamente, a partir dos sabores
+    // cadastrados em panquecas salgadas/doces.
+    const choices = flavorChoices(catalog, category, product);
+    let flavorSelectors = [];
+    if (choices) {
+        const flavorsBox = document.createElement('fieldset');
+        flavorsBox.className = 'extras-group flavor-choices';
+        const legend = document.createElement('legend');
+        legend.textContent = 'Escolha os dois sabores';
+        flavorsBox.append(legend);
+        const help = document.createElement('p');
+        help.textContent = 'Selecione um sabor para cada metade da panqueca.';
+        flavorsBox.append(help);
+        flavorSelectors = choices.map((choice, index) => {
+            const label = document.createElement('label');
+            label.textContent = choice.label;
+            const select = document.createElement('select');
+            select.name = 'flavor' + (index + 1);
+            select.required = true;
+            const placeholder = new Option('Selecione um sabor', '');
+            placeholder.disabled = true;
+            select.add(placeholder);
+            for (const flavor of choice.options) select.add(new Option(flavor, flavor));
+            select.value = '';
+            select.addEventListener('change', () => {
+                const values = flavorSelectors.map(field => field.value);
+                formStatus.textContent = values.every(Boolean) && values[0] === values[1]
+                    ? 'Escolha dois sabores diferentes.' : '';
+            });
+            label.append(select);
+            flavorsBox.append(label);
+            return select;
+        });
+        form.querySelector('fieldset').after(flavorsBox);
+    }
     const extrasBox = document.createElement('div'); extrasBox.className = 'extras-box';
     form.querySelector('fieldset').after(extrasBox);
     const freeSelected = new Set();
@@ -200,6 +243,7 @@ byId('menuContent').addEventListener('click', event => {
         try {
             const [line] = priceOrder(catalog, [{ category, product, option: selected.label,
                 quantity: form.elements.quantity.valueAsNumber, note: form.elements.note.value.trim(),
+                flavors: flavorSelectors.map(select => select.value),
                 freeExtras: [...freeSelected], paidExtras: [...paidSelected] }]);
             cart.push(line);
         } catch (error) { formStatus.textContent = error.message; return; }
