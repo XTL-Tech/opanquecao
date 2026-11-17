@@ -660,6 +660,11 @@ byId('checkout').onsubmit = async event => {
             body: JSON.stringify(payload)
         });
         const result = await response.json().catch(() => ({}));
+        if (result.reviewPending && result.requestId && result.trackingToken) {
+            document.dispatchEvent(new CustomEvent('order-review-created', {detail:{
+                id:result.id,requestId:result.requestId,trackingToken:result.trackingToken
+            }}));
+        }
         if (response.status === 202 || result.pending) {
             status.textContent = (result.error || 'Pedido aguardando conferência.') +
                 ' Referência #' + (result.id || 'indisponível') + '. Consulte a loja pelo WhatsApp.';
@@ -675,7 +680,9 @@ byId('checkout').onsubmit = async event => {
         updatePayment();
         status.textContent = result.test
             ? 'TESTE #' + result.id + ' enviado ao grupo da loja. NÃO PREPARAR. Nenhum pedido real foi realizado.'
-            : 'Solicitação #' + result.id + ' enviada à loja. Aguarde a confirmação pelo WhatsApp informado.';
+            : result.reviewPending
+                ? 'Pré-pedido #' + result.id + ' recebido para análise. Veja o andamento abaixo; a loja ainda precisa aprovar.'
+                : 'Solicitação #' + result.id + ' enviada à loja. Aguarde a confirmação pelo WhatsApp informado.';
     } catch (error) {
         status.textContent = 'Não foi possível confirmar o envio (código ' + trace +
             '). ' + (error?.message || 'Erro de comunicação.') +
