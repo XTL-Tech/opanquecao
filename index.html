@@ -3,7 +3,68 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>O PANQUECÃO - Cardápio</title>
+    <title>Disk Panquecão | Cardápio, Entrega e Retirada em Nova Hartz</title>
+    <meta name="description" content="Cardápio do Disk Panquecão em Nova Hartz/RS: panquecas doces, salgadas e de dois sabores, refeições, bebidas e sobremesas. Entrega em Nova Hartz e Araricá, retirada e consumo no local. Pré-pedido sujeito à confirmação.">
+    <meta name="robots" content="index,follow,max-image-preview:large">
+    <link rel="canonical" href="https://opanquecao.vercel.app/">
+    <link rel="alternate" type="text/plain" title="Informações públicas para agentes de IA" href="/llms.txt">
+    <link rel="alternate" type="application/json" title="Perfil público do estabelecimento" href="/ai/business.json">
+    <meta property="og:type" content="website">
+    <meta property="og:locale" content="pt_BR">
+    <meta property="og:site_name" content="Disk Panquecão">
+    <meta property="og:title" content="Disk Panquecão | Cardápio em Nova Hartz">
+    <meta property="og:description" content="Cardápio do Disk Panquecão em Nova Hartz/RS: panquecas doces, salgadas e de dois sabores, refeições, bebidas e sobremesas. Entrega em Nova Hartz e Araricá, retirada e consumo no local. Pré-pedido sujeito à confirmação.">
+    <meta property="og:url" content="https://opanquecao.vercel.app/">
+    <meta property="og:image" content="https://opanquecao.vercel.app/img/logo-disk-panquecao.webp">
+    <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Restaurant",
+  "@id": "https://opanquecao.vercel.app/#restaurante",
+  "name": "Disk Panquecão",
+  "alternateName": "O Panquecão",
+  "description": "Cardápio do Disk Panquecão em Nova Hartz/RS: panquecas doces, salgadas e de dois sabores, refeições, bebidas e sobremesas. Entrega em Nova Hartz e Araricá, retirada e consumo no local. Pré-pedido sujeito à confirmação.",
+  "url": "https://opanquecao.vercel.app",
+  "image": "https://opanquecao.vercel.app/img/logo-disk-panquecao.webp",
+  "telephone": "+5551997383849",
+  "servesCuisine": [
+    "Panquecas",
+    "Refeições",
+    "Sobremesas"
+  ],
+  "hasMenu": "https://opanquecao.vercel.app/#cardapio",
+  "address": {
+    "@type": "PostalAddress",
+    "addressLocality": "Nova Hartz",
+    "addressRegion": "RS",
+    "addressCountry": "BR"
+  },
+  "areaServed": [
+    {
+      "@type": "City",
+      "name": "Nova Hartz"
+    },
+    {
+      "@type": "City",
+      "name": "Araricá"
+    }
+  ],
+  "availableService": [
+    {
+      "@type": "Service",
+      "name": "Entrega"
+    },
+    {
+      "@type": "Service",
+      "name": "Retirada"
+    },
+    {
+      "@type": "Service",
+      "name": "Consumo no local"
+    }
+  ]
+}
+    </script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -624,10 +685,6 @@ src="https://www.facebook.com/tr?id=766179976513223&ev=PageView&noscript=1"
     <div class="container">
         <span class="restaurant-badge">DESDE 2017</span>
         <h1 class="restaurant-logo"><img src="img/logo-disk-panquecao.webp" width="160" height="175" alt="Disk Panquecão" style="max-width:40vw;height:auto;vertical-align:middle"></h1>
-        <div style="margin-top:10px; opacity:0.7; font-size:0.9rem">
-            <p>Praça do Trabalhador · Nova Hartz/RS</p>
-            <p>DiskPanquecão: <a href="tel:+5551997383849">(51) 9 9738-3849</a></p>
-        </div>
     </div>
     <nav class="site-tabs" aria-label="Navegação principal">
         <a href="#cardapio">Cardápio</a>
@@ -648,7 +705,6 @@ src="https://www.facebook.com/tr?id=766179976513223&ev=PageView&noscript=1"
     <section class="category-home container" id="categoryHome" aria-labelledby="categoriesTitle">
         <p class="category-kicker">FEITO PARA A SUA FOME</p>
         <h2 id="categoriesTitle" tabindex="-1">Escolha uma categoria</h2>
-        <p>Toque em um card para ver os produtos daquela categoria. O cardápio completo também está logo abaixo.</p>
         <div id="categoryCards" class="category-cards" aria-label="Categorias do cardápio"></div>
     </section>
     <div class="category-toolbar container" id="categoryToolbar" hidden>

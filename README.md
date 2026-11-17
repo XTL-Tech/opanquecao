@@ -127,3 +127,16 @@ Configurar as quatro variáveis citadas acima no projeto existente, inicialmente
 ## Atualização — açaí e carregamento
 
 Açaí 300 ml e 500 ml aparecem em cards separados, com tamanho fixo, preços e limites originais. O JSON comercial permanece inalterado; ambos usam a fotografia aprovada. O carrinho mantém os tamanhos distintos. O catálogo começa a carregar sem aguardar Turnstile; falhas exibem opção de tentar novamente.
+
+## Descoberta pública por IA, buscadores e agentes
+
+- `llms.txt` e `llms-full.txt`: fatos públicos e limites de interpretação, sem credenciais.
+- `ai/business.json`: perfil público de contato, cidades, política de pré-pedido e horário de referência com `verified_by_owner=false`.
+- `ai/catalog-summary.json`: categorias e contagem; preços continuam sob a API/catálogo comercial.
+- `ai/agents.md` e `ai/faq.md`: explicação e perguntas frequentes para assistentes.
+- `robots.txt` e `sitemap.xml`: descoberta e limites básicos para indexação.
+- `index.html`: metadados SEO + Restaurant JSON-LD; sem horários estruturados enquanto não forem confirmados pelo responsável.
+
+**Governança:** publicações são informações visíveis para crawlers embora não ocupem a interface. Não há conteúdo secreto ocultado aqui. O diretório externo aponta qua–dom 19h–23h, seg/ter fechados; confirmar dias/horas e endereço exato com a loja antes de marcar como oficial e ativar eventual bloqueio de pedidos fora do expediente.
+
+**Redução de duplicações:** o cabeçalho conserva somente identidade/atalhos; telefone e localização ficam nas seções de Contato/Como chegar; o aviso redundante de seleção de categoria foi removido. Observações do catálogo foram consolidadas sem mudar as 12 categorias, os 82 produtos ou preços. CI testa a consistência com os arquivos de IA.
