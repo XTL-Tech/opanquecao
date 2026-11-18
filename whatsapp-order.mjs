@@ -133,12 +133,7 @@ export function buildSimpleWhatsAppMessage({ lines, note = '' }) {
         throw new Error('Adicione pelo menos um produto ao pedido.');
     }
     let subtotal = 0;
-    const parts = [
-        '*PRÉ-PEDIDO | DISK PANQUECÃO*',
-        'Olá! Gostaria de pedir estes itens do cardápio:',
-        '',
-        '*ITENS DO PEDIDO*'
-    ];
+    const parts = ['*PEDIDO | DISK PANQUECÃO*', ''];
     lines.forEach((line, index) => {
         if (!line || !Number.isSafeInteger(line.cents) || line.cents < 0 ||
             !Number.isInteger(line.quantity) || line.quantity < 1 || line.quantity > 10 ||
@@ -150,23 +145,27 @@ export function buildSimpleWhatsAppMessage({ lines, note = '' }) {
             throw new Error('Valor do carrinho inválido.');
         }
         subtotal += lineTotal;
-        parts.push((index + 1) + '. *' + line.quantity + 'x ' + clean(line.product, 160) + '*',
-            '   Opção: ' + clean(line.option === 'Único' ? 'Unidade' : line.option, 90),
-            '   Unitário com adicionais: ' + money(line.cents),
-            '   Total do item: ' + money(lineTotal));
-        if (line.flavors?.length === 2) {
-            parts.push('   Sabor 1: ' + clean(line.flavors[0], 120),
-                '   Sabor 2: ' + clean(line.flavors[1], 120));
+        // Uma linha por item; opções não selecionadas não ocupam espaço.
+        const details = [(index + 1) + '. ' + line.quantity + 'x ' + clean(line.product, 160)];
+        if (line.option && line.option !== 'Único') {
+            details.push('Tam.: ' + clean(line.option, 90));
         }
-        for (const detail of extraSummary(line)) parts.push('   ' + clean(detail, 450));
-        if (line.note) parts.push('   Observação: ' + clean(line.note, 160));
+        if (line.flavors?.length === 2) {
+            details.push('Sabores: ' + line.flavors.map(flavor => clean(flavor, 120)).join(' / '));
+        }
+        if (line.freeExtras?.length) {
+            details.push('Grátis: ' + line.freeExtras.map(extra => clean(extra, 100)).join(', '));
+        }
+        if (line.paidExtras?.length) {
+            details.push('Adicionais: ' + line.paidExtras.map(extra => clean(extra, 100).replace(/^Adicional de\s+/i, '')).join(', '));
+        }
+        if (line.note) details.push('Obs.: ' + clean(line.note, 160));
+        parts.push(details.join(' - '));
     });
     const generalNote = clean(note, 400);
-    if (generalNote) parts.push('', '*OBSERVAÇÕES GERAIS*', generalNote);
-    parts.push('', '*Subtotal dos itens (sem frete): ' + money(subtotal) + '*',
-        'Entrega ou retirada, endereço, pagamento e total final: a combinar neste WhatsApp.',
-        '',
-        'Por favor, confirmem a disponibilidade e o valor final antes de preparar.');
+    if (generalNote) parts.push('', 'Obs. geral: ' + generalNote);
+    parts.push('', '*Subtotal (sem entrega): ' + money(subtotal) + '*',
+        'Entrega/retirada, pagamento e valor final a combinar. Aguardo confirmação da loja.');
     return parts.join('\n');
 }
 
