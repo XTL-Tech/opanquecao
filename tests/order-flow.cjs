@@ -150,7 +150,7 @@ let directMessage=new URL(directUrl).searchParams.get('text');
 assert.match(directMessage,/Embalagens separadas/);
 assert.match(directMessage,/Por favor, confirmar antes de preparar/);
 assert.match(directMessage,/Subtotal \(sem entrega\):/);
-assert.match(directMessage,/entrega ou retirada/i);
+assert.match(directMessage,/Entrega\/retirada/i);
 assert.doesNotMatch(directMessage,/Cliente fictício|Rua das Flores|Forma: Pix|WhatsApp: 51/);
 assert.equal(d.querySelector('#cartEmpty').hidden,true,'Carrinho não deve ser apagado antes da confirmação');
 // The full card opens exactly one form, including açaí configuration.
