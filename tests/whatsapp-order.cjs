@@ -6,7 +6,7 @@ const path = require('node:path');
 (async () => {
     const catalog = JSON.parse(fs.readFileSync('cardapio.json', 'utf8'));
     const { priceOrder, orderOptions, extraOptions } = await import(path.resolve('order-catalog.mjs'));
-    const { buildWhatsAppMessage, whatsappOrderUrl, STORE_WHATSAPP } =
+    const { buildWhatsAppMessage, buildSimpleWhatsAppMessage, whatsappOrderUrl, STORE_WHATSAPP } =
         await import(path.resolve('whatsapp-order.mjs'));
     assert.equal(STORE_WHATSAPP, '5551997383849');
 
@@ -105,5 +105,20 @@ const path = require('node:path');
     assert.throws(() => buildWhatsAppMessage({...base,
         fulfillment:{...base.fulfillment,city:'Cidade inventada'}}), /cidade/);
 
-    console.log('PASS: WhatsApp direto contém itens, sabores, complementos, taxas, total, endereço, GPS, pagamento e troco.');
+    const simple = buildSimpleWhatsAppMessage({lines, note:'Sem talheres, por favor'});
+    assert.match(simple, /2x Panqueca Meio a Meio/);
+    assert.match(simple, /Sabor 1: Bacon/);
+    assert.match(simple, /Sabor 2: Calabresa/);
+    assert.match(simple, /Sem cebola/);
+    assert.match(simple, /Complementos grátis:/);
+    assert.match(simple, /Adicionais pagos:/);
+    assert.match(simple, /Sem talheres, por favor/);
+    assert.ok(simple.includes('Subtotal dos itens (sem frete): ' + money(subtotal)));
+    assert.match(simple, /a combinar neste WhatsApp/);
+    assert.doesNotMatch(simple, /Nome:|WhatsApp: 51|Endereço:|Forma: Pix|Troco para:/);
+    assert.equal(new URL(whatsappOrderUrl(simple)).searchParams.get('text'),simple);
+    assert.throws(() => buildSimpleWhatsAppMessage({lines:[]}), /pelo menos um produto/);
+    assert.throws(() => buildSimpleWhatsAppMessage({lines:[{...panqueca,quantity:0}]}), /valores/);
+    assert.throws(() => buildSimpleWhatsAppMessage({lines:[{...panqueca,cents:-1}]}), /valores/);
+    console.log('PASS: WhatsApp simples e completo preservam itens, sabores, preços e validação.');
 })().catch(err => { console.error(err); process.exitCode = 1; });
