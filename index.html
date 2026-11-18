@@ -1208,107 +1208,14 @@
     <footer class="cart-footer">
     <div id="cartSummary">
         <div class="cart-total-row"><span>Subtotal dos itens</span><strong id="cartTotal"></strong></div>
-        <p class="cart-disclaimer">Os valores dos itens incluem os adicionais selecionados. A taxa de entrega aparece após escolher a localidade; o pedido só vale depois da confirmação da loja.</p>
+        <p class="cart-disclaimer">O subtotal inclui os adicionais selecionados, mas não inclui a entrega. Combine entrega ou retirada, pagamento e valor final diretamente no WhatsApp. O pedido depende da confirmação da loja.</p>
     </div>
     <form id="checkout" class="order-form" hidden>
-        <nav class="checkout-progress" aria-label="Etapas para finalizar o pré-pedido">
-            <ol>
-                <li data-progress-step="1" aria-current="step"><span>1</span> Recebimento</li>
-                <li data-progress-step="2"><span>2</span> Contato</li>
-                <li data-progress-step="3"><span>3</span> Pagamento</li>
-            </ol>
-            <p id="checkoutProgressText" role="status" aria-live="polite">Etapa 1 de 3: escolha como receber.</p>
-        </nav>
-        <section class="checkout-step" data-checkout-step="1" aria-labelledby="checkoutStep1">
-            <h3 id="checkoutStep1" tabindex="-1">1. Como você quer receber?</h3>
-            <p class="checkout-help">Escolha entrega, retirada ou mesa. Para entrega, informe onde levar o pedido.</p>
-        <fieldset class="fulfillment-options">
-            <legend>Como deseja receber?</legend>
-            <div class="fulfillment-choices">
-                <label><input type="radio" name="fulfillment" value="delivery" required checked> Entrega</label>
-                <label><input type="radio" name="fulfillment" value="pickup" required> Retirada</label>
-                <label><input type="radio" name="fulfillment" value="table" required> Comer no local</label>
-            </div>
-        </fieldset>
-        <div class="fulfillment-panel" id="fulfillmentDelivery">
-            <label>Cidade de entrega *
-                <select name="city" id="deliveryCity" required>
-                    <option value="">Selecione a cidade</option>
-                </select>
-            </label>
-            <label>Bairro ou localidade *
-                <select name="neighborhood" id="deliveryNeighborhood" required disabled>
-                    <option value="">Escolha primeiro a cidade</option>
-                </select>
-            </label>
-            <label id="otherNeighborhoodLabel" hidden>Qual bairro ou localidade? *
-                <input name="otherNeighborhood" id="otherNeighborhood" type="text" maxlength="80" minlength="3" placeholder="Informe seu bairro ou localidade" autocomplete="address-level3">
-            </label>
-            <label>Rua, avenida ou estrada *
-                <input name="street" type="text" required minlength="3" maxlength="120" autocomplete="address-line1" placeholder="Nome da rua, avenida ou estrada">
-            </label>
-            <div class="delivery-address-grid">
-                <label>Número *
-                    <input name="number" type="text" required maxlength="20" placeholder="123 ou S/N" autocomplete="off">
-                </label>
-                <label>CEP da cidade (opcional)
-                    <input name="postalCode" inputmode="numeric" type="text" maxlength="9" placeholder="00000-000" autocomplete="postal-code" aria-describedby="postalCodeHelp">
-                    <small id="postalCodeHelp">O CEP é geral da localidade: não identifica seu bairro. Informe rua e número corretamente.</small>
-                </label>
-            </div>
-            <label>Complemento (opcional)
-                <input name="complement" type="text" maxlength="100" placeholder="Casa, apartamento, bloco, portão...">
-            </label>
-            <label>Referência para o entregador (opcional)
-                <input name="reference" type="text" maxlength="140" placeholder="Próximo à praça, portão azul...">
-            </label>
-            <p id="deliveryFeeStatus" role="status" aria-live="polite">Taxa de entrega: a confirmar pela loja.</p>
-            <button type="button" id="captureLocation">Usar minha localização atual (opcional)</button>
-            <p id="locationStatus" role="status" aria-live="polite">A localização só será solicitada se você tocar no botão. Confirme também o endereço.</p>
-            <input type="hidden" name="latitude" id="geoLatitude">
-            <input type="hidden" name="longitude" id="geoLongitude">
-        </div>
-        <div class="fulfillment-panel" id="fulfillmentPickup" hidden>
-            <p>Retirada no estabelecimento. A loja confirmará quando o pedido estará pronto.</p>
-        </div>
-        <div class="fulfillment-panel" id="fulfillmentTable" hidden>
-            <label>Número ou identificação da mesa
-                <input name="table" type="text" minlength="1" maxlength="12" autocomplete="off" placeholder="Ex.: 05">
-            </label>
-        </div>
-        <p id="fulfillmentEstimate" role="status" aria-live="polite">O prazo será informado pela loja na confirmação.</p>
-        <button type="button" class="checkout-next" data-next-step="2">Continuar para meus dados</button>
-        </section>
-        <section class="checkout-step" data-checkout-step="2" aria-labelledby="checkoutStep2">
-            <h3 id="checkoutStep2" tabindex="-1">2. Como a loja pode falar com você?</h3>
-            <p class="checkout-help">Só precisamos de nome e WhatsApp para confirmar o pedido.</p>
-            <label>Seu nome * <input name="name" required maxlength="80" autocomplete="name" placeholder="Como podemos chamar você?"></label>
-            <label>Seu WhatsApp com DDD * <input name="phone" type="tel" required maxlength="20" autocomplete="tel" inputmode="tel" placeholder="Ex.: 51999999999"></label>
-            <button type="button" class="checkout-next" data-next-step="3">Continuar para pagamento</button>
-        </section>
-        <section class="checkout-step" data-checkout-step="3" aria-labelledby="checkoutStep3">
-            <h3 id="checkoutStep3" tabindex="-1">3. Como você prefere pagar?</h3>
-            <p class="checkout-help">Escolha como vai pagar na loja ou entrega. <strong>Não há cobrança online aqui.</strong> O pedido será preparado para envio no WhatsApp.</p>
-        <fieldset class="payment-options" id="paymentOptions">
-            <legend>Como deseja pagar? *</legend>
-            <div class="payment-choices">
-                <label><input type="radio" name="paymentMethod" value="cash" required> Dinheiro</label>
-                <label><input type="radio" name="paymentMethod" value="credit" required> Cartão de crédito</label>
-                <label><input type="radio" name="paymentMethod" value="debit" required> Cartão de débito</label>
-                <label><input type="radio" name="paymentMethod" value="pix" required> Pix</label>
-            </div>
-            <div id="cashChangeGroup" hidden>
-                <label class="change-toggle"><input name="needsChange" type="checkbox"> Preciso de troco</label>
-                <label id="changeForField" hidden>Troco para quanto? (R$) *
-                    <input name="changeFor" type="text" inputmode="decimal" maxlength="12" placeholder="Ex.: 50,00" autocomplete="off" aria-describedby="paymentHint">
-                </label>
-            </div>
-            <p id="paymentHint" role="status" aria-live="polite">Escolha a forma de pagamento. Não há cobrança online nesta etapa.</p>
-        </fieldset>
-        <label><span><input name="consent" type="checkbox" required style="width:auto; min-height:auto"> Estou ciente do uso dos meus dados para atender este pré-pedido, conforme o <a href="/privacidade.html" target="_blank" rel="noopener noreferrer">aviso de privacidade</a>.</span></label>
-        <p class="checkout-assurance">Ao continuar, abriremos o WhatsApp da loja com todos os itens, sabores, adicionais, valores e dados de entrega. <strong>Confira a mensagem e toque em enviar no WhatsApp.</strong> A loja confirmará o pré-pedido. Nenhum pagamento é feito aqui.</p>
-        <button id="sendOrder" disabled>Abrir pedido no WhatsApp</button>
-        </section>
+        <label for="orderNote">Observação geral para a loja (opcional)
+            <textarea id="orderNote" name="orderNote" maxlength="400" rows="2" placeholder="Ex.: preparar separado, alguma orientação especial..."></textarea>
+        </label>
+        <p class="checkout-assurance">Sem cadastro ou formulário de entrega. Abriremos o WhatsApp com os itens, sabores, adicionais, quantidades e valores. A loja combinará entrega ou retirada e pagamento por lá. <strong>Confira a mensagem e toque em Enviar no WhatsApp.</strong></p>
+        <button id="sendOrder" disabled>Enviar pedido pelo WhatsApp</button>
     </form>
     <p id="orderStatus" role="status" aria-live="polite"></p>
     <a id="whatsappOrderLink" class="cart-whatsapp" hidden target="_blank" rel="noopener noreferrer">Se o WhatsApp não abrir, toque aqui para continuar o pedido</a>

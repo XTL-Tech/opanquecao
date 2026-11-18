@@ -1,6 +1,5 @@
 import { money, orderOptions, priceOrder, extraOptions, extraSummary, flavorChoices } from './order-catalog.mjs';
-import { parseCashAmount, PAYMENT_METHODS } from './payment.mjs';
-import { buildWhatsAppMessage, whatsappOrderUrl } from './whatsapp-order.mjs';
+import { buildSimpleWhatsAppMessage, whatsappOrderUrl } from './whatsapp-order.mjs';
 
 const byId = id => document.getElementById(id);
 const cart = [];
@@ -9,7 +8,6 @@ let sending = false;
 const initialStoreStatus = window.storeOperationStatus;
 let storeOpenForOrders = !initialStoreStatus?.enabled ||
     (initialStoreStatus.open === true && initialStoreStatus.simulated !== true);
-let areaUiReady = false;
 
 const storageKey = 'disk-panquecao-cart-v1';
 let feedbackTimer;
@@ -113,7 +111,6 @@ function refresh() {
     byId('cartEmpty').hidden = !!cart.length;
     byId('cartSummary').hidden = !cart.length;
     byId('cartTotal').textContent = money(total);
-    if (areaUiReady) updateDeliveryFee();
     byId('sendOrder').disabled = !cart.length || sending || !storeOpenForOrders;
 
 }
@@ -273,258 +270,19 @@ byId('menuContent').addEventListener('click', event => {
 });
 
 const checkoutForm = byId('checkout');
-const paymentHint = byId('paymentHint');
-const cashChangeGroup = byId('cashChangeGroup');
-const changeForField = byId('changeForField');
-const paymentChangeCheckbox = checkoutForm.elements.needsChange;
-const changeForInput = checkoutForm.elements.changeFor;
-function selectedPaymentMethod() {
-    return checkoutForm.querySelector('input[name="paymentMethod"]:checked')?.value || '';
-}
-function deliveryAmount() {
-    const subtotal = cart.reduce((sum, line) => sum + line.cents * line.quantity, 0);
-    if (selectedFulfillment() !== 'delivery') return { total: subtotal, known: true };
-    const city = byId('deliveryCity').value;
-    const area = deliveryAreas?.cities?.[city]?.find(row => row.name === byId('deliveryNeighborhood').value);
-    const rate = area ? (area.feeCents ?? deliveryAreas?.defaultFeeCents?.[city]) : null;
-    if (!Number.isSafeInteger(rate) || rate < 0 || rate > 10000) return { total: subtotal, known: false };
-    return { total: subtotal + rate, known: true };
-}
-function updatePayment() {
-    const method = selectedPaymentMethod();
-    const cash = method === 'cash';
-    cashChangeGroup.hidden = !cash;
-    if (!cash) {
-        paymentChangeCheckbox.checked = false;
-        changeForInput.value = '';
-    }
-    const needsChange = cash && paymentChangeCheckbox.checked;
-    changeForField.hidden = !needsChange;
-    changeForInput.required = needsChange;
-    if (!needsChange) changeForInput.value = '';
-    if (!method) {
-        paymentHint.textContent = 'Selecione a forma de pagamento. Nenhuma cobrança online será realizada neste momento.';
-    } else if (method === 'cash') {
-        const { total, known } = deliveryAmount();
-        if (!needsChange) {
-            paymentHint.textContent = 'Pagamento em dinheiro à loja. Se precisar, marque "Preciso de troco".';
-        } else {
-            try {
-                const amount = parseCashAmount(changeForInput.value);
-                paymentHint.textContent = amount === null ? 'Informe para quanto precisa de troco.' :
-                    amount < total ? 'O valor para troco deve ser pelo menos ' + money(total) + '.' :
-                    known ? 'Troco estimado: ' + money(amount - total) + '. Valor sujeito à confirmação da loja.' :
-                    'Troco a confirmar: a taxa de entrega desta localidade ainda será informada pela loja.';
-            } catch (e) {
-                paymentHint.textContent = e.message;
-            }
-        }
-    } else if (method === 'pix') {
-        paymentHint.textContent = 'Pix a combinar com a loja após confirmação. Não será gerado pagamento automático.';
-    } else {
-        paymentHint.textContent = PAYMENT_METHODS[method] + ': pagamento com a loja, sem cobrança no site.';
-    }
-}
-checkoutForm.querySelectorAll('input[name="paymentMethod"]').forEach(input => {
-    input.addEventListener('change', updatePayment);
-});
-paymentChangeCheckbox.addEventListener('change', updatePayment);
-changeForInput.addEventListener('input', updatePayment);
 const orderStatus = byId('orderStatus');
-let lastInvalidInput = null;
-function fieldLabel(field) {
-    if (!field) return 'campo obrigatório';
-    if (field.name === 'consent') return 'autorização de contato';
-    return field.closest('label')?.firstChild?.textContent?.trim()?.replace(/\s*\*\s*/g, ' ').slice(0,80) ||
-        ({name:'nome', phone:'WhatsApp', city:'cidade', neighborhood:'bairro', street:'rua',
-            number:'número', table:'mesa'})[field.name] || 'campo obrigatório';
-}
-// O Safari impede o evento submit quando algum campo está inválido.
-// Mostrar o motivo evita a impressão de que o botão está sem funcionar.
-checkoutForm.addEventListener('invalid', event => {
-    const field = event.target;
-    if (lastInvalidInput === field) return;
-    lastInvalidInput = field;
-    orderStatus.textContent = 'Preencha ou corrija: ' + fieldLabel(field) + '. O pedido ainda NÃO foi enviado.';
-    field.setAttribute('aria-invalid', 'true');
-}, true);
-checkoutForm.addEventListener('input', event => {
-    if (event.target?.matches?.('input, select, textarea')) {
-        byId('whatsappOrderLink').hidden = true;
-        event.target.removeAttribute('aria-invalid');
-        if (lastInvalidInput === event.target) lastInvalidInput = null;
-    }
-});
-let deliveryAreas;
-let deliveryAreasRequest;
-const deliveryCity = byId('deliveryCity');
-const deliveryNeighborhood = byId('deliveryNeighborhood');
-const otherNeighborhood = byId('otherNeighborhood');
-const notListedValue = '__other__';
-const deliveryFields = ['city', 'neighborhood', 'street', 'number'];
-let estimates = {};
+const fallback = byId('whatsappOrderLink');
 
-/* Ajuda contextual de três etapas. Não bloqueia o formulário nem armazena dados
-   pessoais. Nenhuma venda/urgência/avaliação é criada artificialmente. */
-const checkoutProgressSteps = Array.from(checkoutForm.querySelectorAll('[data-checkout-step]'));
-const checkoutProgressLabels = {
-    1: 'Etapa 1 de 3: escolha como receber.',
-    2: 'Etapa 2 de 3: informe seu nome e WhatsApp.',
-    3: 'Etapa 3 de 3: escolha o pagamento e confirme.'
-};
-function checkoutStepValid(step) {
-    const container = checkoutProgressSteps.find(e => Number(e.dataset.checkoutStep) === step);
-    if (!container) return false;
-    return Array.from(container.querySelectorAll('input, select, textarea'))
-        .every(field => !field.willValidate || field.checkValidity());
-}
-function updateCheckoutProgress(step = 1) {
-    for (const indicator of checkoutForm.querySelectorAll('[data-progress-step]')) {
-        const number = Number(indicator.dataset.progressStep);
-        if (number === step) indicator.setAttribute('aria-current', 'step');
-        else indicator.removeAttribute('aria-current');
-        indicator.dataset.done = number < step && checkoutStepValid(number) ? 'true' : 'false';
-    }
-    byId('checkoutProgressText').textContent = checkoutProgressLabels[step] || checkoutProgressLabels[1];
-}
-checkoutForm.querySelectorAll('[data-next-step]').forEach(button => {
-    button.addEventListener('click', () => {
-        const current = Number(button.closest('[data-checkout-step]')?.dataset.checkoutStep);
-        const target = Number(button.dataset.nextStep);
-        if (!Number.isInteger(current) || target !== current + 1) return;
-        const section = checkoutProgressSteps.find(e => Number(e.dataset.checkoutStep) === current);
-        const invalid = Array.from(section.querySelectorAll('input, select, textarea'))
-            .find(field => field.willValidate && !field.checkValidity());
-        if (invalid) {
-            invalid.setAttribute('aria-invalid', 'true');
-            orderStatus.textContent = 'Confira: ' + fieldLabel(invalid) + '. Você ainda não enviou o pedido.';
-            invalid.focus();
-            return;
-        }
-        orderStatus.textContent = '';
-        updateCheckoutProgress(target);
-        const heading = byId('checkoutStep' + target);
-        heading?.focus();
-        heading?.scrollIntoView?.({ block: 'start', behavior: 'smooth' });
-    });
-});
-checkoutForm.addEventListener('focusin', event => {
-    const step = Number(event.target.closest('[data-checkout-step]')?.dataset.checkoutStep);
-    if (step >= 1 && step <= 3) updateCheckoutProgress(step);
-});
-checkoutForm.addEventListener('change', event => {
-    byId('whatsappOrderLink').hidden = true;
-    const step = Number(event.target.closest('[data-checkout-step]')?.dataset.checkoutStep);
-    if (step >= 1 && step <= 3) updateCheckoutProgress(step);
-});
-updateCheckoutProgress();
-
-
-async function loadDeliveryAreas() {
-    if (deliveryAreas) return;
-    deliveryAreasRequest ??= fetch('/delivery-areas.json', { cache: 'no-store' }).then(async response => {
-        if (!response.ok) throw new Error('Não foi possível carregar as áreas de entrega.');
-        const data = await response.json();
-        if (!data || !data.cities || !Array.isArray(data.cities['Nova Hartz']) || !Array.isArray(data.cities['Araricá'])) {
-            throw new Error('Cadastro de bairros indisponível.');
-        }
-        deliveryAreas = data;
-        deliveryCity.replaceChildren(new Option('Selecione a cidade', ''));
-        for (const city of Object.keys(data.cities)) {
-            deliveryCity.add(new Option(city, city));
-        }
-        updateNeighborhoodList();
-    }).catch(error => { deliveryAreasRequest = undefined; throw error; });
-    await deliveryAreasRequest;
-}
-function updateNeighborhoodList() {
-    deliveryNeighborhood.replaceChildren(new Option('Selecione o bairro', ''));
-    const areas = deliveryAreas?.cities?.[deliveryCity.value] || [];
-    for (const area of areas) deliveryNeighborhood.add(new Option(area.name, area.name));
-    if (areas.length) deliveryNeighborhood.add(new Option('Outro bairro / localidade', notListedValue));
-    deliveryNeighborhood.disabled = !areas.length;
-    updateDeliveryFee();
-}
-function updateDeliveryFee() {
-    const isDelivery = selectedFulfillment() === 'delivery';
-    const another = isDelivery && deliveryNeighborhood.value === notListedValue;
-    byId('otherNeighborhoodLabel').hidden = !another;
-    otherNeighborhood.required = another;
-    if (!another) otherNeighborhood.value = '';
-    const area = deliveryAreas?.cities?.[deliveryCity.value]?.find(row => row.name === deliveryNeighborhood.value);
-    // Bairros cadastrados herdam o padrão municipal; localidades fora da lista
-    // continuam sujeitas à confirmação de cobertura e taxa pela loja.
-    const rate = area ? (area.feeCents ?? deliveryAreas?.defaultFeeCents?.[deliveryCity.value]) : null;
-    const fee = isDelivery && Number.isSafeInteger(rate) && rate >= 0 && rate <= 10000 ? rate : null;
-    byId('deliveryFeeStatus').textContent = fee === null
-        ? 'Taxa de entrega: a confirmar pela loja antes de aceitar o pedido. O subtotal não inclui a taxa.'
-        : 'Taxa de entrega: ' + money(fee) + '. Total estimado com entrega: ' +
-            money(cart.reduce((sum, line) => sum + line.cents * line.quantity, 0) + fee);
-    updatePayment();
-}
-deliveryCity.addEventListener('change', updateNeighborhoodList);
-deliveryNeighborhood.addEventListener('change', updateDeliveryFee);
-function selectedFulfillment() {
-    return checkoutForm.querySelector('input[name="fulfillment"]:checked')?.value || '';
-}
-function updateFulfillment() {
-    const mode = selectedFulfillment();
-    for (const [type, id] of [['delivery', 'fulfillmentDelivery'], ['pickup', 'fulfillmentPickup'], ['table', 'fulfillmentTable']]) {
-        byId(id).hidden = type !== mode;
-    }
-    for (const key of deliveryFields) checkoutForm.elements[key].required = mode === 'delivery';
-    checkoutForm.elements.table.required = mode === 'table';
-    updateDeliveryFee();
-    if (mode !== 'delivery') {
-        byId('geoLatitude').value = '';
-        byId('geoLongitude').value = '';
-        byId('locationStatus').textContent = 'A localização só será solicitada se você tocar no botão. Confirme também o endereço.';
-    }
-    const minutes = mode === 'delivery' ? estimates.delivery : mode === 'pickup' ? estimates.pickup : null;
-    byId('fulfillmentEstimate').textContent = Number.isInteger(minutes) && minutes >= 5 && minutes <= 240
-        ? 'Previsão informada pela loja: cerca de ' + minutes + ' minutos, sujeita à confirmação.'
-        : mode === 'table' ? 'O atendimento será confirmado pela loja.'
-        : 'O prazo será informado pela loja na confirmação.';
-}
-checkoutForm.querySelectorAll('input[name="fulfillment"]').forEach(radio => {
-    radio.addEventListener('change', updateFulfillment);
-});
-updateFulfillment();
-areaUiReady = true;
-byId('captureLocation').onclick = () => {
-    const status = byId('locationStatus');
-    if (selectedFulfillment() !== 'delivery') return;
-    if (!navigator.geolocation) {
-        status.textContent = 'Seu navegador não oferece localização. Informe o endereço manualmente.';
-        return;
-    }
-    status.textContent = 'Solicitando sua localização, mediante autorização do navegador…';
-    navigator.geolocation.getCurrentPosition(position => {
-        if (selectedFulfillment() !== 'delivery') return;
-        byId('geoLatitude').value = String(position.coords.latitude);
-        byId('geoLongitude').value = String(position.coords.longitude);
-        status.textContent = 'Localização registrada (precisão aproximada de ' +
-            Math.round(position.coords.accuracy || 0) + ' m). Confirme também o endereço.';
-    }, () => {
-        status.textContent = 'Localização não disponível ou não autorizada. Informe o endereço manualmente.';
-    }, { enableHighAccuracy: true, maximumAge: 0, timeout: 12000 });
-};
-
-
-// Não chamar /api/order, Telegram, Turnstile ou qualquer gateway de pagamento.
-// A mensagem é montada no próprio navegador e enviada somente após o cliente
-// tocar em "enviar" no WhatsApp. Nunca declarar o pedido como recebido aqui.
-byId('openCart').onclick = async () => {
+// O cliente precisa apenas escolher produtos. Não há validação de cadastro,
+// pagamento, endereço, Telegram, API de pedido nem desafio Turnstile.
+byId('openCart').onclick = () => {
     refresh();
     byId('cartDialog').showModal();
-    try {
-        await loadDeliveryAreas();
-    } catch (error) {
-        byId('deliveryFeeStatus').textContent = error.message + ' Escolha retirada ou tente novamente.';
-        orderStatus.textContent = 'Áreas de entrega indisponíveis. Para entrega, tente novamente mais tarde.';
-    }
 };
-
+checkoutForm.addEventListener('input', () => {
+    fallback.hidden = true;
+    orderStatus.textContent = '';
+});
 checkoutForm.onsubmit = event => {
     event.preventDefault();
     if (sending) return;
@@ -532,61 +290,28 @@ checkoutForm.onsubmit = event => {
         orderStatus.textContent = 'Loja fechada no momento. Confira o horário antes de pedir.';
         return;
     }
-    if (!cart.length) {
+    if (!cart.length || !catalog) {
         orderStatus.textContent = 'Escolha seus itens antes de continuar.';
-        return;
-    }
-    if (!checkoutForm.checkValidity()) {
-        checkoutForm.reportValidity();
-        orderStatus.textContent = 'Confira os campos obrigatórios. O pré-pedido ainda não foi enviado.';
         return;
     }
     sending = true;
     refresh();
     try {
-        // Revalidar produtos, sabores, adicionais e preços com o catálogo exibido.
+        // Revalidar sabores, complementos e preços com o catálogo vigente.
         const lines = priceOrder(catalog, cart);
-        const mode = selectedFulfillment();
-        const subtotal = lines.reduce((sum, line) => sum + line.cents * line.quantity, 0);
-        const delivery = deliveryAmount();
-        const deliveryFeeCents = mode === 'delivery' && delivery.known
-            ? delivery.total - subtotal : null;
-        const method = selectedPaymentMethod();
-        const message = buildWhatsAppMessage({
+        const message = buildSimpleWhatsAppMessage({
             lines,
-            name: checkoutForm.elements.name.value,
-            phone: checkoutForm.elements.phone.value,
-            fulfillment: {
-                type: mode,
-                city: checkoutForm.elements.city.value,
-                neighborhood: checkoutForm.elements.neighborhood.value,
-                otherNeighborhood: otherNeighborhood.value.trim(),
-                street: checkoutForm.elements.street.value.trim(),
-                number: checkoutForm.elements.number.value.trim(),
-                postalCode: checkoutForm.elements.postalCode.value.trim(),
-                complement: checkoutForm.elements.complement.value.trim(),
-                reference: checkoutForm.elements.reference.value.trim(),
-                table: checkoutForm.elements.table.value.trim(),
-                latitude: byId('geoLatitude').value || null,
-                longitude: byId('geoLongitude').value || null
-            },
-            payment: {
-                method,
-                changeForCents: method === 'cash' && paymentChangeCheckbox.checked
-                    ? parseCashAmount(changeForInput.value) : null
-            },
-            deliveryFeeCents
+            note: checkoutForm.elements.orderNote.value
         });
         const url = whatsappOrderUrl(message);
-        const fallback = byId('whatsappOrderLink');
         fallback.href = url;
         fallback.hidden = false;
-        orderStatus.textContent = 'Abrindo o WhatsApp com o pré-pedido preenchido. Confira a mensagem e toque em enviar no aplicativo. O pedido ainda não foi recebido pela loja.';
-        // Navegação na mesma aba: funciona no Safari do iPhone sem pop-ups.
+        orderStatus.textContent = 'Abrindo o WhatsApp. Confira e toque em Enviar. A loja ainda não recebeu o pedido.';
+        // Mesma aba evita bloqueio de pop-ups em dispositivos móveis.
         window.location.assign(url);
     } catch (error) {
         orderStatus.textContent = (error?.message || 'Não foi possível preparar o pedido.') +
-            ' Nenhum pedido foi enviado. Corrija os dados e tente novamente.';
+            ' Nenhum pedido foi enviado; confira o carrinho e tente novamente.';
     } finally {
         sending = false;
         refresh();
