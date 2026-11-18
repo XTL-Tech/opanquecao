@@ -1208,7 +1208,7 @@
     <footer class="cart-footer">
     <div id="cartSummary">
         <div class="cart-total-row"><span>Subtotal dos itens</span><strong id="cartTotal"></strong></div>
-        <p class="cart-disclaimer">Entrega e adicionais serão combinados com a loja.</p>
+        <p class="cart-disclaimer">Os valores dos itens incluem os adicionais selecionados. A taxa de entrega aparece após escolher a localidade; o pedido só vale depois da confirmação da loja.</p>
     </div>
     <form id="checkout" class="order-form" hidden>
         <nav class="checkout-progress" aria-label="Etapas para finalizar o pré-pedido">
@@ -1288,7 +1288,7 @@
         </section>
         <section class="checkout-step" data-checkout-step="3" aria-labelledby="checkoutStep3">
             <h3 id="checkoutStep3" tabindex="-1">3. Como você prefere pagar?</h3>
-            <p class="checkout-help">Escolha como vai pagar na loja ou entrega. <strong>Não há cobrança online aqui.</strong></p>
+            <p class="checkout-help">Escolha como vai pagar na loja ou entrega. <strong>Não há cobrança online aqui.</strong> O pedido será preparado para envio no WhatsApp.</p>
         <fieldset class="payment-options" id="paymentOptions">
             <legend>Como deseja pagar? *</legend>
             <div class="payment-choices">
@@ -1306,14 +1306,13 @@
             <p id="paymentHint" role="status" aria-live="polite">Escolha a forma de pagamento. Não há cobrança online nesta etapa.</p>
         </fieldset>
         <label><span><input name="consent" type="checkbox" required style="width:auto; min-height:auto"> Estou ciente do uso dos meus dados para atender este pré-pedido, conforme o <a href="/privacidade.html" target="_blank" rel="noopener noreferrer">aviso de privacidade</a>.</span></label>
-        <div id="orderChallenge"></div>
-        <p class="checkout-assurance">Revise os dados. Você enviará um <strong>pré-pedido</strong> e a loja confirmará pelo WhatsApp. Nenhum pagamento é feito aqui.</p>
-        <button id="sendOrder" disabled>Enviar pré-pedido para confirmação</button>
+        <p class="checkout-assurance">Ao continuar, abriremos o WhatsApp da loja com todos os itens, sabores, adicionais, valores e dados de entrega. <strong>Confira a mensagem e toque em enviar no WhatsApp.</strong> A loja confirmará o pré-pedido. Nenhum pagamento é feito aqui.</p>
+        <button id="sendOrder" disabled>Abrir pedido no WhatsApp</button>
         </section>
     </form>
     <p id="orderStatus" role="status" aria-live="polite"></p>
-    <p id="orderUnavailable" hidden role="status">O envio digital está indisponível no momento. Não foi enviado nenhum pedido. Entre em contato com a loja para atendimento.</p>
-    <p class="cart-next">Este é um pré-pedido. A loja confirmará o atendimento e o prazo pelo WhatsApp informado.</p>
+    <a id="whatsappOrderLink" class="cart-whatsapp" hidden target="_blank" rel="noopener noreferrer">Se o WhatsApp não abrir, toque aqui para continuar o pedido</a>
+    <p class="cart-next">O envio só acontece quando você confirmar no WhatsApp. A loja confirmará a disponibilidade e o prazo pelo aplicativo.</p>
     </footer>
 </dialog>
 <style>
@@ -1334,7 +1333,7 @@
   <button type="button" id="dismissStoreClosed">Entendi, continuar vendo o cardápio</button>
 </dialog>
 <script type="module" src="store-hours-client.mjs"></script>
-<!-- Turnstile é carregado apenas na abertura do carrinho pelo cart.mjs. -->
+<!-- Pedido direto no WhatsApp: sem Telegram, gateway ou Turnstile. -->
 <script type="module" src="cart.mjs"></script>
 </body>
 </html>
