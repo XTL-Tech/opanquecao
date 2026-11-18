@@ -1,13 +1,11 @@
 import { money, orderOptions, priceOrder, extraOptions, extraSummary, flavorChoices } from './order-catalog.mjs';
 import { parseCashAmount, PAYMENT_METHODS } from './payment.mjs';
+import { buildWhatsAppMessage, whatsappOrderUrl } from './whatsapp-order.mjs';
 
 const byId = id => document.getElementById(id);
 const cart = [];
 let catalog;
-let widget;
-let challenge;
 let sending = false;
-let digitalAvailable = false;
 const initialStoreStatus = window.storeOperationStatus;
 let storeOpenForOrders = !initialStoreStatus?.enabled ||
     (initialStoreStatus.open === true && initialStoreStatus.simulated !== true);
@@ -31,10 +29,8 @@ if (window.menuCatalog) initializeCatalog(window.menuCatalog);
 
 function refresh() {
     try { window.localStorage.setItem(storageKey, JSON.stringify({version: 1, updatedAt: Date.now(), lines: cart})); } catch {}
-    // Allow visual inspection of the checkout when integrations are offline;
-    // the send button stays disabled until Turnstile issues a challenge.
+    // Pedidos do carrinho abrem diretamente no WhatsApp, sem backend de pedidos.
     byId('checkout').hidden = !cart.length;
-    byId('orderUnavailable').hidden = digitalAvailable || !cart.length;
     const rows = byId('cartLines');
     rows.replaceChildren();
     let total = 0;
@@ -85,6 +81,7 @@ function refresh() {
             button.disabled = sending || (delta < 0 ? line.quantity <= 1 : line.quantity >= 10);
             button.onclick = () => {
                 line.quantity += delta;
+                byId('whatsappOrderLink').hidden = true;
                 refresh();
                 const updated = rows.children[index]?.querySelectorAll('.cart-stepper button');
                 const preferred = updated?.[delta < 0 ? 0 : 1];
@@ -101,6 +98,7 @@ function refresh() {
         remove.disabled = sending;
         remove.onclick = () => {
             cart.splice(index, 1);
+            byId('whatsappOrderLink').hidden = true;
             refresh();
             (rows.children[Math.min(index, cart.length - 1)]?.querySelector('button') ||
                 byId('cartDialog').querySelector('.cart-back')).focus({ preventScroll: true });
@@ -116,7 +114,7 @@ function refresh() {
     byId('cartSummary').hidden = !cart.length;
     byId('cartTotal').textContent = money(total);
     if (areaUiReady) updateDeliveryFee();
-    byId('sendOrder').disabled = !cart.length || !challenge || sending || !storeOpenForOrders;
+    byId('sendOrder').disabled = !cart.length || sending || !storeOpenForOrders;
 
 }
 
@@ -263,6 +261,7 @@ byId('menuContent').addEventListener('click', event => {
                 freeExtras: [...freeSelected], paidExtras: [...paidSelected] }]);
             cart.push(line);
         } catch (error) { formStatus.textContent = error.message; return; }
+        byId('whatsappOrderLink').hidden = true;
         refresh();
         byId('productDialog').close();
         button.focus({ preventScroll: true });
@@ -351,6 +350,7 @@ checkoutForm.addEventListener('invalid', event => {
 }, true);
 checkoutForm.addEventListener('input', event => {
     if (event.target?.matches?.('input, select, textarea')) {
+        byId('whatsappOrderLink').hidden = true;
         event.target.removeAttribute('aria-invalid');
         if (lastInvalidInput === event.target) lastInvalidInput = null;
     }
@@ -413,6 +413,7 @@ checkoutForm.addEventListener('focusin', event => {
     if (step >= 1 && step <= 3) updateCheckoutProgress(step);
 });
 checkoutForm.addEventListener('change', event => {
+    byId('whatsappOrderLink').hidden = true;
     const step = Number(event.target.closest('[data-checkout-step]')?.dataset.checkoutStep);
     if (step >= 1 && step <= 3) updateCheckoutProgress(step);
 });
@@ -509,68 +510,10 @@ byId('captureLocation').onclick = () => {
     }, { enableHighAccuracy: true, maximumAge: 0, timeout: 12000 });
 };
 
-const pendingOrderKey = 'disk-panquecao-order-intent-v1';
-let fallbackAttempt;
-function freshRequestId() {
-    const bytes = new Uint8Array(16);
-    if (!window.crypto?.getRandomValues) throw new Error('Este navegador não permite criar um identificador seguro de pedido.');
-    window.crypto.getRandomValues(bytes);
-    bytes[6] = (bytes[6] & 15) | 64;
-    bytes[8] = (bytes[8] & 63) | 128;
-    const hex = [...bytes].map(value => value.toString(16).padStart(2, '0')).join('');
-    return [hex.slice(0,8), hex.slice(8,12), hex.slice(12,16), hex.slice(16,20), hex.slice(20)].join('-');
-}
-async function getRequestId(payload) {
-    // Turnstile é descartado da assinatura; não persistir nome, telefone ou endereço.
-    const { challenge: ignored, ...orderData } = payload;
-    const serialized = JSON.stringify(orderData);
-    let fingerprint;
-    try {
-        if (window.crypto?.subtle) {
-            const digest = await window.crypto.subtle.digest('SHA-256', new TextEncoder().encode(serialized));
-            fingerprint = [...new Uint8Array(digest)].map(n => n.toString(16).padStart(2, '0')).join('');
-        }
-    } catch { /* Ambiente sem WebCrypto sutil usa somente memória. */ }
-    if (fingerprint) {
-        try {
-            const previous = JSON.parse(window.sessionStorage.getItem(pendingOrderKey));
-            if (previous?.fingerprint === fingerprint && Date.now() - previous.time < 1800000 &&
-                /^[0-9a-f-]{36}$/i.test(previous.id)) return previous.id;
-        } catch {}
-        const id = freshRequestId();
-        try { window.sessionStorage.setItem(pendingOrderKey,
-            JSON.stringify({ id, fingerprint, time: Date.now() })); } catch {}
-        return id;
-    }
-    if (fallbackAttempt?.serialized === serialized) return fallbackAttempt.id;
-    fallbackAttempt = { serialized, id: freshRequestId() };
-    return fallbackAttempt.id;
-}
 
-
-
-let turnstileScriptPromise;
-function ensureTurnstile() {
-    if (window.turnstile?.render) return Promise.resolve(window.turnstile);
-    if (!turnstileScriptPromise) {
-        turnstileScriptPromise = new Promise((resolve, reject) => {
-            const script = document.createElement('script');
-            script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
-            script.async = true;
-            script.onload = () => window.turnstile?.render ? resolve(window.turnstile)
-                : reject(new Error('Verificação de segurança não inicializada'));
-            script.onerror = () => reject(new Error('Falha de rede na verificação de segurança'));
-            document.head.appendChild(script);
-        }).catch(error => {
-            turnstileScriptPromise = undefined;
-            document.querySelector('script[src*="challenges.cloudflare.com/turnstile/v0/api.js"]')?.remove();
-            throw error;
-        });
-    }
-    return turnstileScriptPromise;
-}
-
-let configPromise;
+// Não chamar /api/order, Telegram, Turnstile ou qualquer gateway de pagamento.
+// A mensagem é montada no próprio navegador e enviada somente após o cliente
+// tocar em "enviar" no WhatsApp. Nunca declarar o pedido como recebido aqui.
 byId('openCart').onclick = async () => {
     refresh();
     byId('cartDialog').showModal();
@@ -578,112 +521,74 @@ byId('openCart').onclick = async () => {
         await loadDeliveryAreas();
     } catch (error) {
         byId('deliveryFeeStatus').textContent = error.message + ' Escolha retirada ou tente novamente.';
-    }
-    if (widget !== undefined) return;
-    try {
-        configPromise ??= fetch('/api/order-config').then(response => response.json());
-        const { siteKey, testMode, deliveryEstimateMinutes, pickupEstimateMinutes } = await configPromise;
-        if (testMode) byId('orderStatus').textContent = 'AMBIENTE DE TESTE: a comanda será enviada ao Telegram da loja com aviso NÃO PREPARAR.';
-        estimates = { delivery: deliveryEstimateMinutes, pickup: pickupEstimateMinutes };
-        updateFulfillment();
-        if (!siteKey) throw new Error('Site key não disponível');
-        await ensureTurnstile();
-        if (!window.turnstile?.render) throw new Error('Verificação indisponível');
-        if (widget !== undefined) return;
-        widget = window.turnstile.render('#orderChallenge', {
-            sitekey: siteKey,
-            callback: token => { challenge = token; refresh(); },
-            'expired-callback': () => {
-                challenge = undefined;
-                orderStatus.textContent = 'Verificação de segurança expirada. Conclua uma nova verificação antes de enviar.';
-                refresh();
-            },
-            'error-callback': () => {
-                challenge = undefined;
-                orderStatus.textContent = 'O navegador não conseguiu validar a segurança. Recarregue a página e tente novamente. Nenhum pedido foi enviado.';
-                refresh();
-            }
-        });
-        digitalAvailable = true;
-    } catch {
-        configPromise = undefined;
-        orderStatus.textContent = 'Não foi possível iniciar a verificação de segurança. Recarregue a página. Nenhum pedido foi enviado.';
-    } finally {
-        byId('checkout').hidden = !cart.length;
-        refresh();
+        orderStatus.textContent = 'Áreas de entrega indisponíveis. Para entrega, tente novamente mais tarde.';
     }
 };
 
-byId('checkout').onsubmit = async event => {
+checkoutForm.onsubmit = event => {
     event.preventDefault();
     if (sending) return;
-    const form = event.currentTarget;
-    const status = orderStatus;
-    if (!challenge) {
-        status.textContent = 'A verificação de segurança não foi concluída ou expirou. Aguarde e tente novamente. Nenhum pedido foi enviado.';
+    if (!storeOpenForOrders) {
+        orderStatus.textContent = 'Loja fechada no momento. Confira o horário antes de pedir.';
         return;
     }
-    const trace = Math.random().toString(36).slice(2, 10).padEnd(8, '0');
+    if (!cart.length) {
+        orderStatus.textContent = 'Escolha seus itens antes de continuar.';
+        return;
+    }
+    if (!checkoutForm.checkValidity()) {
+        checkoutForm.reportValidity();
+        orderStatus.textContent = 'Confira os campos obrigatórios. O pré-pedido ainda não foi enviado.';
+        return;
+    }
     sending = true;
     refresh();
-    status.textContent = 'Enviando…';
     try {
+        // Revalidar produtos, sabores, adicionais e preços com o catálogo exibido.
         const lines = priceOrder(catalog, cart);
+        const mode = selectedFulfillment();
+        const subtotal = lines.reduce((sum, line) => sum + line.cents * line.quantity, 0);
+        const delivery = deliveryAmount();
+        const deliveryFeeCents = mode === 'delivery' && delivery.known
+            ? delivery.total - subtotal : null;
         const method = selectedPaymentMethod();
-        const payment = {
-            method,
-            changeForCents: method === 'cash' && paymentChangeCheckbox.checked
-                ? parseCashAmount(changeForInput.value) : null
-        };
-        if (method === 'cash' && paymentChangeCheckbox.checked && payment.changeForCents === null) {
-            throw new Error('Informe para quanto precisa de troco.');
-        }
-        const payload = { lines, payment, name: form.elements.name.value,
-                phone: form.elements.phone.value.replace(/\D/g, ''), challenge,
-                fulfillment: {
-                    type: selectedFulfillment(),
-                    city: form.elements.city.value,
-                    neighborhood: form.elements.neighborhood.value,
-                    otherNeighborhood: otherNeighborhood.value.trim(),
-                    street: form.elements.street.value.trim(),
-                    number: form.elements.number.value.trim(),
-                    postalCode: form.elements.postalCode.value.trim(),
-                    complement: form.elements.complement.value.trim(),
-                    reference: form.elements.reference.value.trim(),
-                    table: form.elements.table.value.trim(),
-                    latitude: byId('geoLatitude').value || null,
-                    longitude: byId('geoLongitude').value || null
-                } };
-        payload.requestId = await getRequestId(payload);
-        const response = await fetch('/api/order', {
-            method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Checkout-Trace': trace },
-            body: JSON.stringify(payload)
+        const message = buildWhatsAppMessage({
+            lines,
+            name: checkoutForm.elements.name.value,
+            phone: checkoutForm.elements.phone.value,
+            fulfillment: {
+                type: mode,
+                city: checkoutForm.elements.city.value,
+                neighborhood: checkoutForm.elements.neighborhood.value,
+                otherNeighborhood: otherNeighborhood.value.trim(),
+                street: checkoutForm.elements.street.value.trim(),
+                number: checkoutForm.elements.number.value.trim(),
+                postalCode: checkoutForm.elements.postalCode.value.trim(),
+                complement: checkoutForm.elements.complement.value.trim(),
+                reference: checkoutForm.elements.reference.value.trim(),
+                table: checkoutForm.elements.table.value.trim(),
+                latitude: byId('geoLatitude').value || null,
+                longitude: byId('geoLongitude').value || null
+            },
+            payment: {
+                method,
+                changeForCents: method === 'cash' && paymentChangeCheckbox.checked
+                    ? parseCashAmount(changeForInput.value) : null
+            },
+            deliveryFeeCents
         });
-        const result = await response.json().catch(() => ({}));
-        if (response.status === 202 || result.pending) {
-            status.textContent = (result.error || 'Pedido aguardando conferência.') +
-                ' Referência #' + (result.id || 'indisponível') + '. Consulte a loja pelo WhatsApp.';
-            return;
-        }
-        if (!response.ok) throw new Error(result.error || 'Falha na comunicação com a loja.');
-        fallbackAttempt = undefined;
-        try { window.sessionStorage.removeItem(pendingOrderKey); } catch {}
-        cart.length = 0;
-        form.reset();
-        updateNeighborhoodList();
-        updateFulfillment();
-        updatePayment();
-        status.textContent = result.test
-            ? 'TESTE #' + result.id + ' enviado ao grupo da loja. NÃO PREPARAR. Nenhum pedido real foi realizado.'
-            : 'Solicitação #' + result.id + ' enviada à loja. Aguarde a confirmação pelo WhatsApp informado.';
+        const url = whatsappOrderUrl(message);
+        const fallback = byId('whatsappOrderLink');
+        fallback.href = url;
+        fallback.hidden = false;
+        orderStatus.textContent = 'Abrindo o WhatsApp com o pré-pedido preenchido. Confira a mensagem e toque em enviar no aplicativo. O pedido ainda não foi recebido pela loja.';
+        // Navegação na mesma aba: funciona no Safari do iPhone sem pop-ups.
+        window.location.assign(url);
     } catch (error) {
-        status.textContent = 'Não foi possível confirmar o envio (código ' + trace +
-            '). ' + (error?.message || 'Erro de comunicação.') +
-            ' Antes de reenviar, confirme no Telegram com a loja para evitar pedidos duplicados.';
+        orderStatus.textContent = (error?.message || 'Não foi possível preparar o pedido.') +
+            ' Nenhum pedido foi enviado. Corrija os dados e tente novamente.';
     } finally {
         sending = false;
-        challenge = undefined;
-        if (widget !== undefined && window.turnstile) window.turnstile.reset(widget);
         refresh();
     }
 };
