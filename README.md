@@ -2,6 +2,18 @@
 
 Cardápio e pré-pedido do Disk Panquecão, Nova Hartz/RS. HTML, CSS e JavaScript, sem framework. Tecnologia XTL TECH.
 
+## Pedidos diretos pelo WhatsApp — 18/11/2026
+
+**Fluxo atual:** cardápio → adicionar ao carrinho → informar entrega/retirada/mesa, contato e forma de pagamento → **Abrir pedido no WhatsApp**. O site monta a mensagem com produtos, opções, quantidade, sabores, adicionais, observações, subtotal, taxa de entrega, valor estimado, endereço/GPS opcional, pagamento e troco. O número é o WhatsApp comercial já publicado no próprio site (51) 99738-3849.
+
+- O pré-pedido **não é enviado automaticamente**: o cliente precisa conferir a mensagem e tocar em **Enviar** no WhatsApp. O carrinho fica preservado para correções; há link de contingência se a navegação não abrir.
+- As taxas são calculadas pelo catálogo de bairros já existente (`delivery-areas.json`); localidades fora da lista são marcadas como **taxa a confirmar**, sem inventar preço ou total.
+- **Não há chamada ao Telegram, ao Turnstile, a gateway de pagamento ou à rota `/api/order` no fluxo público.** O código servidor anterior permanece no repositório apenas como legado, sem uso no carrinho.
+- A habilitação do botão continua condicionada ao horário da loja; a página não afirma que um pedido foi recebido sem confirmação efetiva do WhatsApp.
+- Testes automatizados: `npm test`, incluindo `tests/whatsapp-order.cjs`. Antes de publicar, confirmar se o número comercial permanece correto e realizar teste real de abertura no iPhone e no Android.
+
+> Seções abaixo descrevem também recursos e decisões **históricas** do checkout via Telegram. Para o fluxo de produção vigente, prevalece esta seção.
+
 ## Ambientes e regra de entrega
 
 - Produção: https://opanquecao.vercel.app — branch `main`.
