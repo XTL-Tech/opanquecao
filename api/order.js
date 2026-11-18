@@ -4,6 +4,8 @@ const { loadCatalog, CatalogUnavailableError } = require('../lib/catalog-source'
 const { UUID_V4, isEnabled, initLedger, OrderLedgerUnavailable, payloadDigest, replayResponse } = require('../lib/order-idempotency');
 const { randomUUID } = require('node:crypto');
 const { loadStoreStatus } = require('../lib/store-hours-source');
+const { enabled: reviewEnabled, initReviewStore, trackingToken } = require('../lib/order-review');
+const { buttonsForOrder } = require('../lib/telegram-review');
 
 module.exports = async function handler(req, res) {
     res.setHeader('Cache-Control', 'no-store');
@@ -23,6 +25,11 @@ module.exports = async function handler(req, res) {
     };
     log('received');
     const { TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID, TURNSTILE_SECRET_KEY } = process.env;
+    const requireReview = reviewEnabled();
+    if (requireReview && (!isEnabled() || !process.env.TELEGRAM_WEBHOOK_SECRET ||
+        !/^\d+(,\d+)*$/.test((process.env.TELEGRAM_REVIEWER_IDS || '').replace(/\s/g, '')))) {
+        return reject(503, 'A confirmação digital está em configuração. Fale com a loja.', 'review_configuration_missing');
+    }
     if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID || !TURNSTILE_SECRET_KEY) {
         return reject(503, 'Pedido digital indisponível no momento. Entre em contato com a loja.', 'configuration_missing');
     }
@@ -141,6 +148,9 @@ module.exports = async function handler(req, res) {
     }
     const id = ledger ? requestId.replace(/-/g, '').slice(0, 8) : randomUUID().slice(0, 8);
     let claimed = false;
+    let reviewStore = null;
+    let reviewToken = null;
+    let reviewSaved = false;
     let stage = 'turnstile';
     let telegramStatus = null;
     try {
@@ -164,6 +174,18 @@ module.exports = async function handler(req, res) {
                 return reject(503, 'Não foi possível registrar o pedido com segurança. Contate a loja.', 'ledger_claim_failed');
             }
         }
+        // Persistir ANTES de notificar Telegram. Falha no banco impede envio.
+        if (requireReview) {
+            stage = 'review_create';
+            reviewStore = initReviewStore();
+            reviewToken = trackingToken();
+            await reviewStore.create({
+                requestId, orderRef: id, token: reviewToken, name: name.trim(), phone,
+                items, fulfillment: delivery, payment: validatedPayment, subtotal,
+                fee: delivery.feeCents
+            });
+            reviewSaved = true;
+        }
         stage = 'pdf';
         const pdf = await orderPdf({ id, name: name.trim(), phone, items, subtotal, money, fulfillment: delivery, payment: validatedPayment, testMode });
         const form = new FormData();
@@ -179,6 +201,7 @@ Produtos: ${money(subtotal)}${feeDescription ? ' · ' + feeDescription : ''}
 Pagamento previsto: ${validatedPayment.label}${changeDescription}
 Aguardando confirmação da loja. PAGAMENTO PENDENTE.`);
         form.set('document', new Blob([pdf], { type: 'application/pdf' }), `${testMode ? 'TESTE-nao-preparar-' : 'pre-pedido-'}${id}.pdf`);
+        if (requireReview) form.set('reply_markup', JSON.stringify(buttonsForOrder(requestId)));
         stage = 'telegram';
         const sent = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendDocument`, {
             method: 'POST', body: form, signal: AbortSignal.timeout(8000)
@@ -186,6 +209,10 @@ Aguardando confirmação da loja. PAGAMENTO PENDENTE.`);
         telegramStatus = Number.isInteger(sent.status) ? sent.status : null;
         const telegram = await sent.json();
         if (!sent.ok || !telegram.ok) throw new Error('Telegram indisponível');
+        if (requireReview) {
+            stage = 'review_bind_telegram';
+            await reviewStore.setTelegram(requestId, telegram.result?.message_id);
+        }
         if (ledger) {
             stage = 'ledger_finish';
             try {
@@ -193,16 +220,22 @@ Aguardando confirmação da loja. PAGAMENTO PENDENTE.`);
             } catch {
                 log('ledger_confirmation_pending', { httpStatus: 202 });
                 return res.status(202).json({ id, pending: true, trace,
+                    ...(reviewSaved ? {reviewPending: true, requestId, trackingToken: reviewToken} : {}),
                     error: 'A loja pode ter recebido o pedido, mas não foi possível confirmar o registro. Não reenvie.' });
             }
         }
         log('sent', { httpStatus: 200 });
-        return res.status(200).json({ id, test: testMode, trace });
+        return res.status(200).json({ id, test: testMode, trace,
+            ...(reviewSaved ? {reviewPending: true, requestId, trackingToken: reviewToken} : {}) });
     } catch (error) {
         if (claimed) {
+            if (reviewSaved) {
+                try { await reviewStore.decide(requestId, 'delivery_uncertain', null); } catch { /* Reconciliar manualmente. */ }
+            }
             try { await ledger.finish(requestId, 'needs_review'); } catch { /* Reconciliar manualmente. */ }
             log('delivery_uncertain', { httpStatus: 202, stage, telegramStatus });
             return res.status(202).json({ id, pending: true, trace,
+                ...(reviewSaved ? {reviewPending: true, requestId, trackingToken: reviewToken} : {}),
                 error: 'Não foi possível confirmar o envio. Consulte a loja e não envie novamente.' });
         }
         log('failed', { httpStatus: 502, stage, telegramStatus,
