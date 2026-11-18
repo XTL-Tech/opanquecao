@@ -157,7 +157,7 @@ export function buildSimpleWhatsAppMessage({ lines, note = '' }) {
             details.push('Grátis: ' + line.freeExtras.map(extra => clean(extra, 100)).join(', '));
         }
         if (line.paidExtras?.length) {
-            details.push('Adicionais: ' + line.paidExtras.map(extra => clean(extra, 100)).join(', '));
+            details.push('Adicionais: ' + line.paidExtras.map(extra => clean(extra, 100).replace(/^Adicional de\s+/i, '')).join(', '));
         }
         if (line.note) details.push('Obs.: ' + clean(line.note, 160));
         parts.push(details.join(' - '));
