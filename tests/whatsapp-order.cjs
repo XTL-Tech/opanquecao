@@ -106,17 +106,27 @@ const path = require('node:path');
         fulfillment:{...base.fulfillment,city:'Cidade inventada'}}), /cidade/);
 
     const simple = buildSimpleWhatsAppMessage({lines, note:'Sem talheres, por favor'});
-    assert.match(simple, /2x Panqueca Meio a Meio/);
-    assert.match(simple, /Sabor 1: Bacon/);
-    assert.match(simple, /Sabor 2: Calabresa/);
-    assert.match(simple, /Sem cebola/);
-    assert.match(simple, /Complementos grátis:/);
-    assert.match(simple, /Adicionais pagos:/);
-    assert.match(simple, /Sem talheres, por favor/);
-    assert.ok(simple.includes('Subtotal dos itens (sem frete): ' + money(subtotal)));
-    assert.match(simple, /a combinar neste WhatsApp/);
+    const itemRows = simple.split('\n').filter(row => /^\d+\. /.test(row));
+    assert.equal(itemRows.length, 2, 'Cada item deve ocupar uma linha');
+    assert.match(itemRows[0], /^1\. 2x Panqueca Meio a Meio/);
+    assert.match(itemRows[0], /Sabores: Bacon \/ Calabresa/);
+    assert.match(itemRows[0], /Obs\.: Sem cebola$/);
+    assert.match(itemRows[1], /^2\. 1x Açaí Panquecão - Tam\.: 500ml/);
+    assert.match(itemRows[1], /Grátis: /);
+    assert.match(itemRows[1], /Adicionais: /);
+    assert.match(simple, /^Obs\. geral: Sem talheres, por favor$/m);
+    assert.ok(simple.includes('Subtotal (sem entrega): ' + money(subtotal)));
+    assert.match(simple, /Entrega\/retirada, pagamento e valor final a combinar/);
+    assert.doesNotMatch(simple, /Unitário com adicionais:|Total do item:|Opção:|Sabor 1:|Sabor 2:/);
     assert.doesNotMatch(simple, /Nome:|WhatsApp: 51|Endereço:|Forma: Pix|Troco para:/);
     assert.equal(new URL(whatsappOrderUrl(simple)).searchParams.get('text'),simple);
+    const drink = priceOrder(catalog, [{
+        category: 'bebidas', product: 'Coca-Cola Lata', option: 'Único',
+        quantity: 1, note: ''
+    }]);
+    const oneLine = buildSimpleWhatsAppMessage({lines:drink});
+    assert.match(oneLine, /^1\. 1x Coca-Cola Lata$/m);
+    assert.doesNotMatch(oneLine, /Tam\.:|Obs\.:|Grátis:|Adicionais:/);
     assert.throws(() => buildSimpleWhatsAppMessage({lines:[]}), /pelo menos um produto/);
     assert.throws(() => buildSimpleWhatsAppMessage({lines:[{...panqueca,quantity:0}]}), /valores/);
     assert.throws(() => buildSimpleWhatsAppMessage({lines:[{...panqueca,cents:-1}]}), /valores/);
