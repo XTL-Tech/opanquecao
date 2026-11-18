@@ -196,7 +196,7 @@ assert.match(directMessage,/Nova Hartz\/RS/);
 assert.match(directMessage,/Rua das Flores, 123/);
 assert.match(directMessage,/Casa 2/);
 assert.match(directMessage,/Portão azul/);
-assert.match(directMessage,/Taxa de entrega: R\$ 7,00/);
+assert.match(directMessage.replace(/\u00a0/g, ' '),/Taxa de entrega: R\$ 7,00/);
 assert.match(directMessage,/Total estimado:/);
 assert.match(directMessage,/Embalagens separadas/);
 assert.match(directMessage,/https:\/\/www.google.com\/maps\?q=-29.585,-50.938/);
