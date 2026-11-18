@@ -27,15 +27,38 @@ function hex(bytes: Uint8Array): string {
 async function verified(req: Request, raw: string, publicKeyB64: string): Promise<boolean> {
   try {
     const timestamp=req.headers.get("x-xtl-food-time");
+    const nonce=req.headers.get("x-xtl-food-nonce");
     const sig=req.headers.get("x-xtl-food-signature");
-    if(!timestamp||!/^[0-9]{13}$/.test(timestamp)||!sig||!/^[A-Za-z0-9_-]{86}$/.test(sig))return false;
+    if(!timestamp||!/^[0-9]{13}$/.test(timestamp)||!nonce||!/^[A-Za-z0-9_-]{22}$/.test(nonce)||
+       !sig||!/^[A-Za-z0-9_-]{86}$/.test(sig))return false;
     if(Math.abs(Date.now()-Number(timestamp))>45000)return false;
     const pub=b64urlToBytes(publicKeyB64);
     const key=await crypto.subtle.importKey("spki",pub,{name:"Ed25519"},false,["verify"]);
     const digest=hex(new Uint8Array(await crypto.subtle.digest("SHA-256",new TextEncoder().encode(raw))));
-    const message=timestamp+"\nPOST\n/xtl-food-gateway\n"+digest;
+    const message=timestamp+"\nPOST\n/xtl-food-gateway\n"+nonce+"\n"+digest;
     return await crypto.subtle.verify("Ed25519",key,b64urlToBytes(sig),new TextEncoder().encode(message));
   } catch {return false;}
+}
+// Atomic one-time nonce reservation prevents replay inside the 45s signature window.
+// Any database failure denies the request before it reaches operational tables.
+async function reserveNonce(req: Request, projectUrl: string, secret: string): Promise<boolean> {
+  const nonce=req.headers.get("x-xtl-food-nonce");
+  if(!nonce||!/^[A-Za-z0-9_-]{22}$/.test(nonce))return false;
+  const nonceSha=hex(new Uint8Array(await crypto.subtle.digest("SHA-256",new TextEncoder().encode(nonce))));
+  const target=projectUrl.replace(/\/$/,"")+
+    "/rest/v1/xtl_food_gateway_nonces?on_conflict=nonce_sha256";
+  const resp=await fetch(target,{
+    method:"POST",
+    headers:{apikey:secret,Authorization:"Bearer "+secret,
+      "Content-Type":"application/json",Prefer:"resolution=ignore-duplicates,return=representation"},
+    body:JSON.stringify({nonce_sha256:nonceSha,restaurant_id:RESTAURANT,
+      expires_at:new Date(Date.now()+120000).toISOString()}),
+    signal:AbortSignal.timeout(5000)
+  });
+  if(!resp.ok)throw new Error("nonce_db_unavailable");
+  const rows:unknown=await resp.json().catch(()=>null);
+  if(!Array.isArray(rows))throw new Error("nonce_db_invalid_response");
+  return rows.length===1;
 }
 async function rowsFor(action:string,input:Record<string,unknown>,url:string,key:string):Promise<unknown[]> {
   const root=url.replace(/\/$/,"")+"/rest/v1/";
@@ -149,6 +172,8 @@ Deno.serve(async(req:Request):Promise<Response>=>{
   const projectUrl=Deno.env.get("SUPABASE_URL"),serviceKey=Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
   if(!projectUrl||!serviceKey)return response(503,{error:"database_not_configured"});
   try {
+    const accepted=await reserveNonce(req,projectUrl,serviceKey);
+    if(!accepted)return response(409,{error:"request_already_used"});
     const rows=await rowsFor(data.action,data.input as Record<string,unknown>,projectUrl,serviceKey);
     return response(200,{rows});
   }catch(e){
