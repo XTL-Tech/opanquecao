@@ -22,9 +22,15 @@ const {SHARED_XTL_REF}=require('../lib/food-db-policy');
   delete process.env.SUPABASE_SECRET_KEY;
   const now=Date.now(),req=gateway.signedRequest('store.get',{},process.env,now);
   const digest=createHash('sha256').update(req.body).digest('hex');
-  const canonical=now+'\nPOST\n/xtl-food-gateway\n'+digest;
+  const canonical=now+'\nPOST\n/xtl-food-gateway\n'+req.headers['x-xtl-food-nonce']+'\n'+digest;
   assert.equal(verify(null,Buffer.from(canonical),publicKey,Buffer.from(req.headers['x-xtl-food-signature'],'base64url')),true);
   assert.equal(verify(null,Buffer.from(canonical+'wrong'),publicKey,Buffer.from(req.headers['x-xtl-food-signature'],'base64url')),false);
+  const sameTimestamp=gateway.signedRequest('store.get',{},process.env,now);
+  assert.notEqual(req.headers['x-xtl-food-nonce'],sameTimestamp.headers['x-xtl-food-nonce']);
+  assert.notEqual(req.headers['x-xtl-food-signature'],sameTimestamp.headers['x-xtl-food-signature']);
+  const tampered=canonical.replace(req.headers['x-xtl-food-nonce'],sameTimestamp.headers['x-xtl-food-nonce']);
+  assert.equal(verify(null,Buffer.from(tampered),publicKey,
+    Buffer.from(req.headers['x-xtl-food-signature'],'base64url')),false,'nonce cannot be changed');
   assert.throws(()=>gateway.signedRequest('some.other.table',{}),gateway.FoodGatewayUnavailable);
   assert.throws(()=>gateway.signedRequest('store.get',{},{
    ...process.env,FOOD_GATEWAY_URL:'https://example.supabase.co/functions/v1/xtl-food-gateway'
@@ -38,7 +44,7 @@ const {SHARED_XTL_REF}=require('../lib/food-db-policy');
    assert.equal(opt.method,'POST');
    assert.equal(opt.headers['content-type'],'application/json');
    const payload=JSON.parse(opt.body),stamp=opt.headers['x-xtl-food-time'];
-   const canonical=stamp+'\nPOST\n/xtl-food-gateway\n'+createHash('sha256').update(opt.body).digest('hex');
+   const canonical=stamp+'\nPOST\n/xtl-food-gateway\n'+opt.headers['x-xtl-food-nonce']+'\n'+createHash('sha256').update(opt.body).digest('hex');
    assert.equal(verify(null,Buffer.from(canonical),publicKey,
     Buffer.from(opt.headers['x-xtl-food-signature'],'base64url')),true);
    operations.push(payload.action);
