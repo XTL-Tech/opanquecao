@@ -2,17 +2,18 @@
 
 Cardápio e pré-pedido do Disk Panquecão, Nova Hartz/RS. HTML, CSS e JavaScript, sem framework. Tecnologia XTL TECH.
 
-## Pedidos diretos pelo WhatsApp — 18/11/2026
+## Produção: pedido simplificado pelo WhatsApp — 18/11/2026
 
-**Fluxo atual:** cardápio → adicionar ao carrinho → informar entrega/retirada/mesa, contato e forma de pagamento → **Abrir pedido no WhatsApp**. O site monta a mensagem com produtos, opções, quantidade, sabores, adicionais, observações, subtotal, taxa de entrega, valor estimado, endereço/GPS opcional, pagamento e troco. O número é o WhatsApp comercial já publicado no próprio site (51) 99738-3849.
+**Fluxo público:** selecionar produtos, opções, sabores, quantidades, complementos e observações (inclusive observação geral opcional) → **Enviar pedido pelo WhatsApp**. O número comercial é (51) 99738-3849.
 
-- O pré-pedido **não é enviado automaticamente**: o cliente precisa conferir a mensagem e tocar em **Enviar** no WhatsApp. O carrinho fica preservado para correções; há link de contingência se a navegação não abrir.
-- As taxas são calculadas pelo catálogo de bairros já existente (`delivery-areas.json`); localidades fora da lista são marcadas como **taxa a confirmar**, sem inventar preço ou total.
-- **Não há chamada ao Telegram, ao Turnstile, a gateway de pagamento ou à rota `/api/order` no fluxo público.** O código servidor anterior permanece no repositório apenas como legado, sem uso no carrinho.
-- A habilitação do botão continua condicionada ao horário da loja; a página não afirma que um pedido foi recebido sem confirmação efetiva do WhatsApp.
-- Testes automatizados: `npm test`, incluindo `tests/whatsapp-order.cjs`. Antes de publicar, confirmar se o número comercial permanece correto e realizar teste real de abertura no iPhone e no Android.
+- **Sem formulário de nome/telefone, endereço, entrega/retirada, pagamento ou checkout.** Esses dados e a taxa de entrega são combinados com a loja na conversa.
+- O site apresenta o **subtotal dos itens, sem frete**; mensagem com itens, preços e observações é gerada no navegador. A loja confirma disponibilidade e total final antes do preparo.
+- Cliente precisa tocar em **Enviar** dentro do WhatsApp. O site mantém o carrinho para revisão, oferece link alternativo e não alega recebimento automático.
+- Sem Telegram, Turnstile, gateway ou chamada a `/api/order` no fluxo público. A disponibilidade continua respeitando o horário da loja.
+- A branch **`homologacao/checkout-completo`** preserva o formulário e recursos completos anteriores para evolução isolada, sem promoção automática à produção. Implantar o sistema completo somente após homologação funcional, segurança e testes reais.
+- CI: `npm test`, incluindo testes de montagem da mensagem e interação do carrinho. Confirmar a abertura em Android e iPhone e a operação do WhatsApp comercial em teste real.
 
-> Seções abaixo descrevem também recursos e decisões **históricas** do checkout via Telegram. Para o fluxo de produção vigente, prevalece esta seção.
+> As seções históricas abaixo documentam APIs/experimentos antigos e não descrevem o formulário vigente na produção.
 
 ## Ambientes e regra de entrega
 
