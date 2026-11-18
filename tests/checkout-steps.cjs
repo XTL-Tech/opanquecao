@@ -9,10 +9,10 @@ assert.equal((html.match(/data-progress-step=/g)||[]).length,0);
 assert.match(html, /id="orderNote" name="orderNote" maxlength="400"/);
 assert.match(html, /id="sendOrder" disabled>Enviar pedido pelo WhatsApp/);
 assert.match(html, /id="whatsappOrderLink"/);
-const form=html.match(/<form id="checkout"[\\s\\S]*?<\\/form>/)?.[0]||'';
+const form=html.match(/<form id="checkout"[\s\S]*?<\/form>/)?.[0]||'';
 assert.ok(form,'Simple order form must exist');
-assert.doesNotMatch(form,/\\brequired\\b|name="name"|name="phone"|name="paymentMethod"|name="fulfillment"|id="captureLocation"/,
+assert.doesNotMatch(form,/\brequired\b|name="name"|name="phone"|name="paymentMethod"|name="fulfillment"|id="captureLocation"/,
     'Production form must not require personal or delivery data');
 assert.match(cart,/buildSimpleWhatsAppMessage/);
-assert.doesNotMatch(cart,/fetch\\(['"]\\/api\\/order|ensureTurnstile|paymentMethod/);
+assert.doesNotMatch(cart,/fetch\(['"]\/api\/order|ensureTurnstile|paymentMethod/);
 console.log('PASS: checkout simplificado com nota opcional, link de contingência e nenhum dado pessoal obrigatório.');
