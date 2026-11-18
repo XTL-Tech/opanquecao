@@ -123,6 +123,53 @@ export function buildWhatsAppMessage({ lines, name, phone, fulfillment, payment,
     return parts.join('\n');
 }
 
+
+/**
+ * Produção enxuta: apenas itens e observações. Os demais dados são acertados
+ * na conversa, sem pedir nome, telefone, endereço ou pagamento no site.
+ */
+export function buildSimpleWhatsAppMessage({ lines, note = '' }) {
+    if (!Array.isArray(lines) || !lines.length || lines.length > 25) {
+        throw new Error('Adicione pelo menos um produto ao pedido.');
+    }
+    let subtotal = 0;
+    const parts = [
+        '*PRÉ-PEDIDO | DISK PANQUECÃO*',
+        'Olá! Gostaria de pedir estes itens do cardápio:',
+        '',
+        '*ITENS DO PEDIDO*'
+    ];
+    lines.forEach((line, index) => {
+        if (!line || !Number.isSafeInteger(line.cents) || line.cents < 0 ||
+            !Number.isInteger(line.quantity) || line.quantity < 1 || line.quantity > 10 ||
+            !clean(line.product, 160)) {
+            throw new Error('Confira os itens e valores do carrinho.');
+        }
+        const lineTotal = line.cents * line.quantity;
+        if (!Number.isSafeInteger(lineTotal) || !Number.isSafeInteger(subtotal + lineTotal)) {
+            throw new Error('Valor do carrinho inválido.');
+        }
+        subtotal += lineTotal;
+        parts.push((index + 1) + '. *' + line.quantity + 'x ' + clean(line.product, 160) + '*',
+            '   Opção: ' + clean(line.option === 'Único' ? 'Unidade' : line.option, 90),
+            '   Unitário com adicionais: ' + money(line.cents),
+            '   Total do item: ' + money(lineTotal));
+        if (line.flavors?.length === 2) {
+            parts.push('   Sabor 1: ' + clean(line.flavors[0], 120),
+                '   Sabor 2: ' + clean(line.flavors[1], 120));
+        }
+        for (const detail of extraSummary(line)) parts.push('   ' + clean(detail, 450));
+        if (line.note) parts.push('   Observação: ' + clean(line.note, 160));
+    });
+    const generalNote = clean(note, 400);
+    if (generalNote) parts.push('', '*OBSERVAÇÕES GERAIS*', generalNote);
+    parts.push('', '*Subtotal dos itens (sem frete): ' + money(subtotal) + '*',
+        'Entrega ou retirada, endereço, pagamento e total final: a combinar neste WhatsApp.',
+        '',
+        'Por favor, confirmem a disponibilidade e o valor final antes de preparar.');
+    return parts.join('\n');
+}
+
 export function whatsappOrderUrl(message) {
     if (!message || typeof message !== 'string') throw new Error('Não foi possível preparar o pedido.');
     return 'https://wa.me/' + STORE_WHATSAPP + '?text=' + encodeURIComponent(message);
