@@ -289,6 +289,33 @@ function within(rect,width){
                 assert.equal(await cdp.eval("document.querySelector('#productDialogContent [name=quantity]').value"),'2');
                 await cdp.eval("document.querySelector('#productDialogContent .order-primary').click()");
                 await waitFor(()=>cdp.eval("!document.getElementById('productDialog').open && document.querySelectorAll('#cartLines .cart-line').length > 0"),5000);
+                // Teste físico de toque: o botão do aviso deve receber o tap,
+                // sem atravessá-lo e reabrir a ficha do produto atrás.
+                const toast = await cdp.eval(`(() => {
+                    const button = document.getElementById('cartFeedbackCart');
+                    const rect = button.getBoundingClientRect();
+                    const x = rect.left + rect.width/2, y = rect.top + rect.height/2;
+                    const hit = document.elementFromPoint(x,y);
+                    return {x,y,visible:!document.getElementById('cartFeedback').hidden,
+                        target:hit?.id || null, pointer:getComputedStyle(button).pointerEvents};
+                })()`);
+                assert.ok(toast.visible,'O aviso após adicionar precisa aparecer');
+                assert.equal(toast.pointer,'auto','Botão Ver pedido não pode ignorar toque');
+                assert.equal(toast.target,'cartFeedbackCart',
+                    'O toque em Ver pedido atravessa o aviso e acerta o produto ao fundo');
+                await cdp.call('Input.dispatchMouseEvent',{
+                    type:'mousePressed',x:toast.x,y:toast.y,button:'left',clickCount:1
+                });
+                await cdp.call('Input.dispatchMouseEvent',{
+                    type:'mouseReleased',x:toast.x,y:toast.y,button:'left',clickCount:1
+                });
+                await waitFor(()=>cdp.eval(
+                    'document.getElementById("cartDialog").open && !document.getElementById("productDialog").open'
+                ),5000);
+                assert.ok(await cdp.eval('document.querySelector("#cartLines .cart-line")!==null'),
+                    'Ver pedido deve exibir o produto adicionado');
+                await shot('toast-ver-pedido-390');
+                await cdp.eval('document.getElementById("cartDialog").close()');
             }
             await cdp.eval("document.getElementById('productDialog').close();document.querySelector('.category-toolbar > a').click()");
             await waitFor(()=>cdp.eval("!document.getElementById('categoryHome').hidden"),5000);
