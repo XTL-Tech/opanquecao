@@ -182,7 +182,11 @@ byId('menuContent').addEventListener('click', event => {
     const form = document.createElement('form');
     form.className = 'order-form';
     form.innerHTML = '<select name="option" hidden aria-hidden="true"></select><fieldset class="option-choices"><legend>Escolha o tamanho ou opção</legend></fieldset>' +
-        '<label>Quantidade <input name="quantity" type="number" min="1" max="10" value="1" required></label>' +
+        '<div class="quantity-picker"><span>Quantidade</span><div class="quantity-controls">' +
+        '<button type="button" data-adjust="-1" aria-label="Diminuir quantidade">−</button>' +
+        '<input aria-label="Quantidade do produto" name="quantity" type="number" inputmode="numeric" min="1" max="10" value="1" required>' +
+        '<button type="button" data-adjust="1" aria-label="Aumentar quantidade">+</button>' +
+        '</div></div>' +
         '<label>Observações <textarea name="note" maxlength="160"></textarea></label>' +
         '<button class="order-primary">Adicionar ao carrinho</button><p role="status"></p>';
     for (const option of options) form.elements.option.add(new Option(option.label + ' · ' + money(option.cents), option.label));
@@ -236,6 +240,15 @@ byId('menuContent').addEventListener('click', event => {
     const paidSelected = new Set();
     const formStatus = form.querySelector('[role=status]');
     const submitButton = form.querySelector('.order-primary');
+    for (const control of form.querySelectorAll('[data-adjust]')) {
+        control.onclick = () => {
+            const input = form.elements.quantity;
+            const next = Math.max(1, Math.min(10, (Number.parseInt(input.value, 10) || 1) +
+                Number(control.dataset.adjust)));
+            input.value = String(next);
+            updateExtras();
+        };
+    }
     function updateExtras() {
         const extras = extraOptions(item, form.elements.option.value);
         extrasBox.replaceChildren();
@@ -273,6 +286,9 @@ byId('menuContent').addEventListener('click', event => {
         const base = options.find(option => option.label === form.elements.option.value).cents;
         const additional = extras.paid.filter(extra => paidSelected.has(extra.label)).reduce((sum, extra) => sum + extra.cents, 0);
         const quantity = form.elements.quantity.valueAsNumber;
+        for (const button of form.querySelectorAll('[data-adjust]')) {
+            button.disabled = Number(button.dataset.adjust) < 0 ? quantity <= 1 : quantity >= 10;
+        }
         submitButton.textContent = '+ Adicionar · ' + money((base + additional) * (Number.isInteger(quantity) && quantity > 0 ? quantity : 1));
     }
     function focusExtra(group, value) {
