@@ -88,6 +88,57 @@ function cartModalMetrics(){
     const d=document.getElementById('cartDialog').getBoundingClientRect();
     return {left:d.left,right:d.right,top:d.top,bottom:d.bottom};
 }
+function productCardLayoutMetrics() {
+    const cards = [...document.querySelectorAll('.category-section:not([hidden]) .menu-item')];
+    return cards.map(card => {
+        const rect = el => {
+            const r = el?.getBoundingClientRect();
+            return r ? {left:r.left,top:r.top,right:r.right,bottom:r.bottom,width:r.width,height:r.height} : null;
+        };
+        return {
+            name: card.dataset.product,
+            card: rect(card),
+            copy: rect(card.querySelector('.item-copy')),
+            title: rect(card.querySelector('.item-title')),
+            details: rect(card.querySelector('.details-link')),
+            footer: rect(card.querySelector('.item-footer')),
+            action: rect(card.querySelector('.card-primary-action')),
+            actionCount: card.querySelectorAll(':scope > .card-primary-action').length,
+            detailsCount: card.querySelectorAll('.details-link').length
+        };
+    });
+}
+function assertCardLayout(cards, width) {
+    assert.ok(cards.length>0,'Sem produtos para validar o layout '+width);
+    for(const item of cards){
+        const epsilon = 2;
+        assert.equal(item.actionCount,1,'O produto deve ter uma só ação principal: '+item.name);
+        for(const key of ['copy','title','footer','action']){
+            assert.ok(item[key] && item[key].width>0 && item[key].height>0,
+                'Elemento sem área visual ('+key+'): '+item.name+' em '+width);
+            assert.ok(item[key].left>=item.card.left-epsilon &&
+                item[key].right<=item.card.right+epsilon,
+                'Elemento vaza horizontalmente do card ('+key+'): '+item.name+' em '+width);
+        }
+        assert.ok(item.title.bottom<=item.footer.top+epsilon,
+            'Preço invade o nome do produto: '+item.name+' em '+width);
+        assert.ok(item.copy.bottom<=item.footer.top+epsilon,
+            'Descrição e preço sobrepostos: '+item.name+' em '+width);
+        assert.ok(item.footer.bottom<=item.action.top+epsilon,
+            'Botão sobreposto ao preço: '+item.name+' em '+width);
+        assert.ok(item.action.bottom<=item.card.bottom+epsilon,
+            'Botão excede a altura do card: '+item.name+' em '+width);
+        assert.ok(item.action.height>=43,
+            'Botão muito pequeno para toque: '+item.name+' em '+width);
+        if(item.details){
+            assert.equal(item.detailsCount,1);
+            assert.ok(item.title.bottom<=item.details.top+epsilon,
+                'Ver detalhes sobreposto ao título: '+item.name+' em '+width);
+            assert.ok(item.details.bottom<=item.footer.top+epsilon,
+                'Ver detalhes sobreposto ao preço: '+item.name+' em '+width);
+        }
+    }
+}
 const expression=fn=>'('+fn.toString()+')()';
 function within(rect,width){
     assert.ok(rect.left>=-2&&rect.right<=width+2,'Elemento fora da largura '+width+': '+JSON.stringify(rect));
@@ -153,6 +204,15 @@ function within(rect,width){
             if(width<600)assert.equal(menu.productStyle,'grid','Produto móvel deve ser horizontal');
             assert.ok(menu.productImage.height <= menu.productImage.width*1.15,
                 'Foto fora de proporção em '+width+': '+JSON.stringify(menu.productImage));
+            assertCardLayout(await cdp.eval(expression(productCardLayoutMetrics)),width);
+            // A categoria bebidas possui ações de adição direta, não duas colunas de botões.
+            await cdp.eval("document.querySelector('.category-switcher a[href=\"#bebidas\"]').click()");
+            await waitFor(()=>cdp.eval("document.querySelector('#bebidas:not([hidden])')!==null"),5000);
+            assertCardLayout(await cdp.eval(expression(productCardLayoutMetrics)),width);
+            const beverages=await cdp.eval(expression(productCardLayoutMetrics));
+            assert.ok(beverages.some(item=>item.details && item.actionCount===1),'Bebidas simples com link de detalhes e um botão para adicionar');
+            await cdp.eval("document.querySelector('.category-switcher a[href=\"#panquecas-salgadas\"]').click()");
+            await waitFor(()=>cdp.eval("!document.getElementById('panquecas-salgadas').hidden"),5000);
             if([390,768,1440].includes(width))await shot('menu-'+width);
             await cdp.eval("document.querySelector('#panquecas-salgadas .product-details').click()");
             await waitFor(()=>cdp.eval("document.getElementById('productDialog').open && !!document.querySelector('#productDialogContent form.order-form')"),5000);
