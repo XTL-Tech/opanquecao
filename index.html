@@ -1000,52 +1000,8 @@
     </style>
 </head>
 
-<!-- Meta Pixel: carregamento somente após escolha opcional de análise -->
-<script>
-(function () {
-    const key = 'disk-panquecao-analytics-consent-v1';
-    let consent;
-    try { consent = window.localStorage.getItem(key); } catch { consent = null; }
-
-    function enableAnalytics() {
-        if (window.fbq) { window.fbq('consent', 'grant'); return; }
-        !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-        n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
-        n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
-        t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}
-        (window, document,'script','https://connect.facebook.net/en_US/fbevents.js');
-        fbq('init', '766179976513223');
-        fbq('track', 'PageView');
-        fbq('track', 'ViewContent');
-        document.addEventListener('click', function(event) {
-            if (consent === 'accepted' && event.target.closest('a.whatsapp-float')) {
-                fbq('track', 'Contact', {content_category:'pedido_whatsapp',
-                    content_name:'Botão Flutuante WhatsApp', value:0, currency:'BRL'});
-            }
-        });
-    }
-
-    function initAnalyticsNotice() {
-        const notice = document.getElementById('analyticsNotice');
-        if (!notice) return;
-        function choose(value) {
-            consent = value;
-            try { window.localStorage.setItem(key, value); } catch {}
-            notice.hidden = true;
-            if (value === 'accepted') enableAnalytics();
-            else if (window.fbq) window.fbq('consent', 'revoke');
-        }
-        document.getElementById('analyticsAccept').addEventListener('click', () => choose('accepted'));
-        document.getElementById('analyticsReject').addEventListener('click', () => choose('rejected'));
-        document.getElementById('analyticsManage').addEventListener('click', () => { notice.hidden = false; });
-        if (consent === 'accepted') enableAnalytics();
-        else if (consent !== 'rejected') notice.hidden = false;
-    }
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initAnalyticsNotice, {once:true});
-    } else initAnalyticsNotice();
-}());
-</script>
+<!-- Meta Pixel: consentimento e eventos de marketing centralizados, sem PII. -->
+<script src="/meta-pixel.js" defer></script>
 
     
 <body>
