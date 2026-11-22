@@ -26,3 +26,13 @@ jobs:
         run: npm test
       - name: Validar cache e orçamento de imagens
         run: node tests/cache-policy.cjs
+      - name: Conferir responsividade real no Chromium
+        run: node tests/responsive-browser.cjs
+      - name: Guardar capturas de telas para revisão
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: capturas-responsividade
+          path: artifacts/responsive/*.png
+          if-no-files-found: ignore
+          retention-days: 7

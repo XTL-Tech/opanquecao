@@ -52,15 +52,15 @@ w.renderMenu(catalog);
 d.dispatchEvent(new w.CustomEvent('menu-ready',{detail:catalog}));
 assert.match(d.querySelector('a.whatsapp-float').textContent,/Chamar no WhatsApp/);
 assert.equal(d.querySelectorAll('.category-card').length, catalog.categorias.length);
-assert.equal(d.querySelectorAll('.category-section:not([hidden])').length,12);
-assert.equal(d.querySelectorAll('.category-section:not([hidden]) .menu-item').length,83);
+assert.equal(d.querySelectorAll('.category-section:not([hidden])').length,0,'A home mostra categorias, não a lista inteira de produtos');
+assert.equal(d.querySelectorAll('.category-section:not([hidden]) .menu-item').length,0);
 assert.equal(d.querySelectorAll('.category-card img').length,12);
 assert.equal(d.querySelectorAll('.category-card-media img').length,12);
 assert.equal(d.querySelectorAll('.category-card .category-card-title').length,12);
 assert.equal(d.querySelectorAll('.category-card .category-card-action').length,12);
 assert.equal(d.querySelectorAll('.category-switcher a').length,12);
 assert.equal(d.querySelector('#categoryHome').hidden,false);
-assert.equal(d.querySelectorAll('.category-section:not([hidden]) .menu-item').length,83);
+assert.equal(d.querySelectorAll('.category-section:not([hidden]) .menu-item').length,0);
 for (const category of catalog.categorias) {
   const categoryLink=d.querySelector('.category-card[href="#'+category.id+'"]');
   assert.ok(categoryLink,'Falta categoria '+category.id);
@@ -108,7 +108,7 @@ assert.equal(d.querySelector('.category-switcher a[href="#panquecas-doces"]').ge
 assert.equal(d.querySelector('.category-switcher a[href="#panquecas-salgadas"]').hasAttribute('aria-current'),false);
 d.querySelector('.category-toolbar > a').click();
 assert.equal(d.querySelector('#categoryHome').hidden,false);
-assert.equal(d.querySelectorAll('.category-section:not([hidden]) .menu-item').length,83);
+assert.equal(d.querySelectorAll('.category-section:not([hidden]) .menu-item').length,0);
 d.querySelector('.category-card[href="#panquecas-salgadas"]').click();
 const card=d.querySelector('#panquecas-salgadas .menu-item');
 card.querySelector('.product-details').click();

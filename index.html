@@ -663,6 +663,230 @@
         .analytics-actions { display: flex; gap: 8px; flex-wrap: wrap; }
         .analytics-actions button { flex: 1; min-height: 42px; padding: 9px 12px; border-radius: 9px; border: 1px solid #741c2d; cursor: pointer; font: inherit; font-size: 13px; font-weight: 700; background: #fff; color: #741c2d; }
         .analytics-actions #analyticsAccept { background: #741c2d; color: #fff; }
+
+        /* XTL · layout responsivo do cardápio (mobile-first)
+           Mantém dados, fotos, cores e fluxo original de compras. */
+        :root { --page-gutter: clamp(14px, 2.6vw, 32px); }
+        html { scroll-padding-top: 88px; }
+        body { min-width: 0; overflow-x: clip; }
+        .main-content { min-width: 0; }
+        .container, .main-content .container {
+            max-width: 1240px;
+            padding-inline: var(--page-gutter);
+        }
+        .nav-wrapper { padding-inline: var(--page-gutter); }
+        .categories-nav { width: 100%; max-width: 1240px; padding-inline: 0; }
+        .category-section { scroll-margin-top: 90px; margin-bottom: clamp(24px, 4vw, 44px); }
+        .section-header { width: 100%; text-align: left; }
+        .menu-grid { grid-template-columns: minmax(0, 1fr); gap: clamp(12px, 1.8vw, 20px); }
+        .menu-item { align-items: stretch; text-align: left; height: 100%; padding: clamp(12px, 1.6vw, 18px); }
+        .item-photo { width: 100%; margin-bottom: 12px; }
+        .item-photo img { height: auto; aspect-ratio: 16 / 10; }
+        .item-title { font-size: clamp(1.02rem, 1.65vw, 1.2rem); line-height: 1.32; overflow-wrap: break-word; }
+        .item-desc { font-size: .88rem; line-height: 1.52; overflow-wrap: break-word; }
+        .menu-item .product-details { width: 100%; min-height: 48px; margin-top: 12px; }
+        .item-footer { width: 100%; }
+        .size-value { overflow-wrap: normal; }
+        .category-home { padding-block: clamp(18px, 3vw, 32px) 36px; }
+        .category-cards { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+        .category-card-media { aspect-ratio: 16 / 10; }
+        .category-card-title { font-size: clamp(.96rem, 1.6vw, 1.14rem); line-height: 1.35; overflow-wrap: break-word; }
+        .category-card-action { min-height: 44px; }
+        .category-toolbar.container { align-items: stretch; gap: 10px; }
+        /* A seção já tem o título; evita repetição acima dos filtros. */
+        .category-toolbar #categoryCurrent { display: none; }
+        .category-switcher { width: 100%; min-width: 0; scrollbar-width: none; }
+        .category-switcher::-webkit-scrollbar { display: none; }
+        .site-tabs a, .category-switcher a, .category-link, .info-actions a { touch-action: manipulation; }
+        :where(button, a, input, select, textarea):focus-visible { outline: 3px solid #b35b21; outline-offset: 3px; }
+
+        /* Janelas mais enxutas: ver tamanho/opções sem uma foto ocupar a tela inteira. */
+        .product-dialog {
+            width: min(92vw, 620px);
+            max-height: min(92dvh, 900px);
+            overscroll-behavior: contain;
+            padding: clamp(16px, 2vw, 24px);
+        }
+        .product-dialog > form[method="dialog"] {
+            position: sticky;
+            top: -2px;
+            z-index: 2;
+            background: #fff;
+            padding: 4px 0 12px;
+            margin-bottom: 8px;
+            border-bottom: 1px solid #ecdcd5;
+        }
+        .product-dialog > form[method="dialog"] button { margin: 0; }
+        #productDialogContent > .item-photo { max-width: 320px; margin: 0 auto 12px; }
+        #productDialogContent > .item-photo img { height: clamp(125px, 23dvh, 210px); aspect-ratio: 16 / 10; }
+        #productDialogContent > .item-desc { margin-bottom: 10px; }
+        #productDialogContent > .item-footer { margin: 0 auto 12px; }
+        .order-form textarea { min-height: 78px; resize: vertical; }
+        .option-choices label { min-width: 0; }
+        #cartDialog { width: min(96vw, 680px); max-height: 94dvh; overflow-y: auto; overscroll-behavior: contain; }
+        #cartDialog .cart-header { position: sticky; top: 0; z-index: 2; }
+        #cartDialog .cart-footer { padding-bottom: calc(18px + env(safe-area-inset-bottom, 0px)); }
+
+        /* Celulares: cartões de produtos compactos, com fotos e dados lado a lado. */
+        @media (max-width: 599px) {
+            header { padding: 16px 0 18px; border-bottom-width: 6px; }
+            .restaurant-badge { font-size: .68rem; letter-spacing: 2px; margin-bottom: 8px; }
+            .restaurant-logo { line-height: 1.1; }
+            .restaurant-logo img { max-width: 110px !important; max-height: 116px; object-fit: contain; }
+            .site-tabs {
+                width: calc(100% - 2 * var(--page-gutter));
+                margin: 10px auto 0;
+                flex-wrap: nowrap;
+                gap: 6px;
+            }
+            .site-tabs a { flex: 1 1 0; min-width: 0; padding: 8px 6px; font-size: .8rem; line-height: 1.25; }
+            .nav-wrapper { padding-block: 8px; }
+            .category-picker { width: 100%; max-width: none; font-size: .86rem; }
+            .category-picker select { padding: 7px 10px; }
+            .category-home { padding-bottom: 24px; }
+            .category-home h2 { font-size: clamp(1.4rem, 5vw, 1.8rem); }
+            .category-card {
+                display: grid;
+                grid-template-columns: minmax(104px, 35%) minmax(0, 1fr);
+                align-items: stretch;
+                min-height: 124px;
+            }
+            .category-card-media { height: 100%; aspect-ratio: auto; }
+            .category-card-media img { height: 100%; min-height: 124px; object-fit: cover; }
+            .category-card-copy { padding: 10px 12px; gap: 4px; justify-content: center; }
+            .category-card-title { font-size: clamp(.87rem, 3.5vw, 1.02rem); }
+            .category-card-count { font-size: .72rem; }
+            .category-card-action { min-height: 36px; margin-top: 4px; padding: 6px; font-size: .77rem; }
+            .category-toolbar { padding-block: 12px 6px; }
+            .category-toolbar #categoryCurrent { font-size: 1.04rem; }
+            .category-section { padding-top: 10px; }
+            .section-header h2 { font-size: 1.2rem; }
+            .menu-grid { gap: 10px; }
+            .menu-item {
+                display: grid;
+                grid-template-columns: minmax(92px, 35%) minmax(0, 1fr);
+                grid-template-rows: auto auto auto;
+                align-items: start;
+                gap: 7px 12px;
+                padding: 12px;
+                border-radius: 14px;
+            }
+            .menu-item > .item-photo { grid-column: 1; grid-row: 1 / span 3; margin: 0; }
+            .menu-item > .item-photo img { height: auto; aspect-ratio: 1 / 1; }
+            .menu-item > div:not(.item-footer) { grid-column: 2; grid-row: 1; min-width: 0; }
+            .menu-item > .item-footer { grid-column: 2; grid-row: 2; margin: 0; min-width: 0; }
+            .menu-item > .product-details { grid-column: 2; grid-row: 3; margin: 0; min-height: 44px; padding: 7px 8px; }
+            .menu-item:not(:has(.item-photo)) > div,
+            .menu-item:not(:has(.item-photo)) > .product-details { grid-column: 1 / -1; }
+            .item-photo figcaption { font-size: .62rem; line-height: 1.25; }
+            .item-title { font-size: clamp(.98rem, 3.9vw, 1.09rem); margin-bottom: 4px; }
+            .item-desc { font-size: .79rem; line-height: 1.38; margin-bottom: 0; }
+            .size-grid { margin-top: 4px; }
+            .size-box { padding: 6px 2px; }
+            .size-value { font-size: clamp(.77rem, 2.75vw, .96rem); white-space: nowrap; }
+            .single-price { margin-top: 4px; font-size: 1.2rem; }
+            .tag-box { gap: 4px; margin-top: 6px; }
+            .tag { font-size: .59rem; padding: 2px 5px; }
+            .product-dialog, #cartDialog {
+                width: 100%;
+                max-width: 100%;
+                max-height: calc(100dvh - 12px);
+                margin: auto 0 0;
+                border-radius: 20px 20px 0 0;
+            }
+            .product-dialog { padding: 16px 16px calc(20px + env(safe-area-inset-bottom, 0px)); }
+            #productDialogContent > .item-photo { max-width: 280px; }
+            #cartDialog .cart-header { padding: 12px 16px 14px; }
+            #cartDialog #cartTitle { font-size: 24px; }
+            #cartDialog .cart-body { padding: 14px 16px; }
+            #cartDialog .cart-line { grid-template-columns: minmax(0, 1fr); gap: 7px; padding: 12px; }
+            #cartDialog .cart-item-controls { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+            #cartDialog .cart-footer { padding: 14px 16px calc(16px + env(safe-area-inset-bottom, 0px)); }
+            #cartDialog .cart-guide { margin-bottom: 10px; }
+            #cartDialog .cart-disclaimer { line-height: 1.4; }
+        }
+        /* Telefones e tablets maiores: usar colunas sem comprimir os textos. */
+        @media (min-width: 600px) {
+            .menu-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .category-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        }
+        @media (min-width: 900px) {
+            .category-cards { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+        }
+        @media (min-width: 1040px) {
+            .menu-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+        }
+        @media (min-width: 1200px) {
+            .category-cards { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+        }
+        @media (min-width: 1320px) {
+            .menu-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+        }
+
+        /* Barra de ação sem duas faixas flutuantes sobre o cardápio no celular. */
+        @media (max-width: 759px) {
+            a.whatsapp-float {
+                left: var(--page-gutter);
+                right: auto;
+                bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+                transform: none;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 5px;
+                width: calc(40% - var(--page-gutter) - 4px);
+                max-width: none;
+                min-height: 52px;
+                padding: 6px 8px;
+                text-transform: none;
+                line-height: 1.2;
+                font-size: clamp(.7rem, 2.35vw, .82rem);
+                border-radius: 14px;
+            }
+            #openCart {
+                left: auto;
+                right: var(--page-gutter);
+                bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+                transform: none;
+                width: calc(60% - var(--page-gutter) - 4px);
+                max-width: none;
+                min-height: 52px;
+                padding: 8px 10px;
+                border-radius: 14px;
+                font-size: clamp(.76rem, 2.8vw, .98rem);
+                line-height: 1.2;
+            }
+            #cartFeedback { bottom: calc(80px + env(safe-area-inset-bottom, 0px)); }
+            .analytics-notice { bottom: calc(80px + env(safe-area-inset-bottom, 0px)); }
+            footer { padding-bottom: calc(100px + env(safe-area-inset-bottom, 0px)); }
+        }
+        @media (min-width: 760px) {
+            a.whatsapp-float {
+                left: auto;
+                right: 20px;
+                bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+                transform: none;
+                width: 205px;
+                max-width: none;
+                padding: 15px 10px;
+            }
+            #openCart {
+                left: auto;
+                right: 240px;
+                bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+                transform: none;
+                width: 245px;
+                max-width: none;
+                min-height: 52px;
+            }
+        }
+        @media (max-height: 520px) and (orientation: landscape) {
+            header { padding-block: 10px 12px; }
+            .restaurant-badge { margin-bottom: 4px; }
+            .restaurant-logo img { max-height: 92px; width: auto; }
+            .product-dialog, #cartDialog { max-height: calc(100dvh - 8px); }
+        }
+
     </style>
 </head>
 
@@ -1096,7 +1320,8 @@
             home.hidden = !!selected;
             toolbar.hidden = !selected;
             document.getElementById('categoryCurrent').textContent = titles.get(selected) || '';
-            for (const section of content.querySelectorAll('.category-section')) section.hidden = selected !== null && section.id !== selected;
+            // Mostrar somente a categoria escolhida; a home apresenta apenas os cartões.
+            for (const section of content.querySelectorAll('.category-section')) section.hidden = section.id !== selected;
             picker.value = selected || '';
             for (const link of switcher.querySelectorAll('a')) {
                 if (link.hash === '#' + selected) link.setAttribute('aria-current', 'true');
