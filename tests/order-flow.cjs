@@ -150,6 +150,13 @@ assert.equal(firstCartMeta.contents[0].quantity,2);
 assert.match(d.querySelector('#openCart').textContent,/Pedido · 2 itens/);
 assert.match(d.querySelector('#cartFeedback').textContent,/adicionado/);
 assert.equal(JSON.parse(w.localStorage.getItem('disk-panquecao-cart-v1')).lines[0].quantity,2);
+assert.equal(d.querySelector('#cartFeedback').hidden,false);
+d.querySelector('#cartFeedbackCart').click();
+assert.equal(d.getElementById('cartDialog').open,true,
+    'Ver pedido no aviso deve abrir carrinho, não a ficha do produto');
+assert.equal(d.getElementById('productDialog').open,false,
+    'Produto não pode reabrir ao tocar no aviso Ver pedido');
+d.getElementById('cartDialog').close();
 await d.querySelector('#openCart').onclick();
 assert.equal(d.querySelector('#checkout').hidden,true);
 assert.equal(d.querySelector('#startCheckout').hidden,false);
@@ -234,7 +241,7 @@ assert.equal(intentCalls,1,'Não duplicar pré-registro na mesma sessão sem alt
 assert.equal(metaCalls().filter(args=>args[1]==='Lead').length,1,
     'Não duplicar conversão Meta ao reabrir o mesmo pré-registro');
 assert.equal(d.querySelector('#cartEmpty').hidden,true,'Carrinho deve permanecer até confirmação');
-assert.equal(d.querySelector('#cartFeedback').hidden,false);
+assert.equal(d.querySelector('#cartFeedback').hidden,true,'O aviso deve ser ocultado quando Ver pedido foi acionado');
 assert.ok(d.querySelector('#cartFeedbackCart'));
 const beverage=d.querySelector('#bebidas .menu-item .quick-add');
 assert.ok(beverage,'Bebidas simples precisam de Adicionar em um toque');
