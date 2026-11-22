@@ -73,6 +73,7 @@ function viewportMetrics(){
         categoryColumns:cols(document.querySelector('#categoryCards')),
         productColumns:cols(document.querySelector('#panquecas-salgadas .menu-grid')),
         productStyle:getComputedStyle(document.querySelector('#panquecas-salgadas .menu-item')).display,
+        productImage:(() => { const r=document.querySelector('#panquecas-salgadas .menu-item .item-photo img').getBoundingClientRect();return {width:r.width,height:r.height}; })(),
         whatsapp:rect('whatsapp',document.querySelector('a.whatsapp-float')),
         cart:rect('cart',document.getElementById('openCart')),
         tabs:rect('tabs',document.querySelector('.site-tabs'))
@@ -143,13 +144,15 @@ function within(rect,width){
             for(const rect of [home.whatsapp,home.cart,home.tabs])within(rect,width);
             assert.ok(home.whatsapp.right<=home.cart.left+1||
                 home.cart.right<=home.whatsapp.left+1,'WhatsApp e carrinho se sobrepõem: '+width);
-            if(width===390||width===768)await shot('home-'+width);
+            if(width===390||width===768){await cdp.eval('window.scrollTo(0,0)');await sleep(90);await shot('home-'+width);}
             await cdp.eval("document.querySelector('.category-card[href=\"#panquecas-salgadas\"]').click()");
             await waitFor(()=>cdp.eval("document.querySelector('#categoryHome').hidden && document.querySelectorAll('.category-section:not([hidden])').length===1"),5000);
             const menu=await cdp.eval(expression(viewportMetrics));
             assert.equal(menu.productColumns,products,'Produtos: '+width);
             assert.ok(menu.scrollWidth<=width+2,'Rolagem horizontal no menu: '+width+' '+menu.scrollWidth);
             if(width<600)assert.equal(menu.productStyle,'grid','Produto móvel deve ser horizontal');
+            assert.ok(menu.productImage.height <= menu.productImage.width*1.15,
+                'Foto fora de proporção em '+width+': '+JSON.stringify(menu.productImage));
             if([390,768,1440].includes(width))await shot('menu-'+width);
             await cdp.eval("document.querySelector('#panquecas-salgadas .product-details').click()");
             await waitFor(()=>cdp.eval("document.getElementById('productDialog').open && !!document.querySelector('#productDialogContent form.order-form')"),5000);
