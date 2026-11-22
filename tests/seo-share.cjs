@@ -61,7 +61,7 @@ for(const category of catalog.categorias){
    assert.equal(node.querySelector('strong')?.textContent,item.nome,'Nome errado em '+slug);
    assert.equal(schema.about.hasMenuItem[i]?.name,item.nome,'MenuItem JSON-LD errado em '+slug);
    assert.ok(node.querySelector('img')?.alt.includes(item.nome),'Imagem sem alt em '+slug);
-   const link=new URL(node.querySelector('a.product-link').href);
+   const link=new URL(node.querySelector('a.product-link').getAttribute('href'),site);
    assert.equal(link.origin,site);
    assert.equal(link.searchParams.get('categoria'),slug,'Deep-link categoria incorreta: '+slug);
    assert.equal(link.searchParams.get('produto'),item.nome,'Deep-link produto incorreto: '+slug);
