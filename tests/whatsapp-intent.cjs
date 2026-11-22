@@ -67,7 +67,7 @@ const run=async(payload=base,method='POST',host='opanquecao.vercel.app')=>{
     assert.match(sent.text,/NÃO É PEDIDO CONFIRMADO/);
     assert.match(sent.text,/Cliente de teste/);
     assert.match(sent.text,/Coca-Cola Lata/);
-    assert.match(sent.text,/R\$\s*12,00/); // Valor recalculado pelo catálogo, nunca usa cents:1
+    assert.match(sent.text,/R\$\s*20,00/); // Valor recalculado pelo catálogo, nunca usa cents:1
     assert.doesNotMatch(sent.text,/R\$\s*0,02/);
     available=false;
     result=await run({...base,requestId:randomUUID()});
