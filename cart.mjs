@@ -1,4 +1,4 @@
-import { money, orderOptions, priceOrder, extraOptions, extraSummary, flavorChoices } from './order-catalog.mjs';
+import { money, orderOptions, priceOrder, extraOptions, extraSummary, flavorChoices, orderProductName } from './order-catalog.mjs';
 import { buildSimpleWhatsAppMessage, whatsappOrderUrl } from './whatsapp-order.mjs';
 
 const byId = id => document.getElementById(id);
@@ -39,7 +39,7 @@ function refresh() {
         const info = document.createElement('div');
         info.className = 'cart-item-info';
         const title = document.createElement('h3');
-        title.textContent = line.product;
+        title.textContent = orderProductName(line);
         const option = document.createElement('p');
         option.className = 'cart-option';
         option.textContent = line.option === 'Único' ? 'Por unidade' : 'Opção: ' + line.option;
@@ -75,7 +75,7 @@ function refresh() {
             const button = document.createElement('button');
             button.type = 'button';
             button.textContent = text;
-            button.setAttribute('aria-label', label + ' quantidade de ' + line.product);
+            button.setAttribute('aria-label', label + ' quantidade de ' + orderProductName(line));
             button.disabled = sending || (delta < 0 ? line.quantity <= 1 : line.quantity >= 10);
             button.onclick = () => {
                 line.quantity += delta;
@@ -92,7 +92,7 @@ function refresh() {
         remove.type = 'button';
         remove.className = 'cart-remove';
         remove.textContent = 'Remover';
-        remove.setAttribute('aria-label', 'Remover ' + line.product);
+        remove.setAttribute('aria-label', 'Remover ' + orderProductName(line));
         remove.disabled = sending;
         remove.onclick = () => {
             cart.splice(index, 1);
@@ -262,7 +262,7 @@ byId('menuContent').addEventListener('click', event => {
         refresh();
         byId('productDialog').close();
         button.focus({ preventScroll: true });
-        byId('cartFeedback').textContent = '✓ ' + product + ' adicionado ao pedido';
+        byId('cartFeedback').textContent = '✓ ' + orderProductName({category, product}) + ' adicionado ao pedido';
         clearTimeout(feedbackTimer);
         feedbackTimer = setTimeout(() => { byId('cartFeedback').textContent = ''; }, 3500);
     };

@@ -1,4 +1,4 @@
-import { money, extraSummary } from './order-catalog.mjs';
+import { money, extraSummary, orderProductName } from './order-catalog.mjs';
 import { PAYMENT_METHODS, validatePayment } from './payment.mjs';
 
 // Número comercial já publicado no próprio site; não usar números pessoais.
@@ -88,7 +88,7 @@ export function buildWhatsAppMessage({ lines, name, phone, fulfillment, payment,
     }
     parts.push('', '*ITENS*');
     lines.forEach((line, i) => {
-        parts.push(String(i + 1) + '. *' + line.quantity + 'x ' + clean(line.product, 160) + '*',
+        parts.push(String(i + 1) + '. *' + line.quantity + 'x ' + clean(orderProductName(line), 160) + '*',
             '   Opção: ' + clean(line.option === 'Único' ? 'Unidade' : line.option, 90),
             '   Valor unitário (com adicionais): ' + money(line.cents),
             '   Total deste item: ' + money(line.cents * line.quantity));
@@ -146,7 +146,7 @@ export function buildSimpleWhatsAppMessage({ lines, note = '' }) {
         }
         subtotal += lineTotal;
         // Uma linha por item; opções não selecionadas não ocupam espaço.
-        const details = [(index + 1) + '. ' + line.quantity + 'x ' + clean(line.product, 160)];
+        const details = [(index + 1) + '. ' + line.quantity + 'x ' + clean(orderProductName(line), 160)];
         if (line.option && line.option !== 'Único') {
             details.push('Tam.: ' + clean(line.option, 90));
         }
