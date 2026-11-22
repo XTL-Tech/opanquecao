@@ -10,19 +10,19 @@ Atua em Nova Hartz/RS, usando a Praça do Trabalhador como ponto de referência 
 Um diretório de terceiros informa quarta a domingo, das 19h às 23h, e segunda e terça fechadas. O estabelecimento ainda não confirmou oficialmente esses horários para esta base. Não pressupor atendimento em feriados ou eventos.
 
 ### Entrega em quais cidades?
-Nova Hartz e Araricá, sujeitas à disponibilidade e cobertura. Taxas iniciais cadastradas: R$ 7 em Nova Hartz e R$ 10 em Araricá, para bairros cadastrados sem exceção. Outra localidade exige confirmação. Verificar no checkout.
+Nova Hartz e Araricá, sujeitas à cobertura e disponibilidade. A taxa de entrega não é calculada ou cobrada no checkout: a loja confirma o valor do frete e o total final pelo WhatsApp após receber o endereço. Não tratar taxas antigas como válidas.
 
 ### Posso retirar ou consumir no local?
 O site oferece pré-pedido para retirada e consumo no local com mesa identificada. A aceitação e o prazo são confirmados pela loja.
 
 ### Quais pagamentos são oferecidos?
-O checkout permite selecionar dinheiro, Pix e cartão de débito ou crédito para pagamento combinado com a loja. Não há cobrança online ou garantia de disponibilidade de outras formas.
+O checkout não pede forma de pagamento. A loja confirma diretamente pelo WhatsApp quais opções de pagamento estão disponíveis; não há cobrança online.
 
 ### Quem confirma o pedido?
-O cliente envia pré-pedido pelo site, o sistema encaminha comanda ao Telegram interno da loja e a loja confirma pelo WhatsApp fornecido. O envio não equivale a pedido aceito ou pagamento realizado.
+O cliente prepara um pré-pedido pelo site; antes de abrir o WhatsApp, o sistema tenta registrar a intenção no bot da loja. O clique de registro não confirma que a mensagem foi de fato enviada pelo WhatsApp nem que o pedido foi aceito. A confirmação humana é obrigatória.
 
 ### Como falar com a loja?
 Telefone (51) 9 9738-3849; WhatsApp https://wa.me/5551997383849.
 
 ### Como consultar preços atuais?
-Consultar o cardápio em https://opanquecao.vercel.app/#cardapio ou https://opanquecao.vercel.app/api/catalog. Preços e condições não devem ser inventados ou tratados como permanentes.
+Consultar o cardápio em https://opanquecao.vercel.app/ ou https://opanquecao.vercel.app/api/catalog. Preços e condições não devem ser inventados ou tratados como permanentes.
