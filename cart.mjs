@@ -9,10 +9,35 @@ let sending = false;
 let checkoutStep = false;
 let lastRegistration = null;
 let deepLinkOpened = false;
+let checkoutEventSent = false;
+const trackedPreOrders = new Set();
 const initialStoreStatus = window.storeOperationStatus;
 let storeOpenForOrders = !initialStoreStatus?.enabled ||
     (initialStoreStatus.open === true && initialStoreStatus.simulated !== true);
 
+// Eventos Meta somente mediante consentimento. Preço de item é subtotal, não receita realizada.
+const trackMeta = (eventName, data) => window.XTLMeta?.track?.(eventName, data) === true;
+const productId = line => [line.category, line.product, line.option].join('::');
+function productEventData(lines) {
+    const valueCents = lines.reduce((sum, line) => sum + line.cents * line.quantity, 0);
+    return {
+        content_type: 'product',
+        content_ids: lines.map(productId),
+        contents: lines.map(line => ({
+            id: productId(line), quantity: line.quantity, item_price: line.cents / 100
+        })),
+        num_items: lines.reduce((sum, line) => sum + line.quantity, 0),
+        currency: 'BRL',
+        value: Number((valueCents / 100).toFixed(2))
+    };
+}
+function trackAddToCart(line) {
+    trackMeta('AddToCart', {
+        ...productEventData([line]),
+        content_name: orderProductName(line),
+        content_category: line.category
+    });
+}
 const storageKey = 'disk-panquecao-cart-v1';
 let feedbackTimer;
 function announceAdded(line) {
@@ -181,6 +206,7 @@ byId('menuContent').addEventListener('click', event => {
             note: '', flavors: [], freeExtras: [], paidExtras: []
         }]);
         cart.push(line);
+        trackAddToCart(line);
         byId('whatsappOrderLink').hidden = true;
         refresh();
         announceAdded(line);
@@ -195,6 +221,11 @@ byId('menuContent').addEventListener('click', event => {
     const item = catalog.categorias.find(entry => entry.id === category)?.itens.find(entry => entry.nome === product);
     if (!item) return;
     const options = orderOptions(item).filter(option => !card.dataset.option || option.label === card.dataset.option);
+    trackMeta('ViewContent', {
+        content_type:'product', content_ids:[productId({category,product,option:card.dataset.option || 'Único'})],
+        content_name:product, content_category:category,
+        ...(options.length ? {currency:'BRL',value:options[0].cents/100} : {})
+    });
     if (!options.length) {
         const contact = document.createElement('a');
         contact.className = 'cart-whatsapp';
@@ -334,6 +365,7 @@ byId('menuContent').addEventListener('click', event => {
                 flavors: flavorSelectors.map(select => select.value),
                 freeExtras: [...freeSelected], paidExtras: [...paidSelected] }]);
             cart.push(line);
+            trackAddToCart(line);
         } catch (error) { formStatus.textContent = error.message; return; }
         byId('whatsappOrderLink').hidden = true;
         refresh();
@@ -509,6 +541,9 @@ byId('cartBack').onclick = () => {
 byId('startCheckout').onclick = () => {
     if (!cart.length || !storeOpenForOrders) return;
     checkoutStep = true;
+    if (!checkoutEventSent) {
+        checkoutEventSent = trackMeta('InitiateCheckout', productEventData(cart));
+    }
     refresh();
     checkoutForm.elements.customerName.focus({preventScroll:true});
 };
@@ -661,6 +696,20 @@ checkoutForm.onsubmit = async event => {
         if (registration.test) {
             orderStatus.textContent = 'TESTE: pré-registro enviado ao bot de homologação. Nenhum WhatsApp foi aberto.';
             return;
+        }
+        // Não marcar Purchase: o registro no bot não confirma envio no WhatsApp
+        // nem aceite/pagamento da loja. Lead identifica SOMENTE o pré-registro.
+        if (!trackedPreOrders.has(registration.id)) {
+            const counted = trackMeta('Lead', {
+                content_category:'pre_pedido_registrado',
+                content_type:'product',
+                content_ids:lines.map(productId),
+                num_items:lines.reduce((sum,line)=>sum+line.quantity,0),
+                currency:'BRL',
+                value:0,
+                status:'pending_whatsapp_confirmation'
+            });
+            if (counted) trackedPreOrders.add(registration.id);
         }
         const message = buildSimpleWhatsAppMessage({
             lines, note, name: customer.name, fulfillment, orderRef: registration.id
