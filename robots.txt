@@ -5,5 +5,7 @@ Allow: /ai/
 Allow: /api/catalog
 Disallow: /api/order
 Disallow: /api/order-config
+Disallow: /api/whatsapp-intent
 Disallow: /api/health/
+Disallow: /demo-fluxo.html
 Sitemap: https://opanquecao.vercel.app/sitemap.xml
