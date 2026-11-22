@@ -5,6 +5,9 @@
     },
     "api/catalog.js": {
       "includeFiles": "cardapio.json"
+    },
+    "api/whatsapp-intent.js": {
+      "includeFiles": "cardapio.json"
     }
   },
   "headers": [
