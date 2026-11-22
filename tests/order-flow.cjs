@@ -256,7 +256,7 @@ assert.throws(()=>priceOrder(catalog,[{category:'panquecas-salgadas',product:'Ba
 
 // Conferir sabores e adicionais no link produzido, sem retornar ao checkout.
 checkout.elements.orderNote.value='';
-submit();
+await submit();
 assert.equal(calls,0);
 directMessage=new URL(d.querySelector('#whatsappOrderLink').href).searchParams.get('text');
 assert.match(directMessage,/Sabores: Bacon \/ Calabresa/);
