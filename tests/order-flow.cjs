@@ -150,6 +150,13 @@ assert.equal(firstCartMeta.contents[0].quantity,2);
 assert.match(d.querySelector('#openCart').textContent,/Pedido · 2 itens/);
 assert.match(d.querySelector('#cartFeedback').textContent,/adicionado/);
 assert.equal(JSON.parse(w.localStorage.getItem('disk-panquecao-cart-v1')).lines[0].quantity,2);
+assert.equal(d.querySelector('#cartFeedback').hidden,false);
+d.querySelector('#cartFeedbackCart').click();
+assert.equal(d.getElementById('cartDialog').open,true,
+    'Ver pedido no aviso deve abrir carrinho, não a ficha do produto');
+assert.equal(d.getElementById('productDialog').open,false,
+    'Produto não pode reabrir ao tocar no aviso Ver pedido');
+d.getElementById('cartDialog').close();
 await d.querySelector('#openCart').onclick();
 assert.equal(d.querySelector('#checkout').hidden,true);
 assert.equal(d.querySelector('#startCheckout').hidden,false);
