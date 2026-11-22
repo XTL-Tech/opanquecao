@@ -3,6 +3,7 @@
 const { randomUUID } = require('node:crypto');
 const { loadCatalog } = require('../lib/catalog-source');
 const { loadStoreStatus } = require('../lib/store-hours-source');
+const deliveryAreas = require('../delivery-areas.json');
 
 const REQUEST_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const clean = (value, max = 160) => String(value ?? '')
@@ -13,7 +14,7 @@ const normalizePhone = value => {
     return /^(?:[1-9]\d)(?:9\d{8}|\d{8})$/.test(phone) ? phone : null;
 };
 
-function messageParts({ id, name, phone, lines, note, money, extraSummary, orderProductName }) {
+function messageParts({ id, name, phone, lines, note, fulfillment, describeFulfillment, money, extraSummary, orderProductName }) {
     const subtotal = lines.reduce((total, line) => total + line.cents * line.quantity, 0);
     const parts = [
         '🧾 PRÉ-REGISTRO DO SITE — DISK PANQUECÃO',
@@ -23,6 +24,9 @@ function messageParts({ id, name, phone, lines, note, money, extraSummary, order
         'Cliente: ' + clean(name, 80),
         'WhatsApp: +55' + phone,
         'Origem: cardápio online → WhatsApp',
+        '',
+        'RECEBIMENTO',
+        ...describeFulfillment(fulfillment),
         '',
         'ITENS'
     ];
@@ -36,7 +40,9 @@ function messageParts({ id, name, phone, lines, note, money, extraSummary, order
     }
     if (note) parts.push('', 'Observação geral: ' + clean(note, 400));
     parts.push('', 'Subtotal sem entrega: ' + money(subtotal),
-        'Entrega, retirada, pagamento e valor final: combinar com o cliente.',
+        fulfillment.type === 'delivery'
+            ? 'Frete e valor final: A CONFIRMAR PELA LOJA NO WHATSAPP.'
+            : 'Forma de pagamento: a combinar.',
         'Aguardar confirmação expressa no WhatsApp antes de preparar.');
     return parts.join('\n');
 }
@@ -75,13 +81,21 @@ module.exports = async function handler(req, res) {
         JSON.stringify(raw).length > 16000) {
         return res.status(400).json({ error: 'Pedido inválido ou muito grande.' });
     }
-    const { requestId, name, phone, challenge, lines, note } = raw;
+    const { requestId, name, phone, challenge, lines, note, fulfillment } = raw;
     const normalizedPhone = normalizePhone(phone);
     if (!REQUEST_ID.test(requestId) || typeof name !== 'string' || !clean(name, 80) ||
         name.length > 80 || /[\r\n]/.test(name) || !normalizedPhone ||
         typeof note !== 'string' || note.length > 400 ||
         typeof challenge !== 'string' || challenge.length < 1 || challenge.length > 2048) {
         return res.status(400).json({ error: 'Confira nome, WhatsApp e dados do pré-pedido.' });
+    }
+    let deliveryDetails, describeFulfillment;
+    try {
+        const functions = await import('../fulfillment.mjs');
+        describeFulfillment = functions.describeFulfillment;
+        deliveryDetails = functions.normalizeFulfillment(fulfillment, deliveryAreas);
+    } catch (error) {
+        return res.status(400).json({ error: error?.message || 'Confira o endereço e a modalidade do pedido.' });
     }
     // Fail closed: nunca informar a equipe de que um pedido é válido sem
     // conferir catálogo e horário no servidor.
@@ -128,6 +142,7 @@ module.exports = async function handler(req, res) {
     const preview = process.env.VERCEL_ENV !== 'production';
     const operatorText = messageParts({
         id, name, phone: normalizedPhone, lines: validated, note,
+        fulfillment: deliveryDetails, describeFulfillment,
         money, extraSummary, orderProductName
     });
     const whatsAppLink = 'https://wa.me/55' + normalizedPhone +
