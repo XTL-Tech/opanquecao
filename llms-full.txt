@@ -2,14 +2,14 @@
 
 ## Empresa
 Nome de atendimento: Disk Panquecão, também O Panquecão. Serviço de alimentação em Nova Hartz, RS, Brasil. O site informa atuação desde 2017, sem comprovação independente nesta referência.
-Cardápio: https://opanquecao.vercel.app/#cardapio. Contato: (51) 9 9738-3849. Referência espacial exibida: Praça do Trabalhador.
+Cardápio: https://opanquecao.vercel.app/. Categorias indexáveis em https://opanquecao.vercel.app/sitemap.xml. Contato: (51) 9 9738-3849. Referência espacial exibida: Praça do Trabalhador.
 
 ## Horário (informativo, não operacional)
 Um diretório comercial público exibe quarta, quinta, sexta, sábado e domingo, 19h–23h; segunda e terça fechadas.
 Fonte consultada: https://es.restaurantguru.com/Disk-Panquecao-Nova-Hartz
 Status: NÃO confirmado pelo responsável em 17/11/2026. Não usar esses horários para ativar/bloquear checkout, prometer entrega ou marcar aberto/fechado em tempo real.
 
-## Categorias do cardápio (12 categorias, 82 produtos na data de revisão)
+## Categorias do cardápio (12 categorias, 82 produtos em 22/11/2026)
 - AÇAÍ — 1 produto(s)
 - PANQUECAS SALGADAS — 15 produto(s)
 - PANQUECAS DOCES — 14 produto(s)
@@ -25,11 +25,11 @@ Status: NÃO confirmado pelo responsável em 17/11/2026. Não usar esses horári
 
 ## Atendimento
 Entrega: Nova Hartz e Araricá, com cobertura a confirmar.
-Taxas base informadas pela gestão: Nova Hartz R$ 7,00, Araricá R$ 10,00 (somente bairros cadastrados sem exceção). Outro bairro requer revisão.
+Não há taxa de entrega fixa confirmada no checkout. O valor é informado pela loja no WhatsApp ao confirmar endereço, cobertura e total final.
 Retirada: o cliente escolhe retirada e aguarda confirmação.
 Consumo local: há opção de mesa; a confirmação cabe à loja.
-Pagamento: dinheiro (com ou sem troco), Pix, cartão de débito/crédito, sem captura de pagamento no site.
-Pré-pedido: enviado do site ao Telegram interno do estabelecimento, que responde ao cliente pelo WhatsApp. Pedido só é aceito após confirmação humana.
+Pagamento: o site não recolhe nem processa dados de pagamento; a forma e o valor final são combinados pelo WhatsApp com a loja.
+Pré-registro: o site notifica o bot da loja com a intenção de pedido, mas não consegue provar se a mensagem preparada foi enviada pelo cliente no WhatsApp. Pedido só é aceito após confirmação humana.
 
 ## Cuidados com a informação
 Não inferir preços atuais a partir deste documento: consultar /api/catalog e validação do servidor. Não divulgar dados pessoais, credenciais ou canais internos.

@@ -336,6 +336,40 @@ function within(rect,width){
             console.log('PASS auditoria Chromium '+width+': '+audit.cardsChecked+
                 ' cards, '+audit.photosChecked+' fotos, '+audit.consultations+' consultas.');
         }
+
+        // Testa todas as landing pages SEO no navegador real, não só como HTML estático.
+        const seoCategories=JSON.parse(fs.readFileSync(path.join(root,'cardapio.json'),'utf8')).categorias;
+        for(const width of [390,1440]){
+            await cdp.call('Emulation.setDeviceMetricsOverride',{
+                width,height:width===390?844:900,deviceScaleFactor:1,mobile:width<900
+            });
+            for(const cat of seoCategories){
+                await cdp.call('Page.navigate',{url:'http://127.0.0.1:'+port+
+                    '/categorias/'+cat.id+'.html'});
+                await waitFor(()=>cdp.eval(
+                    'location.pathname==='+JSON.stringify('/categorias/'+cat.id+'.html')+
+                    ' && document.querySelectorAll("li.product").length==='+cat.itens.length),6000);
+                const metrics=await cdp.eval('({width:document.documentElement.scrollWidth,'+
+                    'products:document.querySelectorAll("li.product").length,'+
+                    'first:document.querySelector("li.product strong")?.textContent,'+
+                    'headings:document.querySelectorAll("h1").length})');
+                assert.ok(metrics.width<=width+2,'Rolagem lateral na categoria '+cat.id+' em '+width);
+                assert.equal(metrics.products,cat.itens.length,'Itens faltando na página SEO: '+cat.id);
+                assert.equal(metrics.first,cat.itens[0].nome,'Produto incorreto na landing: '+cat.id);
+                assert.equal(metrics.headings,1,'Cabeçalho H1 inadequado na landing: '+cat.id);
+                if(width===390&&cat.id==='panquecas-salgadas')await shot('categoria-panquecas-390');
+                if(width===1440&&cat.id==='panquecas-doces')await shot('categoria-doces-1440');
+            }
+            await cdp.call('Page.navigate',{url:'http://127.0.0.1:'+port+
+                '/categorias/panquecas-salgadas.html'});
+            await waitFor(()=>cdp.eval(
+                'location.pathname==="/categorias/panquecas-salgadas.html" && !!document.querySelector("li.product a.product-link")'));
+            await cdp.eval('document.querySelector("li.product a.product-link").click()');
+            await waitFor(()=>cdp.eval('location.pathname==="/" && document.getElementById("productDialog")?.open'),9000);
+            const opened=await cdp.eval('document.getElementById("productDialogTitle").textContent');
+            assert.match(opened,/Bacon/,'Link público de produto abriu ficha errada em '+width);
+            console.log('PASS SEO Chromium '+width+': 12 páginas, 82 nomes, imagens e links diretos para ficha.');
+        }
         console.log('PASS responsividade em Chromium real, sem pedido enviado.');
     }finally{
         try{socket?.close()}catch{}

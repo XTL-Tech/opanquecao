@@ -2,6 +2,17 @@
 
 Cardápio e pré-pedido do Disk Panquecão, Nova Hartz/RS. HTML, CSS e JavaScript, sem framework. Tecnologia XTL TECH.
 
+## SEO local e compartilhamento das categorias (22/11/2026)
+
+- **12 páginas estáticas** em `/categorias/<slug>.html` com H1, títulos, descrições, Open Graph, Twitter, canonical e JSON-LD. Servem HTML legível a buscadores e link de volta para o cardápio operacional. Os 82 produtos aparecem por nome/foto/descrição; preços intencionalmente ausentes para não congelar valores nem contradizer Supabase.
+- **Sitemap** inclui 13 URLs canônicas (homepage + 12 categorias). O rodapé liga todas elas em HTML antes do JavaScript. O botão **Compartilhar categoria** usa a API nativa de compartilhamento quando disponível, senão copia o link e oferece o WhatsApp.
+- Os links individuais das páginas de categoria usam `/?categoria=<id>&produto=<nome>#<id>`; o `cart.mjs` abre a categoria e a ficha do item correto, sem ativar o checkout automaticamente.
+- **OG da homepage**: marca oficial PNG, título/descrição locais, Twitter card. Fotos de itens têm ALT descritivo identificado como imagem ilustrativa.
+- **Dados estruturados**: Restaurant com menu URL canônica, foto, marca e Instagram; não inventar endereço, geolocalização, horários, avaliações ou taxa de entrega até confirmação da gestão.
+- **Consistência pública**: arquivos `llms*.txt`, `ai/*.md` e `ai/business.json` não anunciam mais as taxas antigas como se estivessem em vigor; taxa, total e pagamento são acertados pela loja.
+- **Testes**: `tests/seo-share.cjs` verifica SEO/JSON-LD, 12 páginas, todos os nomes, links individuais, sitemap e deep-link; Chromium real verifica landing pages e produto destino.
+- **Limitações**: landing pages são snapshots do catálogo versionado em `cardapio.json`; quando houver alteração de itens via Supabase, atualizar as páginas SEO também. A leitura de ranking, indexação e métricas depende de propriedade Search Console verificada, ainda não conectada à análise. Prévia de link depende de cache/crawler do mensageiro.
+
 ## Atualização do checkout: endereço e GPS opcionais (22/11/2026)
 
 - Após conferir o carrinho, o cliente informa nome, WhatsApp e escolhe **Entrega**, **Retirada** ou **Comer no local**.

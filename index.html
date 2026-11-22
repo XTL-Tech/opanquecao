@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Disk Panquecão | Cardápio, Entrega e Retirada em Nova Hartz</title>
-    <meta name="description" content="Cardápio do Disk Panquecão em Nova Hartz/RS: panquecas doces, salgadas e de dois sabores, refeições, bebidas e sobremesas. Entrega em Nova Hartz e Araricá, retirada e consumo no local. Pré-pedido sujeito à confirmação.">
+    <title>Disk Panquecão | Panquecas, Açaí e Entregas em Nova Hartz</title>
+    <meta name="description" content="Disk Panquecão em Nova Hartz: panquecas, açaí, massas e refeições com fotos. Entrega em Nova Hartz e Araricá, retirada e consumo no local.">
     <meta name="robots" content="index,follow,max-image-preview:large">
     <link rel="canonical" href="https://opanquecao.vercel.app/">
     <link rel="alternate" type="text/plain" title="Informações públicas para agentes de IA" href="/llms.txt">
@@ -13,9 +13,15 @@
     <meta property="og:locale" content="pt_BR">
     <meta property="og:site_name" content="Disk Panquecão">
     <meta property="og:title" content="Disk Panquecão | Cardápio em Nova Hartz">
-    <meta property="og:description" content="Cardápio do Disk Panquecão em Nova Hartz/RS: panquecas doces, salgadas e de dois sabores, refeições, bebidas e sobremesas. Entrega em Nova Hartz e Araricá, retirada e consumo no local. Pré-pedido sujeito à confirmação.">
+    <meta property="og:description" content="Disk Panquecão em Nova Hartz: panquecas, açaí, massas e refeições com fotos. Entrega em Nova Hartz e Araricá, retirada e consumo no local.">
     <meta property="og:url" content="https://opanquecao.vercel.app/">
-    <meta property="og:image" content="https://opanquecao.vercel.app/img/logo-disk-panquecao.webp">
+    <meta property="og:image" content="https://opanquecao.vercel.app/img/logo-disk-panquecao.png">
+    <meta property="og:image:type" content="image/png">
+    <meta property="og:image:alt" content="Marca oficial Disk Panquecão — cardápio em Nova Hartz">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Disk Panquecão | Panquecas, Açaí e Entregas em Nova Hartz">
+    <meta name="twitter:description" content="Disk Panquecão em Nova Hartz: panquecas, açaí, massas e refeições com fotos. Entrega em Nova Hartz e Araricá, retirada e consumo no local.">
+    <meta name="twitter:image" content="https://opanquecao.vercel.app/img/logo-disk-panquecao.png">
     <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -23,16 +29,19 @@
   "@id": "https://opanquecao.vercel.app/#restaurante",
   "name": "Disk Panquecão",
   "alternateName": "O Panquecão",
-  "description": "Cardápio do Disk Panquecão em Nova Hartz/RS: panquecas doces, salgadas e de dois sabores, refeições, bebidas e sobremesas. Entrega em Nova Hartz e Araricá, retirada e consumo no local. Pré-pedido sujeito à confirmação.",
-  "url": "https://opanquecao.vercel.app",
-  "image": "https://opanquecao.vercel.app/img/logo-disk-panquecao.webp",
+  "description": "Disk Panquecão em Nova Hartz: panquecas, açaí, massas e refeições com fotos. Entrega em Nova Hartz e Araricá, retirada e consumo no local.",
+  "url": "https://opanquecao.vercel.app/",
+  "image": "https://opanquecao.vercel.app/img/panqueca-quadrada.webp",
+  "logo": "https://opanquecao.vercel.app/img/logo-disk-panquecao.png",
+  "sameAs": ["https://www.instagram.com/diskpanquecao/"],
   "telephone": "+5551997383849",
   "servesCuisine": [
     "Panquecas",
     "Refeições",
     "Sobremesas"
   ],
-  "hasMenu": "https://opanquecao.vercel.app/#cardapio",
+  "hasMenu": "https://opanquecao.vercel.app/",
+  "menu": "https://opanquecao.vercel.app/",
   "address": {
     "@type": "PostalAddress",
     "addressLocality": "Nova Hartz",
@@ -652,6 +661,22 @@
         .analytics-actions button { flex: 1; min-height: 42px; padding: 9px 12px; border-radius: 9px; border: 1px solid #741c2d; cursor: pointer; font: inherit; font-size: 13px; font-weight: 700; background: #fff; color: #741c2d; }
         .analytics-actions #analyticsAccept { background: #741c2d; color: #fff; }
 
+        /* Compartilhamento de categorias e navegação indexável em HTML estático. */
+        #shareCategory { display:inline-flex;align-items:center;min-height:44px;padding:8px 13px;
+            color:#741c2d;background:#fff;border:1px solid #aa777a;border-radius:10px;
+            font:inherit;font-size:.88rem;font-weight:800;cursor:pointer; }
+        #shareCategory[hidden] { display:none; }
+        #shareCategory:focus-visible { outline:3px solid #d69218;outline-offset:2px; }
+        .share-category-status {font-size:.83rem;color:#741c2d;font-weight:700}
+        .share-category-status a {color:inherit;text-decoration:underline}
+        .footer-categories {width:100%;max-width:820px;margin:8px auto 28px;text-align:center}
+        .footer-categories h2 {font-size:1.08rem;margin-bottom:12px;color:#fff7ef}
+        .footer-category-links {display:flex;flex-wrap:wrap;justify-content:center;gap:7px}
+        .footer-category-links a {color:#fff7f1;border:1px solid #ffffff4f;
+            border-radius:999px;padding:8px 11px;font-size:.78rem;line-height:1.3;text-decoration:none}
+        .footer-category-links a:hover,.footer-category-links a:focus-visible {
+            background:#ffffff1e;text-decoration:underline}
+        
         /* XTL · layout responsivo do cardápio (mobile-first)
            Mantém dados, fotos, cores e fluxo original de compras. */
         :root { --page-gutter: clamp(14px, 2.6vw, 32px); }
@@ -1057,6 +1082,8 @@
     <div class="category-toolbar container" id="categoryToolbar" hidden>
         <a href="#cardapio">← Todas as categorias</a>
         <span id="categoryCurrent" role="heading" aria-level="2"></span>
+        <button type="button" id="shareCategory" hidden>Compartilhar categoria ↗</button>
+        <span id="shareCategoryStatus" role="status" aria-live="polite" class="share-category-status"></span>
         <nav class="category-switcher" id="categorySwitcher" aria-label="Trocar de categoria"></nav>
     </div>
     <div class="container" id="menuContent">
@@ -1088,6 +1115,23 @@
                 <a href="https://www.google.com/maps/dir/?api=1&amp;destination=O%20PANQUEC%C3%83O%20DISKPANQUEC%C3%83O%20-%20NOVA%20HARTZ%2C%20RS&amp;dir_action=navigate" target="_blank" rel="noopener noreferrer">Traçar rota até o restaurante</a>
             </div>
         </section>
+        <nav class="footer-categories" aria-label="Categorias do cardápio para compartilhar">
+            <h2>Explore por categoria</h2>
+            <div class="footer-category-links">
+                <a href="/categorias/acai.html">Açaí</a>
+                <a href="/categorias/panquecas-salgadas.html">Panquecas salgadas</a>
+                <a href="/categorias/panquecas-doces.html">Panquecas doces</a>
+                <a href="/categorias/panquecas-2-sabores.html">Panquecas meio a meio</a>
+                <a href="/categorias/lasanhas-de-massa-de-panqueca.html">Lasanhas de massa de panqueca</a>
+                <a href="/categorias/frango-frito-crocrante-no-pote.html">Frango frito crocante</a>
+                <a href="/categorias/batatas-fritas.html">Batatas fritas</a>
+                <a href="/categorias/massas.html">Massas</a>
+                <a href="/categorias/paokecao.html">Pãokecão</a>
+                <a href="/categorias/bebidas.html">Bebidas</a>
+                <a href="/categorias/cocktails-com-alcool.html">Coquetéis com álcool</a>
+                <a href="/categorias/cocktails-sem-alcool.html">Coquetéis sem álcool</a>
+            </div>
+        </nav>
         <div class="footer-obs">
             <h3>Informações Importantes</h3>
             <ul id="observationsList" style="list-style: none; font-size: 0.9rem;"></ul>
@@ -1314,7 +1358,7 @@
                 itemsHtml += `
                     <div class="menu-item" data-product="${escapeHtml(item.nome)}" ${size ? `data-option="${escapeHtml(size.tamanho)}"` : ''}>
                         ${photo ? `<figure class="item-photo">
-                            <img src="img/cardapio-lite/${photo.split('/').pop()}" data-full-src="img/${photo}" alt=""
+                            <img src="img/cardapio-lite/${photo.split('/').pop()}" data-full-src="img/${photo}" alt="Imagem ilustrativa de ${escapeHtml(item.nome)} do Disk Panquecão"
                                  width="560" height="420" loading="lazy" decoding="async">
                             <figcaption>Imagem ilustrativa</figcaption>
                         </figure>` : ''}
@@ -1409,6 +1453,33 @@
             switcher.append(quickLink);
         }
         let lastCategory;
+        const shareButton = document.getElementById('shareCategory');
+        shareButton.addEventListener('click', async () => {
+            const selected = shareButton.dataset.category;
+            const title = titles.get(selected);
+            if (!title || !/^[a-z0-9-]+$/.test(selected)) return;
+            const url = 'https://opanquecao.vercel.app/categorias/' + selected + '.html';
+            const text = 'Conheça ' + title.toLowerCase() + ' no cardápio do Disk Panquecão em Nova Hartz.';
+            const feedback = document.getElementById('shareCategoryStatus');
+            if (navigator.share) {
+                try { await navigator.share({title: title + ' | Disk Panquecão', text, url}); return; }
+                catch (error) { if (error?.name === 'AbortError') return; }
+            }
+            if (navigator.clipboard?.writeText) {
+                try {
+                    await navigator.clipboard.writeText(url);
+                    feedback.textContent = '✓ Link da categoria copiado!';
+                    return;
+                } catch {}
+            }
+            feedback.replaceChildren();
+            const fallback = document.createElement('a');
+            fallback.href = 'https://wa.me/?text=' + encodeURIComponent(text + ' ' + url);
+            fallback.target = '_blank';
+            fallback.rel = 'noopener noreferrer';
+            fallback.textContent = 'Compartilhar pelo WhatsApp';
+            feedback.append(fallback);
+        });
         function showCategory(id, focus = false) {
             const selected = titles.has(id) ? id : null;
             home.hidden = !!selected;
@@ -1417,6 +1488,10 @@
             // Mostrar somente a categoria escolhida; a home apresenta apenas os cartões.
             for (const section of content.querySelectorAll('.category-section')) section.hidden = section.id !== selected;
             picker.value = selected || '';
+            const shareButton = document.getElementById('shareCategory');
+            shareButton.hidden = !selected;
+            shareButton.dataset.category = selected || '';
+            document.getElementById('shareCategoryStatus').textContent = '';
             for (const link of switcher.querySelectorAll('a')) {
                 if (link.hash === '#' + selected) link.setAttribute('aria-current', 'true');
                 else link.removeAttribute('aria-current');

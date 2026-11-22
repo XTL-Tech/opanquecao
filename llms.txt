@@ -5,16 +5,17 @@
 Site oficial do cardápio: https://opanquecao.vercel.app/
 Nome: Disk Panquecão (também O Panquecão/DiskPanquecão).
 Perfil público estruturado: https://opanquecao.vercel.app/ai/business.json
-Cardápio: https://opanquecao.vercel.app/#cardapio
+Cardápio e pedidos: https://opanquecao.vercel.app/
+Categorias com páginas indexáveis: https://opanquecao.vercel.app/categorias/panquecas-salgadas.html e outras listadas no sitemap.xml
 Dados do catálogo: https://opanquecao.vercel.app/api/catalog
 Categorias: https://opanquecao.vercel.app/ai/catalog-summary.json
 FAQ: https://opanquecao.vercel.app/ai/faq.md
 Guia para agentes: https://opanquecao.vercel.app/ai/agents.md
 
 Informações principais:
-- Panquecas, opções doces/salgadas/dois sabores, pratos e bebidas; 82 produtos em 12 categorias na fotografia de 17/11/2026.
+- Panquecas, opções doces/salgadas/dois sabores, pratos e bebidas; 82 produtos em 12 categorias no catálogo de referência (22/11/2026).
 - Entrega em Nova Hartz e Araricá, retirada e consumo no local, sempre sujeitos à confirmação da loja.
-- Taxa padrão para bairros cadastrados: Nova Hartz R$ 7; Araricá R$ 10; exceções e outros bairros a confirmar.
+- Taxa de entrega: a confirmar pela loja no WhatsApp após análise de endereço, bairro e cobertura; o site não informa nem cobra frete automaticamente.
 - Horários publicados por diretório externo: quarta–domingo 19:00–23:00, segunda/terça fechadas. **Ainda não confirmados pelo responsável**.
 - Localização: Nova Hartz/RS, referência no site Praça do Trabalhador; endereço exato pendente de confirmação.
 - Contato: (51) 9 9738-3849 / WhatsApp https://wa.me/5551997383849.

@@ -1,4 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://opanquecao.vercel.app/</loc></url>
+  <url><loc>https://opanquecao.vercel.app/</loc><lastmod>2026-11-22</lastmod></url>
+  <url><loc>https://opanquecao.vercel.app/categorias/acai.html</loc><lastmod>2026-11-22</lastmod></url>
+  <url><loc>https://opanquecao.vercel.app/categorias/panquecas-salgadas.html</loc><lastmod>2026-11-22</lastmod></url>
+  <url><loc>https://opanquecao.vercel.app/categorias/panquecas-doces.html</loc><lastmod>2026-11-22</lastmod></url>
+  <url><loc>https://opanquecao.vercel.app/categorias/panquecas-2-sabores.html</loc><lastmod>2026-11-22</lastmod></url>
+  <url><loc>https://opanquecao.vercel.app/categorias/lasanhas-de-massa-de-panqueca.html</loc><lastmod>2026-11-22</lastmod></url>
+  <url><loc>https://opanquecao.vercel.app/categorias/frango-frito-crocrante-no-pote.html</loc><lastmod>2026-11-22</lastmod></url>
+  <url><loc>https://opanquecao.vercel.app/categorias/batatas-fritas.html</loc><lastmod>2026-11-22</lastmod></url>
+  <url><loc>https://opanquecao.vercel.app/categorias/massas.html</loc><lastmod>2026-11-22</lastmod></url>
+  <url><loc>https://opanquecao.vercel.app/categorias/paokecao.html</loc><lastmod>2026-11-22</lastmod></url>
+  <url><loc>https://opanquecao.vercel.app/categorias/bebidas.html</loc><lastmod>2026-11-22</lastmod></url>
+  <url><loc>https://opanquecao.vercel.app/categorias/cocktails-com-alcool.html</loc><lastmod>2026-11-22</lastmod></url>
+  <url><loc>https://opanquecao.vercel.app/categorias/cocktails-sem-alcool.html</loc><lastmod>2026-11-22</lastmod></url>
 </urlset>

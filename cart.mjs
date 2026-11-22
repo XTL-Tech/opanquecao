@@ -8,6 +8,7 @@ let catalog;
 let sending = false;
 let checkoutStep = false;
 let lastRegistration = null;
+let deepLinkOpened = false;
 const initialStoreStatus = window.storeOperationStatus;
 let storeOpenForOrders = !initialStoreStatus?.enabled ||
     (initialStoreStatus.open === true && initialStoreStatus.simulated !== true);
@@ -30,6 +31,29 @@ function initializeCatalog(data) {
         }
     } catch { /* Invalid or unavailable storage never blocks ordering. */ }
     refresh();
+    // Links de categorias trazem o cliente diretamente para a ficha correta.
+    // O timer evita a corrida quando a API carrega antes de registrar os listeners.
+    if (!deepLinkOpened) window.setTimeout(openSharedProduct, 0);
+}
+function openSharedProduct() {
+    if (deepLinkOpened || !catalog) return;
+    const params = new URLSearchParams(window.location.search);
+    const category = params.get('categoria');
+    const product = params.get('produto');
+    const option = params.get('opcao');
+    if (!category || !product) return;
+    if (!catalog.categorias.some(entry => entry.id === category &&
+        entry.itens.some(item => item.nome === product))) return;
+    const section = document.getElementById(category);
+    if (!section) return;
+    const card = [...section.querySelectorAll('.menu-item')].find(item =>
+        item.dataset.product === product && (!option || item.dataset.option === option));
+    const action = card?.querySelector('.product-details');
+    const navigation = document.querySelector('.category-card[href="#' + category + '"]');
+    if (!action || !navigation) return;
+    deepLinkOpened = true;
+    navigation.click();
+    action.click();
 }
 document.addEventListener('menu-ready', event => initializeCatalog(event.detail));
 if (window.menuCatalog) initializeCatalog(window.menuCatalog);
