@@ -136,18 +136,6 @@
         .restaurant-logo span { color: #ffd080; }
         header a { color: inherit; }
 
-        .restaurant-badge {
-            border: 1px solid #ffd080;
-            color: #ffd080;
-            border-radius: 999px;
-            padding: 4px 16px;
-            font-size: 0.8rem;
-            font-weight: 700;
-            display: inline-block;
-            margin-bottom: 20px;
-            letter-spacing: 3px;
-        }
-
         /* Barra de Navegação Corrigida para Muitas Categorias */
         .nav-wrapper {
             position: sticky;
@@ -730,7 +718,6 @@
         /* Celulares: cartões de produtos compactos, com fotos e dados lado a lado. */
         @media (max-width: 599px) {
             header { padding: 16px 0 18px; border-bottom-width: 6px; }
-            .restaurant-badge { font-size: .68rem; letter-spacing: 2px; margin-bottom: 8px; }
             .restaurant-logo { line-height: 1.1; }
             .restaurant-logo img { max-width: 110px !important; max-height: 116px; object-fit: contain; }
             .site-tabs {
@@ -882,7 +869,6 @@
         }
         @media (max-height: 520px) and (orientation: landscape) {
             header { padding-block: 10px 12px; }
-            .restaurant-badge { margin-bottom: 4px; }
             .restaurant-logo img { max-height: 92px; width: auto; }
             .product-dialog, #cartDialog { max-height: calc(100dvh - 8px); }
         }
@@ -946,7 +932,6 @@
 
 <header>
     <div class="container">
-        <span class="restaurant-badge">DESDE 2017</span>
         <h1 class="restaurant-logo"><img src="img/logo-disk-panquecao.webp" width="160" height="175" alt="Disk Panquecão" style="max-width:40vw;height:auto;vertical-align:middle"></h1>
     </div>
     <nav class="site-tabs" aria-label="Navegação principal">
