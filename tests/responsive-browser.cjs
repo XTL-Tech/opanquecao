@@ -139,6 +139,67 @@ function assertCardLayout(cards, width) {
         }
     }
 }
+// Auditoria real no Chromium: clique em título, foto e CTA dos 83 cards.
+function auditCardClickthrough(){
+    const problems=[];
+    let cardsChecked=0,photosChecked=0,consultations=0,categoriesChecked=0;
+    const assert=(condition,message)=>{if(!condition)throw Error(message)};
+    const dialog=document.getElementById('productDialog');
+    for(const cat of window.menuCatalog.categorias){
+        const route=document.querySelector('.category-card[href="#'+cat.id+'"]');
+        assert(route,'Categoria ausente: '+cat.id);
+        route.click();
+        assert(!document.getElementById(cat.id).hidden,'Categoria não abriu: '+cat.id);
+        categoriesChecked++;
+        for(const card of document.querySelectorAll('#'+cat.id+' .menu-item')){
+            const name=card.dataset.product,variant=card.dataset.option||'';
+            const key=cat.id+'/'+name+'/'+variant;
+            try{
+                const item=cat.itens.find(x=>x.nome===name);
+                assert(item,key+' não aparece no catálogo');
+                const expected=cat.titulo+' · '+card.querySelector('.item-title').textContent;
+                const consult=item.preco==='Consultar';
+                const verify=(source)=>{
+                    assert(dialog.open,key+': '+source+' não abriu ficha');
+                    assert(document.getElementById('productDialogTitle').textContent===expected,
+                        key+': '+source+' abriu outro produto');
+                    const form=document.querySelector('#productDialogContent form.order-form');
+                    const link=document.querySelector('#productDialogContent a.cart-whatsapp');
+                    assert(consult ? !form&&!!link : !!form,
+                        key+': '+source+' abriu ficha inválida');
+                    if(consult)assert(new URL(link.href).searchParams.get('text').includes(name),
+                        key+': link WhatsApp do produto incorreto');
+                    dialog.close();
+                };
+                card.querySelector('.item-title').click();
+                verify('título');
+                const photo=card.querySelector('.item-photo img');
+                if(photo){
+                    photo.click();
+                    verify('foto');
+                    photosChecked++;
+                }
+                const action=card.querySelector(':scope > .card-primary-action');
+                assert(action,key+' sem botão de ação');
+                if(consult){
+                    consultations++;
+                    assert(!action.classList.contains('quick-add'),key+' consulta não pode ter + Adicionar');
+                }
+                if(!action.classList.contains('quick-add')){
+                    action.click();
+                    verify('botão');
+                }
+                cardsChecked++;
+            }catch(e){
+                problems.push(String(e?.message||e));
+                if(dialog.open)dialog.close();
+            }
+        }
+        document.querySelector('.category-toolbar > a').click();
+    }
+    return {cardsChecked,photosChecked,consultations,categoriesChecked,problems};
+}
+
 const expression=fn=>'('+fn.toString()+')()';
 function within(rect,width){
     assert.ok(rect.left>=-2&&rect.right<=width+2,'Elemento fora da largura '+width+': '+JSON.stringify(rect));
@@ -261,6 +322,19 @@ function within(rect,width){
             }
             await cdp.eval("document.getElementById('cartDialog').close()");
             console.log('PASS '+width+'x'+height+' | '+categories+' categorias / '+products+' produtos por linha');
+        }
+        for(const width of [390,1440]){
+            await cdp.call('Emulation.setDeviceMetricsOverride',{
+                width,height:width===390?844:900,deviceScaleFactor:1,mobile:width<900
+            });
+            const audit=await cdp.eval(expression(auditCardClickthrough));
+            assert.equal(audit.categoriesChecked,12,'Categorias não verificadas no Chromium '+width);
+            assert.equal(audit.cardsChecked,83,
+                'Nem todos os 83 cards abriram no Chromium '+width+': '+JSON.stringify(audit));
+            assert.equal(audit.consultations,2,'Consulta de produtos com preço indisponível '+width);
+            assert.deepEqual(audit.problems,[],'Falhas por item no Chromium '+width);
+            console.log('PASS auditoria Chromium '+width+': '+audit.cardsChecked+
+                ' cards, '+audit.photosChecked+' fotos, '+audit.consultations+' consultas.');
         }
         console.log('PASS responsividade em Chromium real, sem pedido enviado.');
     }finally{

@@ -1276,6 +1276,12 @@
                 ? item.tamanhos_acai.filter(t => /^\d+ml$/i.test(t.tamanho)).map(size => ({ item, size }))
                 : [{ item, size: null }]).forEach(({ item, size }) => {
                 const photo = itemPhotos[categoria.id]?.[item.nome];
+                // Preço "Consultar" não pode receber botão de adicionar ao carrinho.
+                const canQuickAdd = !item.tamanhos && !item.tamanhos_acai &&
+                    categoria.id !== 'panquecas-2-sabores' &&
+                    /^R\$\s*\d+,\d{2}$/.test(item.preco || '');
+                const mustConsult = !item.tamanhos && !item.tamanhos_acai &&
+                    !/^R\$\s*\d+,\d{2}$/.test(item.preco || '');
                 let priceSection = '';
                 let extraSection = '';
 
@@ -1316,16 +1322,16 @@
                             ${item.sub ? `<span class="size-label" style="color:var(--primary); margin-bottom:2px">${escapeHtml(item.sub)}</span>` : ''}
                             <h3 class="item-title">${escapeHtml(item.nome)}${size ? ' · ' + escapeHtml(size.tamanho.replace('ml', ' ml')) : ''}</h3>
                             ${item.ingredientes ? `<p class="item-desc">${escapeHtml(item.ingredientes)}</p>` : ''}
-                            ${!item.tamanhos && !item.tamanhos_acai && categoria.id !== 'panquecas-2-sabores' ?
+                            ${canQuickAdd ?
                                 '<button type="button" class="product-details details-link">Ver detalhes</button>' : ''}
                         </div>
                         <div class="item-footer">
                             ${priceSection}
                             ${extraSection}
                         </div>
-                        ${!item.tamanhos && !item.tamanhos_acai && categoria.id !== 'panquecas-2-sabores' ?
+                        ${canQuickAdd ?
                             '<button type="button" class="quick-add card-primary-action">+ Adicionar</button>' :
-                            '<button type="button" class="product-details card-primary-action">Escolher opções</button>'}
+                            `<button type="button" class="product-details card-primary-action">${mustConsult ? 'Consultar preço' : 'Escolher opções'}</button>`}
                     </div>
                 `;
             });
