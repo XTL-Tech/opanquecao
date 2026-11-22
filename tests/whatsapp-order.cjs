@@ -5,7 +5,7 @@ const path = require('node:path');
 
 (async () => {
     const catalog = JSON.parse(fs.readFileSync('cardapio.json', 'utf8'));
-    const { priceOrder, orderOptions, extraOptions } = await import(path.resolve('order-catalog.mjs'));
+    const { priceOrder, orderOptions, extraOptions, orderProductName } = await import(path.resolve('order-catalog.mjs'));
     const { buildWhatsAppMessage, buildSimpleWhatsAppMessage, whatsappOrderUrl, STORE_WHATSAPP } =
         await import(path.resolve('whatsapp-order.mjs'));
     assert.equal(STORE_WHATSAPP, '5551997383849');
@@ -126,8 +126,52 @@ const path = require('node:path');
         quantity: 1, note: ''
     }]);
     const oneLine = buildSimpleWhatsAppMessage({lines:drink});
-    assert.match(oneLine, /^1\. 1x Coca-Cola Lata$/m);
+    assert.match(oneLine, /^1\. 1x Bebida — Coca-Cola Lata$/m);
     assert.doesNotMatch(oneLine, /Tam\.:|Obs\.:|Grátis:|Adicionais:/);
+
+    // Cobrir todas as categorias e 82 produtos sem alterar preços ou cadastro.
+    const labelsByCategory = {
+        acai: /^Açaí /,
+        'panquecas-salgadas': /^Panqueca salgada sabor /,
+        'panquecas-doces': /^Panqueca doce sabor /,
+        'panquecas-2-sabores': /^Panqueca /,
+        'lasanhas-de-massa-de-panqueca': /^Lasanha /,
+        'frango-frito-crocrante-no-pote': /^Frango /,
+        'batatas-fritas': /^Batatas Fritas/,
+        massas: /^Massa /,
+        paokecao: /^Pãokecão — Baguete /,
+        bebidas: /^Bebida — /,
+        'cocktails-com-alcool': /^Coquetel com álcool — /,
+        'cocktails-sem-alcool': /^Coquetel sem álcool — /
+    };
+    assert.equal(Object.keys(labelsByCategory).length, catalog.categorias.length);
+    let checkedProducts = 0;
+    for (const category of catalog.categorias) {
+        assert.ok(labelsByCategory[category.id], 'Categoria sem identificação: ' + category.id);
+        for (const item of category.itens) {
+            checkedProducts++;
+            const label = orderProductName({category: category.id, product: item.nome});
+            assert.match(label, labelsByCategory[category.id], 'Tipo não identificado: ' + category.id);
+            assert.ok(label.includes(item.nome), 'Sabor/nome original perdido: ' + category.id + '/' + item.nome);
+            assert.ok(label.length <= 160, 'Nome truncado no pedido: ' + category.id + '/' + item.nome);
+        }
+    }
+    assert.equal(checkedProducts, 82);
+    const makeLine = (category, product, option, note='') =>
+        priceOrder(catalog, [{category,product,option,quantity:1,note}])[0];
+    const mixed = buildSimpleWhatsAppMessage({lines: [
+        makeLine('panquecas-salgadas', 'Bacon', 'M', 'Bem assada'),
+        makeLine('lasanhas-de-massa-de-panqueca', 'Estrogonofe de Frango', 'Único'),
+        makeLine('massas', 'Estrogonofe de Frango', 'Único')
+    ]});
+    assert.match(mixed, /^1\. 1x Panqueca salgada sabor Bacon - Tam\.: M - Obs\.: Bem assada$/m);
+    assert.match(mixed, /^2\. 1x Lasanha sabor Estrogonofe de Frango \(massa de panqueca\)$/m);
+    assert.match(mixed, /^3\. 1x Massa sabor Estrogonofe de Frango$/m);
+    assert.match(mixed, /Subtotal \(sem entrega\):/);
+    assert.match(buildWhatsAppMessage({...base,lines: [
+        makeLine('lasanhas-de-massa-de-panqueca', 'Estrogonofe de Frango', 'Único')
+    ]}), /Lasanha sabor Estrogonofe de Frango/);
+
     assert.throws(() => buildSimpleWhatsAppMessage({lines:[]}), /pelo menos um produto/);
     assert.throws(() => buildSimpleWhatsAppMessage({lines:[{...panqueca,quantity:0}]}), /valores/);
     assert.throws(() => buildSimpleWhatsAppMessage({lines:[{...panqueca,cents:-1}]}), /valores/);
