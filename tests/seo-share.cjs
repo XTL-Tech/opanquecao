@@ -49,7 +49,7 @@ for(const category of catalog.categorias){
  assert.ok(doc.querySelector('meta[property="og:image"]')?.content.includes('/img/cardapio/'),'Imagem da categoria: '+slug);
  assert.ok(doc.querySelector('meta[name="twitter:card"]'),'Twitter card ausente: '+slug);
  assert.equal(doc.querySelectorAll('h1').length,1,'H1 exclusivo: '+slug);
- assert.equal(doc.querySelectorAll('nav.category-nav a').length,12,'Links internos das categorias: '+slug);
+ assert.equal(doc.querySelectorAll('.category-nav a').length,12,'Links internos das categorias: '+slug);
  assert.equal(doc.querySelectorAll('li.product').length,category.itens.length,
     'Quantidade e produtos reais no HTML inicial: '+slug);
  const schema=JSON.parse(doc.querySelector('script[type="application/ld+json"]').textContent);
