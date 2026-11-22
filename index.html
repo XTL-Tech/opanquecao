@@ -913,6 +913,21 @@
             #cartDialog .customer-fields { grid-template-columns: 1fr 1fr; }
         }
 
+
+        /* Quantidade com botões, melhor para toque sem abrir teclado numérico. */
+        .quantity-picker { display: grid; gap: 7px; font-weight: 700; }
+        .quantity-controls { display: grid; grid-template-columns: 54px minmax(0, 1fr) 54px;
+            width: min(100%, 280px); align-items: center; border: 1px solid #d7b5a8;
+            border-radius: 12px; overflow: hidden; background: #fff; }
+        #productDialog .quantity-controls button { min-height: 50px; margin: 0; padding: 4px 8px;
+            background: #fff5eb; color: #741c2d; font-size: 1.5rem; border: 0; border-radius: 0; }
+        .quantity-controls input { width: 100%; min-width: 0; min-height: 50px; border: 0;
+            font: inherit; font-size: 1.05rem; font-weight: 800; text-align: center;
+            appearance: textfield; -moz-appearance: textfield; }
+        .quantity-controls input::-webkit-inner-spin-button,
+        .quantity-controls input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        #productDialog .quantity-controls button:disabled { opacity: .35; cursor: not-allowed; }
+
     </style>
 </head>
 
@@ -1420,9 +1435,10 @@
         const card = trigger.closest('.menu-item');
         const dialogContent = document.getElementById('productDialogContent');
         document.getElementById('productDialogTitle').textContent =
-            card.querySelector('.item-title').textContent;
+            card.closest('.category-section').querySelector('.section-header h2').textContent +
+            ' · ' + card.querySelector('.item-title').textContent;
         dialogContent.replaceChildren();
-        for (const selector of ['.item-photo', '.item-desc', '.item-footer']) {
+        for (const selector of ['.item-photo', '.item-desc']) {
             const source = card.querySelector(selector);
             if (source) {
                 const clone = source.cloneNode(true);
