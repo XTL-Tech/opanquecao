@@ -181,8 +181,21 @@ function within(rect,width){
                 await shot('carrinho-390');
                 await cdp.eval("document.getElementById('startCheckout').click()");
                 assert.equal(await cdp.eval("document.getElementById('checkout').hidden"),false);
-                assert.equal(await cdp.eval("document.querySelectorAll('#checkout [required]').length"),2);
+                assert.equal(await cdp.eval("document.querySelectorAll('#checkout [required]').length"),6);
+                assert.equal(await cdp.eval("document.getElementById('deliveryFields').hidden"),false);
+                assert.equal(await cdp.eval("document.getElementById('deliveryLocationPreview').hidden"),true,
+                    'Não consultar GPS sem permissão');
                 await shot('contato-390');
+                await cdp.eval("document.getElementById('deliveryCity').value='Nova Hartz';document.getElementById('deliveryCity').dispatchEvent(new Event('change',{bubbles:true}))");
+                await waitFor(()=>cdp.eval("document.getElementById('deliveryNeighborhood').options.length > 5"),5000);
+                assert.equal(await cdp.eval("!!document.querySelector('#deliveryNeighborhood option[value=\"Centro\"]')"),true);
+                await shot('endereco-390');
+                await cdp.eval("document.querySelector('input[name=fulfillmentType][value=pickup]').click()");
+                assert.equal(await cdp.eval("document.getElementById('deliveryFields').hidden"),true);
+                await cdp.eval("document.querySelector('input[name=fulfillmentType][value=table]').click()");
+                assert.equal(await cdp.eval("document.getElementById('tableIdentifier').required"),true);
+                await cdp.eval("document.querySelector('input[name=fulfillmentType][value=delivery]').click()");
+                assert.equal(await cdp.eval("document.getElementById('deliveryFields').hidden"),false);
                 await cdp.eval("document.getElementById('cartBack').click()");
                 assert.equal(await cdp.eval("document.getElementById('checkout').hidden"),true);
             }

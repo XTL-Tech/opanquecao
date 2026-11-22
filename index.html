@@ -928,6 +928,39 @@
         .quantity-controls input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
         #productDialog .quantity-controls button:disabled { opacity: .35; cursor: not-allowed; }
 
+
+        /* Checkout por modalidade. Campos de endereço aparecem só em entrega. */
+        #cartDialog .fulfillment-choice { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px;
+            border:0; padding:0; margin:2px 0 8px; min-width:0; }
+        #cartDialog .fulfillment-choice legend { padding:0 0 8px; font-weight:800; }
+        #cartDialog .fulfillment-choice label { display:flex; flex-direction:column; align-items:center; justify-content:center;
+            gap:6px; padding:10px 5px; border:1px solid #c9a9a0; border-radius:11px; background:#fff;
+            text-align:center; font-size:.9rem; cursor:pointer; min-height:72px; }
+        #cartDialog .fulfillment-choice label:has(input:checked) { border:2px solid #9c1830; background:#fff0e9;
+            color:#741c2d; font-weight:800; }
+        #cartDialog .fulfillment-choice input { accent-color:#94172c; width:17px; height:17px; margin:0; }
+        #cartDialog .fulfillment-fields { display:grid; gap:10px; }
+        #cartDialog .fulfillment-fields[hidden], #cartDialog .fulfillment-fields [hidden] { display:none!important; }
+        #cartDialog .fulfillment-fields label { display:grid; gap:5px; font-weight:700; min-width:0; }
+        #cartDialog .address-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; min-width:0; }
+        #cartDialog .address-street-row { grid-template-columns:minmax(0,2fr) minmax(0,1fr); }
+        #cartDialog .fulfillment-fields input, #cartDialog .fulfillment-fields select { min-width:0; width:100%;
+            background:#fff; min-height:44px; }
+        #cartDialog .delivery-fee-note { padding:10px 12px; border-left:3px solid #94172c;
+            border-radius:6px; background:#fff3e4; font-size:.87rem; line-height:1.45; }
+        #cartDialog .order-location { padding:11px 12px; border:1px solid #dac5b7; border-radius:10px;
+            background:#fff; display:grid; gap:7px; font-size:.86rem; }
+        #cartDialog .order-location p { margin:0; line-height:1.45; }
+        #cartDialog .location-actions { display:flex; flex-wrap:wrap; gap:8px; }
+        #cartDialog .location-actions button { margin:0; border:1px solid #8e5160; padding:8px 10px;
+            background:#fff7f1; color:#641b2b; border-radius:9px; min-height:44px; cursor:pointer; font-weight:700; }
+        #cartDialog #deliveryLocationPreview { color:#741c2d; text-decoration:underline; }
+        @media (max-width:420px) {
+            #cartDialog .fulfillment-choice label { font-size:.78rem; padding:9px 3px; }
+            #cartDialog .address-grid { grid-template-columns:minmax(0,1fr); }
+            #cartDialog .address-street-row { grid-template-columns:minmax(0,1.8fr) minmax(0,1fr); }
+        }
+
     </style>
 </head>
 
@@ -1479,11 +1512,11 @@
     <footer class="cart-footer">
     <div id="cartSummary">
         <div class="cart-total-row"><span>Subtotal dos itens</span><strong id="cartTotal"></strong></div>
-        <p class="cart-disclaimer">O subtotal inclui os adicionais selecionados, mas não inclui a entrega. Combine entrega ou retirada, pagamento e valor final diretamente no WhatsApp. O pedido depende da confirmação da loja.</p>
+        <p class="cart-disclaimer">O subtotal não inclui frete. <strong>Para entregas, a taxa e o valor final serão informados pela loja ao confirmar o pedido.</strong> Nenhum pedido é preparado sem confirmação.</p>
     </div>
     <button type="button" id="startCheckout" class="checkout-next-action" hidden>Continuar para o WhatsApp <span aria-hidden="true">→</span></button>
     <form id="checkout" class="order-form" hidden>
-        <p class="checkout-assurance"><strong>Quase pronto!</strong> Informe um contato para a loja localizar seu pedido e poder chamar você para confirmar.</p>
+        <p class="checkout-assurance"><strong>Quase pronto!</strong> Escolha como receber e informe os dados necessários. A loja confirmará o pedido pelo WhatsApp.</p>
         <div class="customer-fields">
             <label for="customerName">Seu nome
                 <input id="customerName" name="customerName" type="text" autocomplete="name" maxlength="80" placeholder="Como podemos chamar você?" required>
@@ -1492,11 +1525,69 @@
                 <input id="customerPhone" name="customerPhone" type="tel" inputmode="tel" autocomplete="tel-national" maxlength="18" placeholder="(51) 99999-9999" required>
             </label>
         </div>
+        <fieldset class="fulfillment-choice">
+            <legend>Como você quer receber?</legend>
+            <label><input type="radio" name="fulfillmentType" value="delivery" checked> <span>🛵 Entrega</span></label>
+            <label><input type="radio" name="fulfillmentType" value="pickup"> <span>🥡 Retirada</span></label>
+            <label><input type="radio" name="fulfillmentType" value="table"> <span>🍽️ Comer no local</span></label>
+        </fieldset>
+        <div id="deliveryFields" class="fulfillment-fields">
+            <p class="delivery-fee-note"><strong>Taxa de entrega a confirmar:</strong> a loja informará o frete e o total final no WhatsApp após conferir seu endereço.</p>
+            <div class="address-grid">
+                <label for="deliveryCity">Cidade
+                    <select id="deliveryCity" name="deliveryCity" required>
+                        <option value="">Selecione a cidade</option>
+                        <option value="Nova Hartz">Nova Hartz</option>
+                        <option value="Araricá">Araricá</option>
+                    </select>
+                </label>
+                <label for="deliveryNeighborhood">Bairro ou localidade
+                    <select id="deliveryNeighborhood" name="deliveryNeighborhood" required disabled>
+                        <option value="">Selecione primeiro a cidade</option>
+                    </select>
+                </label>
+            </div>
+            <label id="deliveryOtherWrap" for="deliveryOtherNeighborhood" hidden>Outro bairro/localidade
+                <input id="deliveryOtherNeighborhood" name="deliveryOtherNeighborhood" type="text" maxlength="80" placeholder="Escreva sua localidade">
+            </label>
+            <div class="address-grid address-street-row">
+                <label for="deliveryStreet">Rua, avenida ou estrada
+                    <input id="deliveryStreet" name="deliveryStreet" type="text" autocomplete="address-line1" maxlength="120" placeholder="Nome da rua" required>
+                </label>
+                <label for="deliveryNumber">Número
+                    <input id="deliveryNumber" name="deliveryNumber" type="text" maxlength="20" placeholder="Ex.: 120 ou S/N" required>
+                </label>
+            </div>
+            <div class="address-grid">
+                <label for="deliveryComplement">Complemento (opcional)
+                    <input id="deliveryComplement" name="deliveryComplement" type="text" autocomplete="address-line2" maxlength="100" placeholder="Casa, apartamento, bloco...">
+                </label>
+                <label for="deliveryReference">Ponto de referência (opcional)
+                    <input id="deliveryReference" name="deliveryReference" type="text" maxlength="140" placeholder="Próximo à praça, portão...">
+                </label>
+            </div>
+            <div class="order-location">
+                <p><strong>📍 Localização (opcional)</strong></p>
+                <p>Você pode enviar o ponto no mapa para facilitar a entrega. O site só acessa o GPS se você autorizar.</p>
+                <div class="location-actions">
+                    <button type="button" id="captureDeliveryLocation">Enviar minha localização</button>
+                    <button type="button" id="removeDeliveryLocation" hidden>Remover localização</button>
+                </div>
+                <p id="deliveryLocationStatus" role="status" aria-live="polite"></p>
+                <a id="deliveryLocationPreview" href="#" hidden target="_blank" rel="noopener noreferrer">Conferir ponto no mapa</a>
+            </div>
+        </div>
+        <div id="tableFields" class="fulfillment-fields" hidden>
+            <label for="tableIdentifier">Número da mesa ou comanda
+                <input id="tableIdentifier" name="tableIdentifier" type="text" maxlength="12" placeholder="Ex.: Mesa 03" disabled>
+            </label>
+            <p class="delivery-fee-note">Para consumir no local, não pedimos CPF. Informe apenas a identificação da mesa ou comanda.</p>
+        </div>
         <label for="orderNote">Observação geral (opcional)
             <textarea id="orderNote" name="orderNote" maxlength="400" rows="2" placeholder="Ex.: preparar separado..."></textarea>
         </label>
         <div id="orderTurnstile" aria-label="Verificação de segurança" class="turnstile-container"></div>
-        <p class="order-privacy">Ao continuar, um <strong>pré-registro</strong> com seus itens e contato é enviado ao bot da loja. A equipe pode chamar você no WhatsApp. O preparo só começa após confirmação. <a href="/privacidade.html" target="_blank" rel="noopener noreferrer">Privacidade</a>.</p>
+        <p class="order-privacy">Ao continuar, o bot recebe um <strong>pré-registro</strong> com itens, contato e dados da entrega (inclusive GPS, se autorizado). A loja confirmará a taxa, o total e o pedido pelo WhatsApp. <a href="/privacidade.html" target="_blank" rel="noopener noreferrer">Privacidade</a>.</p>
         <button type="submit" id="sendOrder" disabled>Registrar e abrir WhatsApp</button>
     </form>
     <p id="orderStatus" role="status" aria-live="polite"></p>

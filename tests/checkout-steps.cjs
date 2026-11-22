@@ -9,6 +9,16 @@ assert.match(html, /id="customerName" name="customerName"[^>]+required/);
 assert.match(html, /id="customerPhone" name="customerPhone"[^>]+required/);
 assert.match(html, /id="orderNote" name="orderNote" maxlength="400"/);
 assert.match(html, /id="orderTurnstile"/);
+assert.match(html, /name="fulfillmentType" value="delivery" checked/);
+assert.match(html, /name="fulfillmentType" value="pickup"/);
+assert.match(html, /name="fulfillmentType" value="table"/);
+for(const name of ['deliveryCity','deliveryNeighborhood','deliveryStreet','deliveryNumber',
+  'deliveryComplement','deliveryReference','captureDeliveryLocation','removeDeliveryLocation',
+  'deliveryLocationPreview','tableIdentifier']){
+  assert.ok(html.includes('id="'+name+'"'),'Campo ausente: '+name);
+}
+assert.match(html, /Taxa de entrega a confirmar/);
+assert.match(html, /não pedimos CPF/);
 assert.match(html, /id="sendOrder" disabled>Registrar e abrir WhatsApp/);
 assert.match(html, /id="whatsappOrderLink"/);
 assert.match(html, /id="cartFeedbackCart"/);
@@ -24,5 +34,9 @@ assert.match(cart, /response\.ok/);
 assert.match(cart, /buildSimpleWhatsAppMessage/);
 assert.match(cart, /function announceAdded/);
 assert.match(cart, /function openWhatsApp/);
+assert.match(cart, /normalizeFulfillment/);
+assert.match(cart, /navigator\.geolocation\.getCurrentPosition/);
+assert.match(cart, /delivery-areas\.json/);
+assert.doesNotMatch(cart, /localStorage\.setItem\([^\n]*(?:address|latitude|longitude)/i);
 assert.doesNotMatch(cart, /fetch\('\/api\/order'/);
 console.log('PASS: compra rápida, carrinho em duas etapas, contato e registro protegido no bot.');

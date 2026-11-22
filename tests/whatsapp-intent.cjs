@@ -10,7 +10,7 @@ const base={
     requestId:randomUUID(),name:'Cliente de teste',phone:'(51) 99999-9999',
     lines:[{category:'bebidas',product:'Coca-Cola Lata',option:'Único',quantity:2,note:'',
         flavors:[],freeExtras:[],paidExtras:[],cents:1}],
-    note:'Separar para retirada',challenge:'token-ficticio'
+    note:'Separar para retirada',challenge:'token-ficticio',fulfillment:{type:'pickup'}
 };
 Object.assign(process.env,{
     VERCEL_ENV:'preview',TELEGRAM_BOT_TOKEN:'fake-token',
@@ -69,6 +69,34 @@ const run=async(payload=base,method='POST',host='opanquecao.vercel.app')=>{
     assert.match(sent.text,/Coca-Cola Lata/);
     assert.match(sent.text,/R\$\s*20,00/); // Valor recalculado pelo catálogo, nunca usa cents:1
     assert.doesNotMatch(sent.text,/R\$\s*0,02/);
+    assert.match(sent.text,/Retirada no estabelecimento/);
+    const delivery = {type:'delivery',city:'Nova Hartz',neighborhood:'Centro',
+        street:'Rua das Flores',number:'123',complement:'Casa 2',reference:'Portão azul',
+        latitude:-29.585,longitude:-50.938};
+    result=await run({...base,fulfillment:delivery,requestId:randomUUID()});
+    assert.equal(result.code,201);
+    assert.match(sent.text,/Modalidade: Entrega/);
+    assert.match(sent.text,/Bairro\/localidade: Centro/);
+    assert.match(sent.text,/Endereço: Rua das Flores, 123/);
+    assert.match(sent.text,/Complemento: Casa 2/);
+    assert.match(sent.text,/Referência: Portão azul/);
+    assert.match(sent.text,/maps\?q=-29\.585,-50\.938/);
+    assert.match(sent.text,/Taxa de entrega: A CONFIRMAR PELA LOJA/);
+    assert.doesNotMatch(sent.text,/Taxa: R\$|Total estimado/);
+    const beforeInvalid=alerts;
+    result=await run({...base,fulfillment:{...delivery,number:''},requestId:randomUUID()});
+    assert.equal(result.code,400);assert.equal(alerts,beforeInvalid);
+    result=await run({...base,fulfillment:{...delivery,neighborhood:'Bairro inexistente'},requestId:randomUUID()});
+    assert.equal(result.code,400);assert.equal(alerts,beforeInvalid);
+    result=await run({...base,fulfillment:{...delivery,latitude:999},requestId:randomUUID()});
+    assert.equal(result.code,400);assert.equal(alerts,beforeInvalid);
+    result=await run({...base,fulfillment:{type:'table',table:'Mesa 03'},requestId:randomUUID()});
+    assert.equal(result.code,201);
+    assert.match(sent.text,/Consumo no local/);
+    assert.match(sent.text,/Mesa\/comanda: Mesa 03/);
+    assert.doesNotMatch(sent.text,/CPF|Localização GPS/);
+    result=await run({...base,fulfillment:{type:'table',table:''},requestId:randomUUID()});
+    assert.equal(result.code,400);
     available=false;
     result=await run({...base,requestId:randomUUID()});
     assert.equal(result.code,202);assert.equal(result.data.pending,true);
