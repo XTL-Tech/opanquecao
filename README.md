@@ -2,11 +2,21 @@
 
 Cardápio e pré-pedido do Disk Panquecão, Nova Hartz/RS. HTML, CSS e JavaScript, sem framework. Tecnologia XTL TECH.
 
+## Atualização do checkout: endereço e GPS opcionais (22/11/2026)
+
+- Após conferir o carrinho, o cliente informa nome, WhatsApp e escolhe **Entrega**, **Retirada** ou **Comer no local**.
+- Em **Entrega**, cidade (Nova Hartz/Araricá), bairro/localidade, rua e número são obrigatórios. Complemento, referência e **localização GPS** são opcionais. Lista de bairros vem do arquivo público `delivery-areas.json`. Quem não encontra o bairro seleciona **Outro bairro/localidade** para informar a região.
+- O GPS só é obtido mediante toque no botão **Enviar minha localização** e permissão explícita do dispositivo; não substitui o endereço e pode ser removido. Sem GPS ou após negá-lo, o cliente ainda pode pedir normalmente.
+- Em **Retirada**, dados de endereço não são enviados. Em **Comer no local**, pede apenas o número ou identificação da mesa/comanda; não coleta CPF.
+- **A taxa de entrega não é calculada automaticamente nesta etapa.** O subtotal exclui frete e o WhatsApp e Telegram mostram **Taxa de entrega: A CONFIRMAR PELA LOJA**. A loja informa a taxa e o valor final ao confirmar o pedido, antes de preparar.
+- A API `/api/whatsapp-intent` valida modalidade, endereço e coordenadas no servidor, além da validação do catálogo e do Turnstile. O pré-registro recebe os dados de entrega e link Google Maps, quando fornecidos, com botão para chamar o cliente pelo WhatsApp.
+- Dados de contato, endereço e GPS **não são gravados no localStorage** do checkout. O registro corrente continua no Telegram; histórico SQLite/D1 de pedidos por cliente permanece pendente, não há banco persistente nesta entrega.
+
 ## Fluxo atual: compra rápida + pré-registro no bot (22/11/2026)
 
 **Catálogo:** 12 categorias, 82 produtos e fotos originais. Itens de preço único e sem extras têm um botão **+ Adicionar** de um toque; produtos que exigem tamanhos, dois sabores ou complementos abrem uma configuração detalhada. O card também mantém uma opção de visualizar detalhes.
 
-**Carrinho, em duas etapas:** (1) revisar itens, quantidades, adicionais e subtotal, sem frete; (2) informar **nome e WhatsApp com DDD** para pré-registro da intenção. O envio se faz pela API `/api/whatsapp-intent`, protegida pelo Cloudflare Turnstile sob demanda. Os preços são sempre recalculados a partir do catálogo no servidor. Somente após o Telegram reconhecer o pré-registro, o site abre o WhatsApp da loja com itens, notas, subtotal e código de referência. O cliente ainda deve tocar em **Enviar** no WhatsApp.
+**Carrinho, em duas etapas:** (1) revisar itens, quantidades, adicionais e subtotal, sem frete; (2) informar **nome, WhatsApp com DDD e modalidade de atendimento** (endereço em entregas) para pré-registro da intenção. O envio se faz pela API `/api/whatsapp-intent`, protegida pelo Cloudflare Turnstile sob demanda. Os preços são sempre recalculados a partir do catálogo no servidor. Somente após o Telegram reconhecer o pré-registro, o site abre o WhatsApp da loja com itens, notas, subtotal e código de referência. O cliente ainda deve tocar em **Enviar** no WhatsApp.
 
 **Registro operacional:** o chat `TELEGRAM_CHAT_ID` recebe mensagem com código, nome, telefone, todos os itens, valores e botão **💬 Chamar cliente no WhatsApp**, que já prepara uma mensagem para o atendente. O Telegram representa um **pré-registro do clique no checkout**, não prova que a mensagem foi enviada pelo WhatsApp e **não autoriza o preparo**. Em Preview, mensagens levam o aviso TESTE — NÃO PREPARAR e a página não abre o WhatsApp real.
 
