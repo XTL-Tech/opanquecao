@@ -14,15 +14,16 @@ let lastScrolledSection = null;
 w.HTMLElement.prototype.scrollIntoView=function(){ lastScrolledSection = this.id || this.closest('[id]')?.id || null };
 Object.defineProperty(global,'navigator',{configurable:true,value:w.navigator});
 Object.defineProperty(w.navigator,'geolocation',{configurable:true,value:{getCurrentPosition(success){success({coords:{latitude:-29.585,longitude:-50.938,accuracy:18}})}}});
-let mockEnabled=false,verified=true,deliver=true,calls=0,tokenCb,lastOrder,lastTelegramCaption;
+let mockEnabled=false,verified=true,deliver=true,calls=0,intentCalls=0,tokenCb,lastOrder,lastTelegramCaption,lastBotMessage;
 const checkoutLogs=[];
 const originalInfo=console.info;
 console.info=entry=>{
     if(typeof entry==='string' && entry.includes('"event":"checkout"')) checkoutLogs.push(JSON.parse(entry));
     else originalInfo(entry);
 };
-w.turnstile={render(_,o){tokenCb=o.callback;return 1},reset(){}};
+w.turnstile={render(_,o){tokenCb=o.callback;return 1},reset(){},execute(){tokenCb('token-verified')}};
 const handler=require(path.resolve('api/order.js'));
+const intentHandler=require(path.resolve('api/whatsapp-intent.js'));
 const {PDFDocument}=require(path.resolve('node_modules/pdf-lib'));
 Object.assign(process.env,{TELEGRAM_BOT_TOKEN:'fake',TELEGRAM_CHAT_ID:'fake',TURNSTILE_SECRET_KEY:'fake',VERCEL_ENV:'preview'});
 global.fetch=async (url,init)=>{
@@ -34,8 +35,19 @@ global.fetch=async (url,init)=>{
   assert.match(init.body.get('document').name,/TESTE-nao-preparar/);
   return {ok:deliver,json:async()=>({ok:deliver})};
  }
+ if(url.endsWith('/sendMessage')){
+   intentCalls++;lastBotMessage=JSON.parse(init.body);
+   assert.match(lastBotMessage.text,/PRÉ-REGISTRO DO SITE/);
+   assert.match(lastBotMessage.reply_markup.inline_keyboard[0][0].url,/^https:\/\/wa\.me\/55/);
+   return {ok:true,json:async()=>({ok:true,result:{message_id:4321}})};
+ }
  if(url==='/delivery-areas.json')return {ok:true,json:async()=>deliveryAreas};
  if(url==='/api/order-config')return {json:async()=>({siteKey:mockEnabled?'fake':null,testMode:true})};
+ if(url==='/api/whatsapp-intent'){
+   const response={setHeader(){},status(n){this.code=n;return this},json(data){this.data=data;return this}};
+   await intentHandler({method:'POST',headers:{host:'opanquecao.vercel.app'},body:JSON.parse(init.body)},response);
+   return {ok:response.code===201,json:async()=>({...response.data,test:false})};
+ }
  if(url==='/api/order'){
  lastOrder=JSON.parse(init.body);
  const res={setHeader(){},status(n){this.code=n;return this},json(data){this.data=data;return this}};
@@ -115,13 +127,15 @@ card.querySelector('.product-details').click();
 const f=d.querySelector('#productDialogContent form');
 f.elements.quantity.value='2';f.elements.note.value='Embalagens separadas';
 f.onsubmit({preventDefault(){}});
-assert.match(d.querySelector('#openCart').textContent,/Ver pedido · 2 itens/);
+assert.match(d.querySelector('#openCart').textContent,/Pedido · 2 itens/);
 assert.match(d.querySelector('#cartFeedback').textContent,/adicionado/);
 assert.equal(JSON.parse(w.localStorage.getItem('disk-panquecao-cart-v1')).lines[0].quantity,2);
 await d.querySelector('#openCart').onclick();
+assert.equal(d.querySelector('#checkout').hidden,true);
+assert.equal(d.querySelector('#startCheckout').hidden,false);
+d.querySelector('#startCheckout').click();
 assert.equal(d.querySelector('#checkout').hidden,false);
 assert.equal(d.querySelector('#cartWhatsApp'),null);
-assert.equal(d.querySelector('#checkout').hidden,false);
 assert.equal(d.querySelector('#orderUnavailable'),null);
 assert.equal(d.querySelector('#sendOrder').disabled,false);
 assert.match(d.querySelector('.cart-note').textContent,/Embalagens separadas/);
@@ -133,17 +147,24 @@ assert.equal(d.querySelector('.cart-stepper span').textContent,'2');
 d.querySelector('#cartDialog').close();
 await d.querySelector('#openCart').onclick();
 const checkout=d.querySelector('#checkout');
-assert.ok(checkout.elements.orderNote,'O fluxo simples deve aceitar observações opcionais');
-assert.equal(checkout.querySelectorAll('[required]').length,0,'Pedido simples não exige dados pessoais nem checkout');
-assert.equal(checkout.querySelector('[name="name"]'),null);
-assert.equal(checkout.querySelector('[name="phone"]'),null);
+assert.ok(checkout.elements.orderNote,'Observações opcionais');
+assert.equal(checkout.querySelectorAll('[required]').length,2,'Nome e WhatsApp para contato');
+assert.ok(checkout.querySelector('[name="customerName"]'));
+assert.ok(checkout.querySelector('[name="customerPhone"]'));
 assert.equal(checkout.querySelector('[name="paymentMethod"]'),null);
 assert.equal(checkout.querySelector('[name="fulfillment"]'),null);
+checkout.elements.customerName.value='Cliente fictício';
+checkout.elements.customerPhone.value='(51) 99999-9999';
 checkout.elements.orderNote.value='Por favor, confirmar antes de preparar';
 checkout.elements.orderNote.dispatchEvent(new w.Event('input',{bubbles:true}));
+mockEnabled=true;
 const submit=()=>checkout.onsubmit({preventDefault(){},currentTarget:checkout});
-submit();
-assert.equal(calls,0,'O fluxo do site não pode chamar a API de pedidos ou Telegram');
+await submit();
+assert.equal(calls,0,'A API PDF legada não deve ser chamada');
+assert.equal(intentCalls,1,'Pré-registro deve chegar ao bot');
+assert.match(lastBotMessage.text,/Cliente fictício/);
+assert.match(lastBotMessage.text,/Embalagens separadas/);
+assert.match(lastBotMessage.reply_markup.inline_keyboard[0][0].url,/51999999999/);
 let directUrl=d.querySelector('#whatsappOrderLink').href;
 assert.match(directUrl,/^https:\/\/wa\.me\/5551997383849\?text=/);
 let directMessage=new URL(directUrl).searchParams.get('text');
@@ -151,8 +172,18 @@ assert.match(directMessage,/Embalagens separadas/);
 assert.match(directMessage,/Por favor, confirmar antes de preparar/);
 assert.match(directMessage,/Subtotal \(sem entrega\):/);
 assert.match(directMessage,/Entrega\/retirada/i);
-assert.doesNotMatch(directMessage,/Cliente fictício|Rua das Flores|Forma: Pix|WhatsApp: 51/);
-assert.equal(d.querySelector('#cartEmpty').hidden,true,'Carrinho não deve ser apagado antes da confirmação');
+assert.match(directMessage,/Cliente fictício/);
+assert.match(directMessage,/Referência: #[0-9A-F]{8}/);
+assert.doesNotMatch(directMessage,/Rua das Flores|Forma: Pix|WhatsApp: 51/);
+await submit();
+assert.equal(intentCalls,1,'Não duplicar pré-registro na mesma sessão sem alterações');
+assert.equal(d.querySelector('#cartEmpty').hidden,true,'Carrinho deve permanecer até confirmação');
+assert.equal(d.querySelector('#cartFeedback').hidden,false);
+assert.ok(d.querySelector('#cartFeedbackCart'));
+const beverage=d.querySelector('#bebidas .menu-item .quick-add');
+assert.ok(beverage,'Bebidas simples precisam de Adicionar em um toque');
+beverage.click();
+assert.match(d.querySelector('#openCart').textContent,/3 itens/);
 // The full card opens exactly one form, including açaí configuration.
 d.querySelector('.category-card[href="#acai"]').click();
 d.querySelector('#acai [data-option="500ml"] .item-photo img').click();
