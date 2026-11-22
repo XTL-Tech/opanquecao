@@ -42,7 +42,7 @@ global.fetch=async (url,init)=>{
    return {ok:true,json:async()=>({ok:true,result:{message_id:4321}})};
  }
  if(url==='/delivery-areas.json')return {ok:true,json:async()=>deliveryAreas};
- if(url==='/api/order-config')return {json:async()=>({siteKey:mockEnabled?'fake':null,testMode:true})};
+ if(url==='/api/order-config')return {ok:true,json:async()=>({siteKey:mockEnabled?'fake':null,testMode:true})};
  if(url==='/api/whatsapp-intent'){
    const response={setHeader(){},status(n){this.code=n;return this},json(data){this.data=data;return this}};
    await intentHandler({method:'POST',headers:{host:'opanquecao.vercel.app'},body:JSON.parse(init.body)},response);
