@@ -27,7 +27,7 @@ const intentHandler=require(path.resolve('api/whatsapp-intent.js'));
 const {PDFDocument}=require(path.resolve('node_modules/pdf-lib'));
 Object.assign(process.env,{TELEGRAM_BOT_TOKEN:'fake',TELEGRAM_CHAT_ID:'fake',TURNSTILE_SECRET_KEY:'fake',VERCEL_ENV:'preview'});
 global.fetch=async (url,init)=>{
- if(url.endsWith('siteverify'))return {json:async()=>({success:verified})};
+ if(url.endsWith('siteverify'))return {ok:true,json:async()=>({success:verified})};
  if(url.endsWith('sendDocument')){
   calls++;lastTelegramCaption=init.body.get('caption'); const pdf=await PDFDocument.load(await init.body.get('document').arrayBuffer());
   assert.ok(Math.abs(pdf.getPage(0).getWidth()-58*72/25.4)<0.1);
