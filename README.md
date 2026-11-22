@@ -6,22 +6,22 @@ Cardápio e pré-pedido do Disk Panquecão, Nova Hartz/RS. HTML, CSS e JavaScrip
 
 **Catálogo:** 12 categorias, 82 produtos e fotos originais. Itens de preço único e sem extras têm um botão **+ Adicionar** de um toque; produtos que exigem tamanhos, dois sabores ou complementos abrem uma configuração detalhada. O card também mantém uma opção de visualizar detalhes.
 
-**Carrinho, em duas etapas:** (1) revisar itens, quantidades, adicionais e subtotal, sem frete; (2) informar **nome e WhatsApp com DDD** para pré-registro da intenção. O envio se faz pela API \`/api/whatsapp-intent\`, protegida pelo Cloudflare Turnstile sob demanda. Os preços são sempre recalculados a partir do catálogo no servidor. Somente após o Telegram reconhecer o pré-registro, o site abre o WhatsApp da loja com itens, notas, subtotal e código de referência. O cliente ainda deve tocar em **Enviar** no WhatsApp.
+**Carrinho, em duas etapas:** (1) revisar itens, quantidades, adicionais e subtotal, sem frete; (2) informar **nome e WhatsApp com DDD** para pré-registro da intenção. O envio se faz pela API `/api/whatsapp-intent`, protegida pelo Cloudflare Turnstile sob demanda. Os preços são sempre recalculados a partir do catálogo no servidor. Somente após o Telegram reconhecer o pré-registro, o site abre o WhatsApp da loja com itens, notas, subtotal e código de referência. O cliente ainda deve tocar em **Enviar** no WhatsApp.
 
-**Registro operacional:** o chat \`TELEGRAM_CHAT_ID\` recebe mensagem com código, nome, telefone, todos os itens, valores e botão **💬 Chamar cliente no WhatsApp**, que já prepara uma mensagem para o atendente. O Telegram representa um **pré-registro do clique no checkout**, não prova que a mensagem foi enviada pelo WhatsApp e **não autoriza o preparo**. Em Preview, mensagens levam o aviso TESTE — NÃO PREPARAR e a página não abre o WhatsApp real.
+**Registro operacional:** o chat `TELEGRAM_CHAT_ID` recebe mensagem com código, nome, telefone, todos os itens, valores e botão **💬 Chamar cliente no WhatsApp**, que já prepara uma mensagem para o atendente. O Telegram representa um **pré-registro do clique no checkout**, não prova que a mensagem foi enviada pelo WhatsApp e **não autoriza o preparo**. Em Preview, mensagens levam o aviso TESTE — NÃO PREPARAR e a página não abre o WhatsApp real.
 
 **Falhas e segurança:** se o bot/Turnstile falhar ou o registro ficar indeterminado, o cliente vê uma explicação e um **link separado para falar com a loja sem registro automático**. Sem fazer alegações falsas de recebimento. O checkout não armazena nome/telefone em localStorage. Credenciais ficam exclusivamente em variáveis Vercel. O registro só usa o Telegram como histórico; **não existe ainda um ledger persistente de deduplicação** em Supabase. Em falhas incertas, a equipe deve reconciliar pelo código. Implementar deduplicação persistente antes de automações mais agressivas.
 
-**Limite essencial:** um cliente que envia mensagem diretamente ao WhatsApp da loja, por contatos externos ou conversa já aberta, não passa pelo checkout e **não é detectável por um link \`wa.me\`**. Capturar todo o tráfego recebido no WhatsApp exigirá WhatsApp Business Platform/Cloud API com webhook oficial, consentimento apropriado e integração específica. O site não pode ler mensagens privadas ou presumir envios externos.
+**Limite essencial:** um cliente que envia mensagem diretamente ao WhatsApp da loja, por contatos externos ou conversa já aberta, não passa pelo checkout e **não é detectável por um link `wa.me`**. Capturar todo o tráfego recebido no WhatsApp exigirá WhatsApp Business Platform/Cloud API com webhook oficial, consentimento apropriado e integração específica. O site não pode ler mensagens privadas ou presumir envios externos.
 
-**Testes:** \`npm test\` cobre o formulário, o bot com Telegram/Turnstile simulados, preço recalculado, compra rápida e a responsividade em Chromium. A prova real de entrega ao chat do bot, do recebimento da mensagem e do retorno pelo WhatsApp exige homologação operacional com um pedido explicitamente de teste.
+**Testes:** `npm test` cobre o formulário, o bot com Telegram/Turnstile simulados, preço recalculado e compra rápida. O teste de responsividade com Chromium roda separadamente na CI. A prova real de entrega ao chat do bot, do recebimento da mensagem e do retorno pelo WhatsApp exige homologação operacional com um pedido explicitamente de teste.
 
 > As seções históricas abaixo documentam APIs/experimentos antigos e não descrevem o formulário vigente na produção.
 
 ## Ambientes e regra de entrega
 
 - Produção: https://opanquecao.vercel.app — branch `main`.
-- Revisão de UX: branch `feat/ux-pedido-simples`, com deploy Preview da Vercel.
+- Revisão do checkout com bot: branch `feat/compra-intuitiva-registro-bot-20261122`; produção somente após validação.
 - GitHub é a fonte oficial. Alteração apenas no computador não é entrega.
 - Validar preview antes de mesclar. Não colocar credenciais, dados de clientes ou tokens no Git.
 
