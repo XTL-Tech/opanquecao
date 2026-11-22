@@ -1,5 +1,6 @@
 import { money, orderOptions, priceOrder, extraOptions, extraSummary, flavorChoices, orderProductName } from './order-catalog.mjs';
 import { buildSimpleWhatsAppMessage, whatsappOrderUrl } from './whatsapp-order.mjs';
+import { normalizeFulfillment } from './fulfillment.mjs';
 
 const byId = id => document.getElementById(id);
 const cart = [];
@@ -40,7 +41,7 @@ function refresh() {
     byId('startCheckout').hidden = !cart.length || checkoutStep;
     byId('cartDialog').classList.toggle('checkout-mode', checkoutStep);
     byId('cartBack').textContent = checkoutStep ? '← Voltar ao carrinho' : '← Continuar escolhendo';
-    byId('cartTitle').textContent = checkoutStep ? 'Seus dados de contato' : 'Seu pedido';
+    byId('cartTitle').textContent = checkoutStep ? 'Contato e entrega' : 'Seu pedido';
     const rows = byId('cartLines');
     rows.replaceChildren();
     let total = 0;
@@ -327,6 +328,141 @@ const cartDialog = byId('cartDialog');
 const turnstileContainer = byId('orderTurnstile');
 let widgetId;
 let challengeWaiter;
+let deliveryAreasData = null;
+let deliveryAreasPromise = null;
+let deliveryLocation = null;
+const deliveryFields = byId('deliveryFields');
+const tableFields = byId('tableFields');
+const neighborhoodSelect = byId('deliveryNeighborhood');
+const otherNeighborhood = byId('deliveryOtherNeighborhood');
+
+function setDeliveryMode() {
+    const mode = checkoutForm.elements.fulfillmentType.value;
+    deliveryFields.hidden = mode !== 'delivery';
+    tableFields.hidden = mode !== 'table';
+    for (const field of deliveryFields.querySelectorAll('input,select')) {
+        field.disabled = mode !== 'delivery' || (field === neighborhoodSelect && !checkoutForm.elements.deliveryCity.value) ||
+            (field === otherNeighborhood && neighborhoodSelect.value !== '__other__');
+    }
+    checkoutForm.elements.tableIdentifier.disabled = mode !== 'table';
+    checkoutForm.elements.tableIdentifier.required = mode === 'table';
+    otherNeighborhood.required = mode === 'delivery' && neighborhoodSelect.value === '__other__';
+    if (mode !== 'delivery') clearLocation();
+}
+checkoutForm.querySelectorAll('input[name="fulfillmentType"]').forEach(radio => {
+    radio.addEventListener('change', () => {
+        setDeliveryMode();
+        fallback.hidden = true;
+        orderStatus.textContent = '';
+    });
+});
+function clearLocation() {
+    deliveryLocation = null;
+    byId('deliveryLocationStatus').textContent = '';
+    byId('deliveryLocationPreview').hidden = true;
+    byId('deliveryLocationPreview').removeAttribute('href');
+    byId('removeDeliveryLocation').hidden = true;
+}
+byId('removeDeliveryLocation').addEventListener('click', () => {
+    clearLocation();
+    orderStatus.textContent = '';
+    fallback.hidden = true;
+});
+byId('captureDeliveryLocation').addEventListener('click', () => {
+    if (checkoutForm.elements.fulfillmentType.value !== 'delivery') return;
+    if (!navigator.geolocation?.getCurrentPosition) {
+        byId('deliveryLocationStatus').textContent =
+            'Seu navegador não oferece localização. Você pode continuar informando o endereço.';
+        return;
+    }
+    byId('deliveryLocationStatus').textContent = 'Solicitando autorização para acessar o GPS…';
+    byId('captureDeliveryLocation').disabled = true;
+    navigator.geolocation.getCurrentPosition(position => {
+        byId('captureDeliveryLocation').disabled = false;
+        if (checkoutForm.elements.fulfillmentType.value !== 'delivery') return;
+        const latitude = Number(position.coords.latitude);
+        const longitude = Number(position.coords.longitude);
+        if (!Number.isFinite(latitude) || !Number.isFinite(longitude) ||
+            latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) {
+            byId('deliveryLocationStatus').textContent = 'Não foi possível validar sua localização.';
+            return;
+        }
+        deliveryLocation = {latitude: Number(latitude.toFixed(6)), longitude: Number(longitude.toFixed(6))};
+        const accuracy = Number(position.coords.accuracy);
+        byId('deliveryLocationStatus').textContent = '✓ Ponto registrado' +
+            (Number.isFinite(accuracy) ? ' (precisão aproximada: ' + Math.round(accuracy) + ' m).' : '.') +
+            ' Confira o ponto no mapa. O endereço escrito continua obrigatório.';
+        const preview = byId('deliveryLocationPreview');
+        preview.href = 'https://www.google.com/maps?q=' + deliveryLocation.latitude + ',' + deliveryLocation.longitude;
+        preview.hidden = false;
+        byId('removeDeliveryLocation').hidden = false;
+        orderStatus.textContent = '';
+        fallback.hidden = true;
+    }, error => {
+        byId('captureDeliveryLocation').disabled = false;
+        byId('deliveryLocationStatus').textContent = error.code === 1
+            ? 'Localização não autorizada. Tudo bem: preencha o endereço normalmente.'
+            : 'GPS indisponível agora. Você pode continuar informando o endereço.';
+    }, {enableHighAccuracy: false, timeout: 12000, maximumAge: 0});
+});
+async function loadDeliveryAreas() {
+    if (deliveryAreasData) return deliveryAreasData;
+    if (!deliveryAreasPromise) {
+        deliveryAreasPromise = fetch('/delivery-areas.json', {cache: 'no-cache'})
+            .then(response => {
+                if (!response.ok) throw new Error('Lista de bairros indisponível');
+                return response.json();
+            })
+            .then(data => {
+                if (!Array.isArray(data?.cities?.['Nova Hartz']) ||
+                    !Array.isArray(data?.cities?.['Araricá'])) throw new Error('Bairros inválidos');
+                deliveryAreasData = data;
+                return data;
+            }).catch(() => { deliveryAreasPromise = null; return null; });
+    }
+    return deliveryAreasPromise;
+}
+function updateOtherNeighborhood() {
+    const show = neighborhoodSelect.value === '__other__';
+    byId('deliveryOtherWrap').hidden = !show;
+    otherNeighborhood.disabled = !show || checkoutForm.elements.fulfillmentType.value !== 'delivery';
+    otherNeighborhood.required = show && !otherNeighborhood.disabled;
+}
+checkoutForm.elements.deliveryNeighborhood.addEventListener('change', updateOtherNeighborhood);
+checkoutForm.elements.deliveryCity.addEventListener('change', async () => {
+    const city = checkoutForm.elements.deliveryCity.value;
+    neighborhoodSelect.replaceChildren(new Option('Carregando bairros…', ''));
+    neighborhoodSelect.value = '';
+    neighborhoodSelect.disabled = true;
+    updateOtherNeighborhood();
+    if (!city) {
+        neighborhoodSelect.replaceChildren(new Option('Selecione primeiro a cidade', ''));
+        return;
+    }
+    const data = await loadDeliveryAreas();
+    if (checkoutForm.elements.deliveryCity.value !== city) return;
+    neighborhoodSelect.replaceChildren(new Option('Selecione seu bairro', ''));
+    for (const area of data?.cities?.[city] || []) {
+        neighborhoodSelect.add(new Option(area.name, area.name));
+    }
+    neighborhoodSelect.add(new Option('Outro bairro / localidade', '__other__'));
+    neighborhoodSelect.disabled = checkoutForm.elements.fulfillmentType.value !== 'delivery';
+});
+setDeliveryMode();
+
+function getFulfillment() {
+    const e = checkoutForm.elements;
+    const type = e.fulfillmentType.value;
+    return normalizeFulfillment({
+        type, city: e.deliveryCity.value, neighborhood: e.deliveryNeighborhood.value,
+        otherNeighborhood: e.deliveryOtherNeighborhood.value,
+        street: e.deliveryStreet.value, number: e.deliveryNumber.value,
+        complement: e.deliveryComplement.value, reference: e.deliveryReference.value,
+        table: e.tableIdentifier.value,
+        latitude: type === 'delivery' ? deliveryLocation?.latitude : undefined,
+        longitude: type === 'delivery' ? deliveryLocation?.longitude : undefined
+    }, deliveryAreasData || {cities:{'Nova Hartz':[], 'Araricá':[]}});
+}
 
 function openCart() {
     checkoutStep = false;
@@ -452,18 +588,19 @@ checkoutForm.onsubmit = async event => {
         orderStatus.textContent = 'Escolha seus itens antes de continuar.';
         return;
     }
-    let lines, customer, note, signature;
+    let lines, customer, note, signature, fulfillment;
     try {
         customer = validateCustomer();
+        fulfillment = getFulfillment();
         lines = priceOrder(catalog, cart);
         note = checkoutForm.elements.orderNote.value.trim();
-        signature = JSON.stringify({lines, customer, note});
+        signature = JSON.stringify({lines, customer, note, fulfillment});
     } catch (error) {
         orderStatus.textContent = error?.message || 'Confira o pedido e seu contato.';
         return;
     }
     const directMessage = buildSimpleWhatsAppMessage({
-        lines, note, name: customer.name
+        lines, note, name: customer.name, fulfillment
     });
     const directUrl = whatsappOrderUrl(directMessage);
     fallback.hidden = true;
@@ -481,7 +618,7 @@ checkoutForm.onsubmit = async event => {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     requestId: requestId(), name: customer.name, phone: customer.phone,
-                    lines, note, challenge
+                    lines, note, fulfillment, challenge
                 }),
                 signal: AbortSignal.timeout(16000)
             });
@@ -497,7 +634,7 @@ checkoutForm.onsubmit = async event => {
             return;
         }
         const message = buildSimpleWhatsAppMessage({
-            lines, note, name: customer.name, orderRef: registration.id
+            lines, note, name: customer.name, fulfillment, orderRef: registration.id
         });
         orderStatus.textContent = 'Pré-registro #' + registration.id +
             ' enviado ao bot. Abrindo WhatsApp: confira a mensagem e toque em Enviar.';
