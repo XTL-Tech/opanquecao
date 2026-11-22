@@ -1,5 +1,6 @@
 import { money, extraSummary, orderProductName } from './order-catalog.mjs';
 import { PAYMENT_METHODS, validatePayment } from './payment.mjs';
+import { describeFulfillment } from './fulfillment.mjs';
 
 // Número comercial já publicado no próprio site; não usar números pessoais.
 export const STORE_WHATSAPP = '5551997383849';
@@ -125,10 +126,10 @@ export function buildWhatsAppMessage({ lines, name, phone, fulfillment, payment,
 
 
 /**
- * Produção enxuta: apenas itens e observações. Os demais dados são acertados
- * na conversa, sem pedir nome, telefone, endereço ou pagamento no site.
+ * Produção: itens, contato e modalidade de atendimento. Para entregas, o endereço
+ * e o ponto GPS opcional seguem juntos. O frete será confirmado pela loja.
  */
-export function buildSimpleWhatsAppMessage({ lines, note = '', name = '', orderRef = '' }) {
+export function buildSimpleWhatsAppMessage({ lines, note = '', name = '', orderRef = '', fulfillment = null }) {
     if (!Array.isArray(lines) || !lines.length || lines.length > 25) {
         throw new Error('Adicione pelo menos um produto ao pedido.');
     }
@@ -139,6 +140,9 @@ export function buildSimpleWhatsAppMessage({ lines, note = '', name = '', orderR
     }
     const customer = clean(name, 80);
     if (customer) parts.push('Cliente: ' + customer);
+    if (fulfillment) {
+        parts.push('', '*RECEBIMENTO*', ...describeFulfillment(fulfillment));
+    }
     parts.push('');
     lines.forEach((line, index) => {
         if (!line || !Number.isSafeInteger(line.cents) || line.cents < 0 ||
@@ -170,8 +174,15 @@ export function buildSimpleWhatsAppMessage({ lines, note = '', name = '', orderR
     });
     const generalNote = clean(note, 400);
     if (generalNote) parts.push('', 'Obs. geral: ' + generalNote);
-    parts.push('', '*Subtotal (sem entrega): ' + money(subtotal) + '*',
-        'Entrega/retirada, pagamento e valor final a combinar. Aguardo confirmação da loja.');
+    parts.push('', '*Subtotal (sem entrega): ' + money(subtotal) + '*');
+    if (fulfillment?.type === 'delivery') {
+        parts.push('*Total com taxa: a confirmar pela loja no WhatsApp.*',
+            'Peço confirmação da taxa, disponibilidade, prazo e valor final antes do preparo.');
+    } else if (fulfillment) {
+        parts.push('Forma de pagamento e valor final a combinar. Aguardo confirmação da loja.');
+    } else {
+        parts.push('Entrega/retirada, pagamento e valor final a combinar. Aguardo confirmação da loja.');
+    }
     return parts.join('\n');
 }
 
