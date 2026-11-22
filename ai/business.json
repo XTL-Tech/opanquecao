@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0.0",
   "data_type": "public_restaurant_information",
-  "updated_at": "2026-11-17",
+  "updated_at": "2026-11-22",
   "business_name": "Disk Panquecão",
   "also_known_as": [
     "O Panquecão",
@@ -12,7 +12,7 @@
   "language": "pt-BR",
   "timezone": "America/Sao_Paulo",
   "website": "https://opanquecao.vercel.app",
-  "description": "Cardápio do Disk Panquecão em Nova Hartz/RS: panquecas doces, salgadas e de dois sabores, refeições, bebidas e sobremesas. Entrega em Nova Hartz e Araricá, retirada e consumo no local. Pré-pedido sujeito à confirmação.",
+  "description": "Disk Panquecão em Nova Hartz: panquecas, açaí, massas e refeições com fotos. Entrega em Nova Hartz e Araricá, retirada e consumo no local.",
   "location": {
     "city": "Nova Hartz",
     "state": "Rio Grande do Sul",
@@ -76,7 +76,7 @@
     "note": "Horários encontrados em diretório externo, ainda não confirmados diretamente pela administração. Podem variar por feriados, eventos e operação. Não usar para aceitar ou recusar pedidos automaticamente."
   },
   "menu": {
-    "page_url": "https://opanquecao.vercel.app/#cardapio",
+    "page_url": "https://opanquecao.vercel.app/",
     "public_api_url": "https://opanquecao.vercel.app/api/catalog",
     "static_catalog_url": "https://opanquecao.vercel.app/cardapio.json",
     "category_count": 12,
@@ -95,6 +95,56 @@
       "BEBIDAS",
       "COCKTAILS COM ÁLCOOL",
       "COCKTAILS SEM ÁLCOOL (MOCKTAILS)"
+    ],
+    "category_pages": [
+      {
+        "category": "acai",
+        "url": "https://opanquecao.vercel.app/categorias/acai.html"
+      },
+      {
+        "category": "panquecas-salgadas",
+        "url": "https://opanquecao.vercel.app/categorias/panquecas-salgadas.html"
+      },
+      {
+        "category": "panquecas-doces",
+        "url": "https://opanquecao.vercel.app/categorias/panquecas-doces.html"
+      },
+      {
+        "category": "panquecas-2-sabores",
+        "url": "https://opanquecao.vercel.app/categorias/panquecas-2-sabores.html"
+      },
+      {
+        "category": "lasanhas-de-massa-de-panqueca",
+        "url": "https://opanquecao.vercel.app/categorias/lasanhas-de-massa-de-panqueca.html"
+      },
+      {
+        "category": "frango-frito-crocrante-no-pote",
+        "url": "https://opanquecao.vercel.app/categorias/frango-frito-crocrante-no-pote.html"
+      },
+      {
+        "category": "batatas-fritas",
+        "url": "https://opanquecao.vercel.app/categorias/batatas-fritas.html"
+      },
+      {
+        "category": "massas",
+        "url": "https://opanquecao.vercel.app/categorias/massas.html"
+      },
+      {
+        "category": "paokecao",
+        "url": "https://opanquecao.vercel.app/categorias/paokecao.html"
+      },
+      {
+        "category": "bebidas",
+        "url": "https://opanquecao.vercel.app/categorias/bebidas.html"
+      },
+      {
+        "category": "cocktails-com-alcool",
+        "url": "https://opanquecao.vercel.app/categorias/cocktails-com-alcool.html"
+      },
+      {
+        "category": "cocktails-sem-alcool",
+        "url": "https://opanquecao.vercel.app/categorias/cocktails-sem-alcool.html"
+      }
     ]
   },
   "service_modes": [
@@ -105,39 +155,35 @@
   "delivery": {
     "cities": [
       {
-        "city": "Nova Hartz",
-        "standard_fee_brl": 7
+        "city": "Nova Hartz"
       },
       {
-        "city": "Araricá",
-        "standard_fee_brl": 10
+        "city": "Araricá"
       }
     ],
-    "fee_policy": "Taxas padrão apenas para bairros cadastrados, com exceções configuráveis; localidades não listadas exigem confirmação.",
-    "coverage_policy": "Disponibilidade e endereço dependem de aprovação da loja.",
+    "fee_policy": "Taxa de entrega NÃO é calculada no checkout; o valor é informado pelo estabelecimento na confirmação via WhatsApp, após verificar endereço e cobertura.",
+    "coverage_policy": "As duas cidades constam como regiões de atendimento, mas cada entrega depende de confirmação da loja, inclusive bairro e disponibilidade.",
     "postal_address_required_for_delivery": true
   },
   "orders": {
     "mode": "pre_order",
     "customer_orders_via": "https://opanquecao.vercel.app",
-    "order_delivery_to_store": "Telegram (canal interno da loja)",
+    "order_delivery_to_store": "Pré-registro de intenção ao bot Telegram do estabelecimento, sem confirmação automática de que a mensagem foi enviada no WhatsApp",
     "store_confirms_via": "WhatsApp fornecido no pedido",
     "automatic_acceptance": false,
     "online_payment_charged": false,
-    "methods_displayed": [
-      "dinheiro",
-      "pix",
-      "cartão de crédito",
-      "cartão de débito"
-    ],
+    "methods_displayed": [],
     "preparation_time": "Confirmado pela loja, sem compromisso de prazo fixo",
-    "security": "O formulário valida campos obrigatórios e usa verificação antiautomação; nenhuma informação de pagamento é cobrada no site."
+    "security": "O formulário valida campos obrigatórios e usa verificação antiautomação; nenhuma informação de pagamento é cobrada no site.",
+    "payment_method_collected_during_checkout": false,
+    "payment_policy": "Forma de pagamento e valor final combinados diretamente com a loja pelo WhatsApp; não há pagamento online."
   },
   "agent_cautions": [
     "Usar o site para preços, disponibilidade e envio de pré-pedidos; não inventar cardápio ou valores.",
     "Não declarar pedido confirmado, pago ou recebido sem confirmação da loja.",
     "Não afirmar que horários e endereço foram homologados: fontes externas ainda precisam de confirmação.",
     "Nunca solicitar cartão de crédito, documento pessoal ou chave de API em nome do estabelecimento.",
-    "Não divulgar dados privados de clientes, tokens, webhooks ou controles internos."
+    "Não divulgar dados privados de clientes, tokens, webhooks ou controles internos.",
+    "Não divulgar valores fixos de frete de R$ 7 ou R$ 10: o frete é sempre confirmado pela loja."
   ]
 }
