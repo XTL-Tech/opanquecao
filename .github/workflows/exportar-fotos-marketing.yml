@@ -1,0 +1,25 @@
+name: Exportar fotos autorizadas para criativos Disk Panquecao
+on:
+  push:
+    branches:
+      - marketing/assets-pack-campanha-novahartz-20261122
+  workflow_dispatch:
+jobs:
+  reunir-fotos:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/upload-artifact@v4
+        with:
+          name: fotos-originais-campanha-diskpanquecao
+          retention-days: 1
+          if-no-files-found: error
+          path: |
+            img/logo-disk-panquecao.webp
+            img/logo-disk-panquecao.png
+            img/cardapio/c02-p15.webp
+            img/cardapio/c02-p08.webp
+            img/cardapio/c03-p07.webp
+            img/cardapio/c01-p01.webp
+            img/cardapio/c07-p03.webp
+            img/cardapio/c04-p01.webp
