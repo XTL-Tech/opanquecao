@@ -2,6 +2,33 @@ export const money = cents => new Intl.NumberFormat('pt-BR', {
     style: 'currency', currency: 'BRL'
 }).format(cents / 100);
 
+ 
+// Nome de apresentação: não altera o identificador original do catálogo,
+// usado em preços, imagens e validação. As 12 categorias ficam explícitas.
+export function orderProductName(line) {
+    const name = typeof line?.product === 'string' ? line.product.trim() : '';
+    if (!name) return '';
+    switch (line.category) {
+        case 'panquecas-salgadas': return 'Panqueca salgada sabor ' + name;
+        case 'panquecas-doces': return 'Panqueca doce sabor ' + name;
+        case 'panquecas-2-sabores': return /^panqueca\b/i.test(name) ? name : 'Panqueca 2 sabores — ' + name;
+        case 'lasanhas-de-massa-de-panqueca':
+            return /^meio a meio\b/i.test(name)
+                ? 'Lasanha (massa de panqueca) — ' + name
+                : 'Lasanha sabor ' + name + ' (massa de panqueca)';
+        case 'massas': return /^massa\b/i.test(name) ? name : 'Massa sabor ' + name;
+        case 'frango-frito-crocrante-no-pote':
+            return /^frango frito\b/i.test(name) ? name : 'Frango frito crocante no pote — ' + name;
+        case 'paokecao': return 'Pãokecão — ' + name;
+        case 'bebidas': return 'Bebida — ' + name;
+        case 'cocktails-com-alcool': return 'Coquetel com álcool — ' + name;
+        case 'cocktails-sem-alcool': return 'Coquetel sem álcool — ' + name;
+        // Açaí e batatas já trazem o tipo de produto no nome cadastrado.
+        default: return name;
+    }
+}
+
+
 export function orderOptions(item) {
     const options = item.tamanhos
         ? Object.entries(item.tamanhos)
