@@ -618,7 +618,12 @@ checkoutForm.onsubmit = async event => {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     requestId: requestId(), name: customer.name, phone: customer.phone,
-                    lines, note, fulfillment, challenge
+                    lines, note,
+                    fulfillment: fulfillment.type === 'delivery'
+                        ? {...fulfillment, latitude: fulfillment.location?.latitude,
+                            longitude: fulfillment.location?.longitude}
+                        : fulfillment,
+                    challenge
                 }),
                 signal: AbortSignal.timeout(16000)
             });
