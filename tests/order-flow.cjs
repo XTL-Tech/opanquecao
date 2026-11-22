@@ -241,7 +241,7 @@ assert.equal(intentCalls,1,'Não duplicar pré-registro na mesma sessão sem alt
 assert.equal(metaCalls().filter(args=>args[1]==='Lead').length,1,
     'Não duplicar conversão Meta ao reabrir o mesmo pré-registro');
 assert.equal(d.querySelector('#cartEmpty').hidden,true,'Carrinho deve permanecer até confirmação');
-assert.equal(d.querySelector('#cartFeedback').hidden,false);
+assert.equal(d.querySelector('#cartFeedback').hidden,true,'O aviso deve ser ocultado quando Ver pedido foi acionado');
 assert.ok(d.querySelector('#cartFeedbackCart'));
 const beverage=d.querySelector('#bebidas .menu-item .quick-add');
 assert.ok(beverage,'Bebidas simples precisam de Adicionar em um toque');
