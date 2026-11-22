@@ -161,7 +161,7 @@ mockEnabled=true;
 const submit=()=>checkout.onsubmit({preventDefault(){},currentTarget:checkout});
 await submit();
 assert.equal(calls,0,'A API PDF legada não deve ser chamada');
-assert.equal(intentCalls,1,'Pré-registro deve chegar ao bot');
+assert.equal(intentCalls,1,'Pré-registro deve chegar ao bot: '+d.querySelector('#orderStatus').textContent);
 assert.match(lastBotMessage.text,/Cliente fictício/);
 assert.match(lastBotMessage.text,/Embalagens separadas/);
 assert.match(lastBotMessage.reply_markup.inline_keyboard[0][0].url,/51999999999/);
