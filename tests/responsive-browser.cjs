@@ -160,14 +160,32 @@ function within(rect,width){
             within(modal,width);
             assert.ok(modal.top>=-2&&modal.bottom<=height+2,'Janela de produto sai da altura: '+width);
             assert.ok(modal.imageHeight<=212,'Foto alta demais na janela: '+width);
-            if(width===390)await shot('produto-390');
+            if(width===390){
+                assert.equal(await cdp.eval("document.querySelectorAll('#productDialogContent .size-grid').length"),0,
+                    'Ficha não deve mostrar preços duplicados');
+                await shot('produto-390');
+                await cdp.eval("document.querySelector('#productDialogContent [data-adjust=\"1\"]').click()");
+                assert.equal(await cdp.eval("document.querySelector('#productDialogContent [name=quantity]').value"),'2');
+                await cdp.eval("document.querySelector('#productDialogContent .order-primary').click()");
+                await waitFor(()=>cdp.eval("!document.getElementById('productDialog').open && document.querySelectorAll('#cartLines .cart-line').length > 0"),5000);
+            }
             await cdp.eval("document.getElementById('productDialog').close();document.querySelector('.category-toolbar > a').click()");
             await waitFor(()=>cdp.eval("!document.getElementById('categoryHome').hidden"),5000);
             await cdp.eval("document.getElementById('openCart').click()");
             const cart=await cdp.eval(expression(cartModalMetrics));
             within(cart,width);
             assert.ok(cart.top>=-2&&cart.bottom<=height+2,'Carrinho sai da altura: '+width);
-            if(width===390)await shot('carrinho-390');
+            if(width===390){
+                assert.equal(await cdp.eval("document.querySelector('#cartLines .cart-line') !== null"),true);
+                assert.equal(await cdp.eval("document.getElementById('checkout').hidden"),true);
+                await shot('carrinho-390');
+                await cdp.eval("document.getElementById('startCheckout').click()");
+                assert.equal(await cdp.eval("document.getElementById('checkout').hidden"),false);
+                assert.equal(await cdp.eval("document.querySelectorAll('#checkout [required]').length"),2);
+                await shot('contato-390');
+                await cdp.eval("document.getElementById('cartBack').click()");
+                assert.equal(await cdp.eval("document.getElementById('checkout').hidden"),true);
+            }
             await cdp.eval("document.getElementById('cartDialog').close()");
             console.log('PASS '+width+'x'+height+' | '+categories+' categorias / '+products+' produtos por linha');
         }

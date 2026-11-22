@@ -633,7 +633,7 @@
         #openCart { bottom: calc(14px + env(safe-area-inset-bottom, 0px)); left: 50%; right: auto; transform: translateX(-50%); width: min(92%, 520px); justify-content: center; background: #94172c; border: 1px solid #c14b55; border-radius: 16px; font-size: 16px; box-shadow: 0 5px 20px #34030b44; }
         a.whatsapp-float { bottom: calc(80px + env(safe-area-inset-bottom, 0px)); font-size: 12px; padding: 9px 12px; }
         #cartFeedback { position: fixed; z-index: 1100; bottom: 145px; left: 50%; transform: translateX(-50%); max-width: 90%; width: max-content; padding: 12px 20px; border-radius: 12px; background: #243e2d; color: #fff; box-shadow: 0 4px 16px #0003; pointer-events: none; }
-        #cartFeedback:empty { display: none; }
+        #cartFeedback[hidden] { display: none; }
         @media (min-width: 760px) { .category-cards { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
         .menu-item { cursor: pointer; }
         .extras-box { display: grid; gap: 16px; }
@@ -872,6 +872,61 @@
             .restaurant-logo img { max-height: 92px; width: auto; }
             .product-dialog, #cartDialog { max-height: calc(100dvh - 8px); }
         }
+
+
+        /* Escolha de produtos: ação direta para itens simples, configuração clara para os demais. */
+        .menu-actions { display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); gap: 8px; width: 100%; }
+        .menu-item .menu-actions button { width: 100%; min-height: 46px; margin-top: 12px; padding: 8px 7px; border-radius: 11px; font-size: .86rem; }
+        .menu-item .menu-actions .product-details { background: #fff; border: 1px solid #aa777a; color: #741c2d; }
+        .menu-item .menu-actions .quick-add { background: #9c1830; color: #fff; border: 1px solid #9c1830; font-weight: 800; }
+        .menu-item .menu-actions .quick-add:active, .menu-item .product-details:active { transform: scale(.985); }
+        .menu-item .menu-actions .quick-add:focus-visible { outline: 3px solid #c88b16; outline-offset: 2px; }
+        #productDialog .order-primary { position: sticky; bottom: -1px; z-index: 3; width: 100%; min-height: 52px; margin-top: 12px;
+            border-radius: 12px; box-shadow: 0 -5px 18px #fff9f3; }
+        #productDialog .order-form { gap: 12px; }
+        #cartFeedback { display: flex; align-items: center; justify-content: space-between; gap: 10px;
+            width: min(calc(100% - 28px), 430px); background: #214c31; color: #fff; font-size: .87rem; line-height: 1.3; }
+        #cartFeedbackText { flex: 1; min-width: 0; }
+        #cartFeedbackCart { flex: 0 0 auto; min-height: 42px; padding: 8px 10px; border: 1px solid #ffffffa8;
+            background: #fff; color: #214c31; border-radius: 9px; font: inherit; font-weight: 800; cursor: pointer; }
+        #startCheckout { display: block; width: 100%; min-height: 52px; margin-top: 16px; padding: 12px 15px;
+            border: 0; background: #94172c; color: white; border-radius: 12px; font-size: 1rem; font-weight: 800; cursor: pointer; }
+        #startCheckout[hidden] { display: none; }
+        #cartDialog.checkout-mode .cart-body { display: none; }
+        #cartDialog.checkout-mode #cartSummary { margin-bottom: 14px; }
+        #cartDialog.checkout-mode #checkout { display: grid; }
+        #cartDialog .customer-fields { display: grid; grid-template-columns: 1fr; gap: 10px; }
+        #cartDialog .customer-fields label { display: grid; gap: 5px; font-weight: 700; }
+        #cartDialog .customer-fields input { min-width: 0; background: #fff; }
+        #cartDialog .order-privacy { font-size: 12px; line-height: 1.5; color: #594942; }
+        #cartDialog .order-privacy a { color: #82172a; text-decoration: underline; }
+        #cartDialog .turnstile-container { min-height: 0; }
+        #cartDialog #sendOrder { min-height: 52px; margin-top: 2px; }
+        #cartDialog #whatsappOrderLink:not([hidden]) { display: flex; justify-content: center; align-items: center; gap: 8px;
+            background: #14733b; color: #fff; padding: 12px; min-height: 48px; border-radius: 12px; text-align: center; }
+        @media (max-width: 599px) {
+            .menu-item > .menu-actions { grid-column: 2; grid-row: 3; margin: 0; min-width: 0; }
+            .menu-item:not(:has(.item-photo)) > .menu-actions { grid-column: 1 / -1; }
+            .menu-item .menu-actions button { margin-top: 0; padding: 6px 5px; font-size: clamp(.72rem, 2.8vw, .86rem); }
+        }
+        @media (min-width: 600px) {
+            #cartDialog .customer-fields { grid-template-columns: 1fr 1fr; }
+        }
+
+
+        /* Quantidade com botões, melhor para toque sem abrir teclado numérico. */
+        .quantity-picker { display: grid; gap: 7px; font-weight: 700; }
+        .quantity-controls { display: grid; grid-template-columns: 54px minmax(0, 1fr) 54px;
+            width: min(100%, 280px); align-items: center; border: 1px solid #d7b5a8;
+            border-radius: 12px; overflow: hidden; background: #fff; }
+        #productDialog .quantity-controls button { min-height: 50px; margin: 0; padding: 4px 8px;
+            background: #fff5eb; color: #741c2d; font-size: 1.5rem; border: 0; border-radius: 0; }
+        .quantity-controls input { width: 100%; min-width: 0; min-height: 50px; border: 0;
+            font: inherit; font-size: 1.05rem; font-weight: 800; text-align: center;
+            appearance: textfield; -moz-appearance: textfield; }
+        .quantity-controls input::-webkit-inner-spin-button,
+        .quantity-controls input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        #productDialog .quantity-controls button:disabled { opacity: .35; cursor: not-allowed; }
 
     </style>
 </head>
@@ -1222,7 +1277,9 @@
                             ${priceSection}
                             ${extraSection}
                         </div>
-                        <button type="button" class="product-details"><span aria-hidden="true">+</span> Adicionar</button>
+                        ${!item.tamanhos && !item.tamanhos_acai && categoria.id !== 'panquecas-2-sabores' ?
+                            '<div class="menu-actions"><button type="button" class="product-details">Detalhes</button><button type="button" class="quick-add">+ Adicionar</button></div>' :
+                            '<button type="button" class="product-details">Escolher opções</button>'}
                     </div>
                 `;
             });
@@ -1378,9 +1435,10 @@
         const card = trigger.closest('.menu-item');
         const dialogContent = document.getElementById('productDialogContent');
         document.getElementById('productDialogTitle').textContent =
-            card.querySelector('.item-title').textContent;
+            card.closest('.category-section').querySelector('.section-header h2').textContent +
+            ' · ' + card.querySelector('.item-title').textContent;
         dialogContent.replaceChildren();
-        for (const selector of ['.item-photo', '.item-desc', '.item-footer']) {
+        for (const selector of ['.item-photo', '.item-desc']) {
             const source = card.querySelector(selector);
             if (source) {
                 const clone = source.cloneNode(true);
@@ -1401,17 +1459,20 @@
 </script>
 
 <p id="storeOpenStatus" role="status" aria-live="polite" hidden></p>
-<p id="cartFeedback" role="status" aria-live="polite"></p>
-<button type="button" id="openCart" class="whatsapp-float cart-trigger">Ver pedido · 0 itens</button>
+<div id="cartFeedback" role="status" aria-live="polite" hidden>
+    <span id="cartFeedbackText"></span>
+    <button type="button" id="cartFeedbackCart">Ver pedido</button>
+</div>
+<button type="button" id="openCart" class="whatsapp-float cart-trigger">🛒 Ver pedido · 0 itens</button>
 <dialog class="product-dialog" id="cartDialog" aria-labelledby="cartTitle">
     <header class="cart-header">
-        <form method="dialog"><button class="cart-back" autofocus>← Continuar escolhendo</button></form>
+        <button type="button" class="cart-back" id="cartBack" autofocus>← Continuar escolhendo</button>
         <p class="cart-eyebrow">DISK PANQUECÃO</p>
         <h2 id="cartTitle">Seu pedido</h2>
         <p id="cartCount"></p>
     </header>
     <div class="cart-body">
-        <p class="cart-guide">Confira os itens. Use + e − para ajustar a quantidade.</p>
+        <p class="cart-guide">Confira seus itens e ajuste as quantidades antes de continuar.</p>
         <div class="cart-lines" id="cartLines"></div>
         <p id="cartEmpty" hidden>Seu carrinho está vazio. Volte ao cardápio para escolher seu pedido.</p>
     </div>
@@ -1420,15 +1481,26 @@
         <div class="cart-total-row"><span>Subtotal dos itens</span><strong id="cartTotal"></strong></div>
         <p class="cart-disclaimer">O subtotal inclui os adicionais selecionados, mas não inclui a entrega. Combine entrega ou retirada, pagamento e valor final diretamente no WhatsApp. O pedido depende da confirmação da loja.</p>
     </div>
+    <button type="button" id="startCheckout" class="checkout-next-action" hidden>Continuar para o WhatsApp <span aria-hidden="true">→</span></button>
     <form id="checkout" class="order-form" hidden>
-        <label for="orderNote">Observação geral para a loja (opcional)
-            <textarea id="orderNote" name="orderNote" maxlength="400" rows="2" placeholder="Ex.: preparar separado, alguma orientação especial..."></textarea>
+        <p class="checkout-assurance"><strong>Quase pronto!</strong> Informe um contato para a loja localizar seu pedido e poder chamar você para confirmar.</p>
+        <div class="customer-fields">
+            <label for="customerName">Seu nome
+                <input id="customerName" name="customerName" type="text" autocomplete="name" maxlength="80" placeholder="Como podemos chamar você?" required>
+            </label>
+            <label for="customerPhone">WhatsApp com DDD
+                <input id="customerPhone" name="customerPhone" type="tel" inputmode="tel" autocomplete="tel-national" maxlength="18" placeholder="(51) 99999-9999" required>
+            </label>
+        </div>
+        <label for="orderNote">Observação geral (opcional)
+            <textarea id="orderNote" name="orderNote" maxlength="400" rows="2" placeholder="Ex.: preparar separado..."></textarea>
         </label>
-        <p class="checkout-assurance">Sem cadastro ou formulário de entrega. Abriremos o WhatsApp com os itens, sabores, adicionais, quantidades e valores. A loja combinará entrega ou retirada e pagamento por lá. <strong>Confira a mensagem e toque em Enviar no WhatsApp.</strong></p>
-        <button id="sendOrder" disabled>Enviar pedido pelo WhatsApp</button>
+        <div id="orderTurnstile" aria-label="Verificação de segurança" class="turnstile-container"></div>
+        <p class="order-privacy">Ao continuar, um <strong>pré-registro</strong> com seus itens e contato é enviado ao bot da loja. A equipe pode chamar você no WhatsApp. O preparo só começa após confirmação. <a href="/privacidade.html" target="_blank" rel="noopener noreferrer">Privacidade</a>.</p>
+        <button type="submit" id="sendOrder" disabled>Registrar e abrir WhatsApp</button>
     </form>
     <p id="orderStatus" role="status" aria-live="polite"></p>
-    <a id="whatsappOrderLink" class="cart-whatsapp" hidden target="_blank" rel="noopener noreferrer">Se o WhatsApp não abrir, toque aqui para continuar o pedido</a>
+    <a id="whatsappOrderLink" class="cart-whatsapp" hidden target="_blank" rel="noopener noreferrer">Abrir WhatsApp com meu pedido</a>
     <p class="cart-next">O envio só acontece quando você confirmar no WhatsApp. A loja confirmará a disponibilidade e o prazo pelo aplicativo.</p>
     </footer>
 </dialog>

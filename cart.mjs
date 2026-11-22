@@ -5,12 +5,20 @@ const byId = id => document.getElementById(id);
 const cart = [];
 let catalog;
 let sending = false;
+let checkoutStep = false;
+let lastRegistration = null;
 const initialStoreStatus = window.storeOperationStatus;
 let storeOpenForOrders = !initialStoreStatus?.enabled ||
     (initialStoreStatus.open === true && initialStoreStatus.simulated !== true);
 
 const storageKey = 'disk-panquecao-cart-v1';
 let feedbackTimer;
+function announceAdded(line) {
+    byId('cartFeedbackText').textContent = '✓ ' + orderProductName(line) + ' adicionado';
+    byId('cartFeedback').hidden = false;
+    clearTimeout(feedbackTimer);
+    feedbackTimer = setTimeout(() => { byId('cartFeedback').hidden = true; }, 6000);
+}
 function initializeCatalog(data) {
     catalog = data;
     try {
@@ -27,8 +35,12 @@ if (window.menuCatalog) initializeCatalog(window.menuCatalog);
 
 function refresh() {
     try { window.localStorage.setItem(storageKey, JSON.stringify({version: 1, updatedAt: Date.now(), lines: cart})); } catch {}
-    // Pedidos do carrinho abrem diretamente no WhatsApp, sem backend de pedidos.
-    byId('checkout').hidden = !cart.length;
+    if (!cart.length) checkoutStep = false;
+    byId('checkout').hidden = !cart.length || !checkoutStep;
+    byId('startCheckout').hidden = !cart.length || checkoutStep;
+    byId('cartDialog').classList.toggle('checkout-mode', checkoutStep);
+    byId('cartBack').textContent = checkoutStep ? '← Voltar ao carrinho' : '← Continuar escolhendo';
+    byId('cartTitle').textContent = checkoutStep ? 'Seus dados de contato' : 'Seu pedido';
     const rows = byId('cartLines');
     rows.replaceChildren();
     let total = 0;
@@ -106,12 +118,14 @@ function refresh() {
         rows.append(row);
     }
     const quantity = cart.reduce((sum, line) => sum + line.quantity, 0);
-    byId('openCart').textContent = 'Ver pedido · ' + quantity + (quantity === 1 ? ' item' : ' itens');
+    byId('openCart').textContent = '🛒 Pedido · ' + quantity + (quantity === 1 ? ' item' : ' itens') +
+        (quantity ? ' · ' + money(total) : '');
     byId('cartCount').textContent = quantity ? quantity + (quantity === 1 ? ' item no pedido' : ' itens no pedido') : 'Vamos escolher algo gostoso?';
     byId('cartEmpty').hidden = !!cart.length;
     byId('cartSummary').hidden = !cart.length;
     byId('cartTotal').textContent = money(total);
     byId('sendOrder').disabled = !cart.length || sending || !storeOpenForOrders;
+    byId('startCheckout').disabled = !cart.length || sending || !storeOpenForOrders;
 
 }
 
@@ -125,6 +139,28 @@ document.addEventListener('store-operation-status', event => {
     refresh();
 });
 
+// Itens com uma única opção, sem adicionais nem seleção de sabores:
+ // adicionar com um toque. A foto e "Detalhes" continuam abrindo a ficha completa.
+byId('menuContent').addEventListener('click', event => {
+    const quick = event.target.closest('.quick-add');
+    if (!quick || !catalog) return;
+    const card = quick.closest('.menu-item');
+    const category = card.closest('.category-section').id;
+    const product = card.dataset.product;
+    const item = catalog.categorias.find(entry => entry.id === category)?.itens.find(entry => entry.nome === product);
+    if (!item || item.tamanhos || item.tamanhos_acai || category === 'panquecas-2-sabores') return;
+    try {
+        if (cart.length >= 25) throw new Error('O pedido atingiu o limite de itens.');
+        const [line] = priceOrder(catalog, [{
+            category, product, option: 'Único', quantity: 1,
+            note: '', flavors: [], freeExtras: [], paidExtras: []
+        }]);
+        cart.push(line);
+        byId('whatsappOrderLink').hidden = true;
+        refresh();
+        announceAdded(line);
+    } catch (error) { byId('cartFeedbackText').textContent = error.message; byId('cartFeedback').hidden = false; }
+});
 byId('menuContent').addEventListener('click', event => {
     const button = event.target.closest('.product-details');
     if (!button || !catalog) return;
@@ -146,7 +182,11 @@ byId('menuContent').addEventListener('click', event => {
     const form = document.createElement('form');
     form.className = 'order-form';
     form.innerHTML = '<select name="option" hidden aria-hidden="true"></select><fieldset class="option-choices"><legend>Escolha o tamanho ou opção</legend></fieldset>' +
-        '<label>Quantidade <input name="quantity" type="number" min="1" max="10" value="1" required></label>' +
+        '<div class="quantity-picker"><span>Quantidade</span><div class="quantity-controls">' +
+        '<button type="button" data-adjust="-1" aria-label="Diminuir quantidade">−</button>' +
+        '<input aria-label="Quantidade do produto" name="quantity" type="number" inputmode="numeric" min="1" max="10" value="1" required>' +
+        '<button type="button" data-adjust="1" aria-label="Aumentar quantidade">+</button>' +
+        '</div></div>' +
         '<label>Observações <textarea name="note" maxlength="160"></textarea></label>' +
         '<button class="order-primary">Adicionar ao carrinho</button><p role="status"></p>';
     for (const option of options) form.elements.option.add(new Option(option.label + ' · ' + money(option.cents), option.label));
@@ -200,6 +240,15 @@ byId('menuContent').addEventListener('click', event => {
     const paidSelected = new Set();
     const formStatus = form.querySelector('[role=status]');
     const submitButton = form.querySelector('.order-primary');
+    for (const control of form.querySelectorAll('[data-adjust]')) {
+        control.onclick = () => {
+            const input = form.elements.quantity;
+            const next = Math.max(1, Math.min(10, (Number.parseInt(input.value, 10) || 1) +
+                Number(control.dataset.adjust)));
+            input.value = String(next);
+            updateExtras();
+        };
+    }
     function updateExtras() {
         const extras = extraOptions(item, form.elements.option.value);
         extrasBox.replaceChildren();
@@ -237,6 +286,9 @@ byId('menuContent').addEventListener('click', event => {
         const base = options.find(option => option.label === form.elements.option.value).cents;
         const additional = extras.paid.filter(extra => paidSelected.has(extra.label)).reduce((sum, extra) => sum + extra.cents, 0);
         const quantity = form.elements.quantity.valueAsNumber;
+        for (const button of form.querySelectorAll('[data-adjust]')) {
+            button.disabled = Number(button.dataset.adjust) < 0 ? quantity <= 1 : quantity >= 10;
+        }
         submitButton.textContent = '+ Adicionar · ' + money((base + additional) * (Number.isInteger(quantity) && quantity > 0 ? quantity : 1));
     }
     function focusExtra(group, value) {
@@ -262,56 +314,200 @@ byId('menuContent').addEventListener('click', event => {
         refresh();
         byId('productDialog').close();
         button.focus({ preventScroll: true });
-        byId('cartFeedback').textContent = '✓ ' + orderProductName({category, product}) + ' adicionado ao pedido';
-        clearTimeout(feedbackTimer);
-        feedbackTimer = setTimeout(() => { byId('cartFeedback').textContent = ''; }, 3500);
+        announceAdded({category, product});
     };
     byId('productDialogContent').append(form);
 });
 
+
 const checkoutForm = byId('checkout');
 const orderStatus = byId('orderStatus');
 const fallback = byId('whatsappOrderLink');
+const cartDialog = byId('cartDialog');
+const turnstileContainer = byId('orderTurnstile');
+let widgetId;
+let challengeWaiter;
 
-// O cliente precisa apenas escolher produtos. Não há validação de cadastro,
-// pagamento, endereço, Telegram, API de pedido nem desafio Turnstile.
-byId('openCart').onclick = () => {
+function openCart() {
+    checkoutStep = false;
     refresh();
-    byId('cartDialog').showModal();
+    if (!cartDialog.open) cartDialog.showModal();
+}
+byId('openCart').onclick = openCart;
+byId('cartFeedbackCart').onclick = () => {
+    byId('cartFeedback').hidden = true;
+    clearTimeout(feedbackTimer);
+    openCart();
+};
+byId('cartBack').onclick = () => {
+    if (checkoutStep) {
+        checkoutStep = false;
+        refresh();
+        byId('startCheckout').focus({preventScroll:true});
+    } else cartDialog.close();
+};
+byId('startCheckout').onclick = () => {
+    if (!cart.length || !storeOpenForOrders) return;
+    checkoutStep = true;
+    refresh();
+    checkoutForm.elements.customerName.focus({preventScroll:true});
 };
 checkoutForm.addEventListener('input', () => {
     fallback.hidden = true;
     orderStatus.textContent = '';
 });
-checkoutForm.onsubmit = event => {
+
+function requestId() {
+    const bytes = new Uint8Array(16);
+    window.crypto.getRandomValues(bytes);
+    bytes[6] = (bytes[6] & 15) | 64;
+    bytes[8] = (bytes[8] & 63) | 128;
+    const hex = [...bytes].map(byte => byte.toString(16).padStart(2, '0')).join('');
+    return [hex.slice(0,8),hex.slice(8,12),hex.slice(12,16),hex.slice(16,20),hex.slice(20)].join('-');
+}
+function validateCustomer() {
+    const name = checkoutForm.elements.customerName.value.trim();
+    let phone = checkoutForm.elements.customerPhone.value.replace(/\D/g, '');
+    if (phone.startsWith('55') && [12,13].includes(phone.length)) phone = phone.slice(2);
+    if (!name || name.length > 80) throw new Error('Informe seu nome para o registro.');
+    if (!/^(?:[1-9]\d)(?:9\d{8}|\d{8})$/.test(phone)) {
+        throw new Error('Informe um WhatsApp válido com DDD para a loja poder chamar você.');
+    }
+    return {name, phone};
+}
+async function ensureTurnstile() {
+    if (widgetId !== undefined) return;
+    const response = await fetch('/api/order-config', {cache: 'no-store'});
+    if (!response.ok) throw new Error('Não conseguimos iniciar o registro seguro de pedidos.');
+    const config = await response.json();
+    if (!config.siteKey) throw new Error('O registro pelo bot está indisponível neste momento.');
+    if (!window.turnstile) {
+        await new Promise((resolve, reject) => {
+            const script = document.createElement('script');
+            script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+            script.onload = resolve;
+            script.onerror = () => reject(new Error('Não conseguimos carregar a verificação de segurança.'));
+            document.head.append(script);
+        });
+    }
+    if (!window.turnstile?.render || !window.turnstile?.execute) {
+        throw new Error('Verificação de segurança não suportada neste navegador.');
+    }
+    widgetId = window.turnstile.render(turnstileContainer, {
+        sitekey: config.siteKey,
+        action: 'order_intent',
+        execution: 'execute',
+        appearance: 'interaction-only',
+        theme: 'light',
+        callback(token) {
+            const pending = challengeWaiter;
+            challengeWaiter = null;
+            pending?.resolve(token);
+        },
+        'error-callback'() {
+            const pending = challengeWaiter;
+            challengeWaiter = null;
+            pending?.reject(new Error('Falha na verificação de segurança.'));
+        },
+        'expired-callback'() {
+            const pending = challengeWaiter;
+            challengeWaiter = null;
+            pending?.reject(new Error('Verificação expirada; tente novamente.'));
+        }
+    });
+}
+async function getChallenge() {
+    await ensureTurnstile();
+    return new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => {
+            if (!challengeWaiter) return;
+            challengeWaiter = null;
+            reject(new Error('A verificação demorou demais. Tente novamente.'));
+        }, 30000);
+        challengeWaiter = {
+            resolve: token => { clearTimeout(timeout); resolve(token); },
+            reject: error => { clearTimeout(timeout); reject(error); }
+        };
+        try { window.turnstile.reset(widgetId); window.turnstile.execute(widgetId); }
+        catch (error) {
+            clearTimeout(timeout); challengeWaiter = null;
+            reject(new Error('Não foi possível iniciar a verificação.'));
+        }
+    });
+}
+function openWhatsApp(url) {
+    fallback.href = url;
+    fallback.hidden = false;
+    window.location.assign(url);
+}
+
+checkoutForm.onsubmit = async event => {
     event.preventDefault();
     if (sending) return;
     if (!storeOpenForOrders) {
-        orderStatus.textContent = 'Loja fechada no momento. Confira o horário antes de pedir.';
+        orderStatus.textContent = 'A loja está fechada. Tente novamente no próximo expediente.';
         return;
     }
     if (!cart.length || !catalog) {
         orderStatus.textContent = 'Escolha seus itens antes de continuar.';
         return;
     }
+    let lines, customer, note, signature;
+    try {
+        customer = validateCustomer();
+        lines = priceOrder(catalog, cart);
+        note = checkoutForm.elements.orderNote.value.trim();
+        signature = JSON.stringify({lines, customer, note});
+    } catch (error) {
+        orderStatus.textContent = error?.message || 'Confira o pedido e seu contato.';
+        return;
+    }
+    const directMessage = buildSimpleWhatsAppMessage({
+        lines, note, name: customer.name
+    });
+    const directUrl = whatsappOrderUrl(directMessage);
+    fallback.hidden = true;
     sending = true;
     refresh();
+    orderStatus.textContent = 'Registrando o pré-pedido no bot da loja…';
     try {
-        // Revalidar sabores, complementos e preços com o catálogo vigente.
-        const lines = priceOrder(catalog, cart);
+        let registration;
+        if (lastRegistration?.signature === signature) {
+            registration = lastRegistration;
+        } else {
+            const challenge = await getChallenge();
+            const response = await fetch('/api/whatsapp-intent', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    requestId: requestId(), name: customer.name, phone: customer.phone,
+                    lines, note, challenge
+                }),
+                signal: AbortSignal.timeout(16000)
+            });
+            const data = await response.json();
+            if (!response.ok || data.status !== 'registered' || data.pending) {
+                throw new Error(data.error || 'O registro no bot não pôde ser confirmado.');
+            }
+            registration = {id: data.id, test: data.test, signature};
+            lastRegistration = registration;
+        }
+        if (registration.test) {
+            orderStatus.textContent = 'TESTE: pré-registro enviado ao bot de homologação. Nenhum WhatsApp foi aberto.';
+            return;
+        }
         const message = buildSimpleWhatsAppMessage({
-            lines,
-            note: checkoutForm.elements.orderNote.value
+            lines, note, name: customer.name, orderRef: registration.id
         });
-        const url = whatsappOrderUrl(message);
-        fallback.href = url;
-        fallback.hidden = false;
-        orderStatus.textContent = 'Abrindo o WhatsApp. Confira e toque em Enviar. A loja ainda não recebeu o pedido.';
-        // Mesma aba evita bloqueio de pop-ups em dispositivos móveis.
-        window.location.assign(url);
+        orderStatus.textContent = 'Pré-registro #' + registration.id +
+            ' enviado ao bot. Abrindo WhatsApp: confira a mensagem e toque em Enviar.';
+        openWhatsApp(whatsappOrderUrl(message));
     } catch (error) {
-        orderStatus.textContent = (error?.message || 'Não foi possível preparar o pedido.') +
-            ' Nenhum pedido foi enviado; confira o carrinho e tente novamente.';
+        orderStatus.textContent = (error?.message || 'Não foi possível registrar no bot.') +
+            ' Você ainda pode contatar a loja; esse caminho não gera alerta no bot.';
+        fallback.href = directUrl;
+        fallback.textContent = 'Continuar pelo WhatsApp sem registro no bot';
+        fallback.hidden = false;
     } finally {
         sending = false;
         refresh();

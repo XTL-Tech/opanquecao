@@ -128,12 +128,18 @@ export function buildWhatsAppMessage({ lines, name, phone, fulfillment, payment,
  * Produção enxuta: apenas itens e observações. Os demais dados são acertados
  * na conversa, sem pedir nome, telefone, endereço ou pagamento no site.
  */
-export function buildSimpleWhatsAppMessage({ lines, note = '' }) {
+export function buildSimpleWhatsAppMessage({ lines, note = '', name = '', orderRef = '' }) {
     if (!Array.isArray(lines) || !lines.length || lines.length > 25) {
         throw new Error('Adicione pelo menos um produto ao pedido.');
     }
     let subtotal = 0;
-    const parts = ['*PEDIDO | DISK PANQUECÃO*', ''];
+    const parts = ['*PRÉ-PEDIDO | DISK PANQUECÃO*'];
+    if (orderRef && /^[A-F0-9]{8}$/i.test(orderRef)) {
+        parts.push('Referência: #' + orderRef.toUpperCase());
+    }
+    const customer = clean(name, 80);
+    if (customer) parts.push('Cliente: ' + customer);
+    parts.push('');
     lines.forEach((line, index) => {
         if (!line || !Number.isSafeInteger(line.cents) || line.cents < 0 ||
             !Number.isInteger(line.quantity) || line.quantity < 1 || line.quantity > 10 ||
