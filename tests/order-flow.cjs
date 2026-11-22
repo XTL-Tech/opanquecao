@@ -59,6 +59,14 @@ global.fetch=async (url,init)=>{
 (async()=>{
 const inline=[...d.querySelectorAll('script:not([src])')].at(-1).textContent;
 w.eval(inline.replace(/\n\s*initMenu\(\);\s*$/,''));
+w.eval(fs.readFileSync('meta-pixel.js','utf8'));
+d.dispatchEvent(new w.Event('DOMContentLoaded'));
+assert.equal(w.fbq,undefined,'Pixel não pode iniciar sem consentimento');
+assert.equal(w.XTLMeta.track('AddToCart',{value:5}),false,'Não rastrear sem consentimento');
+d.querySelector('#analyticsAccept').click();
+assert.equal(typeof w.fbq,'function','Pixel deve iniciar após consentimento positivo');
+const metaCalls=()=>[...(w.fbq?.queue||[])].filter(args=>args[0]==='track');
+assert.equal(metaCalls().filter(args=>args[1]==='PageView').length,1);
 await import(path.resolve('cart.mjs'));
 w.renderMenu(catalog);
 d.dispatchEvent(new w.CustomEvent('menu-ready',{detail:catalog}));
@@ -132,6 +140,13 @@ f.querySelector('[data-adjust="-1"]').click();
 assert.equal(f.elements.quantity.value,'1');
 f.elements.quantity.value='2';f.elements.note.value='Embalagens separadas';
 f.onsubmit({preventDefault(){}});
+assert.equal(metaCalls().filter(args=>args[1]==='AddToCart').length,1,
+    'Uma inclusão de produto deve emitir um AddToCart');
+const firstCartMeta=metaCalls().find(args=>args[1]==='AddToCart')[2];
+assert.equal(firstCartMeta.currency,'BRL');
+assert.equal(firstCartMeta.num_items,2);
+assert.equal(firstCartMeta.value,56);
+assert.equal(firstCartMeta.contents[0].quantity,2);
 assert.match(d.querySelector('#openCart').textContent,/Pedido · 2 itens/);
 assert.match(d.querySelector('#cartFeedback').textContent,/adicionado/);
 assert.equal(JSON.parse(w.localStorage.getItem('disk-panquecao-cart-v1')).lines[0].quantity,2);
@@ -139,6 +154,8 @@ await d.querySelector('#openCart').onclick();
 assert.equal(d.querySelector('#checkout').hidden,true);
 assert.equal(d.querySelector('#startCheckout').hidden,false);
 d.querySelector('#startCheckout').click();
+assert.equal(metaCalls().filter(args=>args[1]==='InitiateCheckout').length,1,
+    'Início do checkout deve ser medido uma única vez');
 assert.equal(d.querySelector('#checkout').hidden,false);
 assert.equal(d.querySelector('#cartWhatsApp'),null);
 assert.equal(d.querySelector('#orderUnavailable'),null);
@@ -181,6 +198,15 @@ checkout.elements.orderNote.dispatchEvent(new w.Event('input',{bubbles:true}));
 mockEnabled=true;
 const submit=()=>checkout.onsubmit({preventDefault(){},currentTarget:checkout});
 await submit();
+assert.equal(metaCalls().filter(args=>args[1]==='Lead').length,1,
+    'Pré-registro confirmado deve emitir Lead, nunca Purchase');
+const leadMeta=metaCalls().find(args=>args[1]==='Lead')[2];
+assert.equal(leadMeta.value,0,'Pré-registro não representa faturamento');
+assert.equal(leadMeta.status,'pending_whatsapp_confirmation');
+assert.equal(metaCalls().filter(args=>args[1]==='Purchase').length,0,
+    'Não registrar faturamento antes da confirmação pela loja');
+assert.doesNotMatch(JSON.stringify(metaCalls()),/Cliente fictício|99999-9999|Rua das Flores|\-29\.585/,
+    'Eventos Meta não devem enviar nome, telefone, endereço nem GPS');
 assert.equal(calls,0,'A API PDF legada não deve ser chamada');
 assert.equal(intentCalls,1,'Pré-registro deve chegar ao bot: '+d.querySelector('#orderStatus').textContent);
 assert.match(lastBotMessage.text,/Cliente fictício/);
@@ -205,12 +231,16 @@ assert.match(directMessage,/Referência: #[0-9A-F]{8}/);
 assert.doesNotMatch(directMessage,/Forma: Pix|WhatsApp: 51|Taxa: R\$/);
 await submit();
 assert.equal(intentCalls,1,'Não duplicar pré-registro na mesma sessão sem alterações');
+assert.equal(metaCalls().filter(args=>args[1]==='Lead').length,1,
+    'Não duplicar conversão Meta ao reabrir o mesmo pré-registro');
 assert.equal(d.querySelector('#cartEmpty').hidden,true,'Carrinho deve permanecer até confirmação');
 assert.equal(d.querySelector('#cartFeedback').hidden,false);
 assert.ok(d.querySelector('#cartFeedbackCart'));
 const beverage=d.querySelector('#bebidas .menu-item .quick-add');
 assert.ok(beverage,'Bebidas simples precisam de Adicionar em um toque');
 beverage.click();
+assert.equal(metaCalls().filter(args=>args[1]==='AddToCart').length,2,
+    'Adição rápida deve emitir AddToCart');
 assert.match(d.querySelector('#openCart').textContent,/3 itens/);
 // The full card opens exactly one form, including açaí configuration.
 d.querySelector('.category-card[href="#acai"]').click();
