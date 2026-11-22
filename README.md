@@ -2,16 +2,19 @@
 
 Cardápio e pré-pedido do Disk Panquecão, Nova Hartz/RS. HTML, CSS e JavaScript, sem framework. Tecnologia XTL TECH.
 
-## Produção: pedido simplificado pelo WhatsApp — 18/11/2026
+## Fluxo atual: compra rápida + pré-registro no bot (22/11/2026)
 
-**Fluxo público:** selecionar produtos, opções, sabores, quantidades, complementos e observações (inclusive observação geral opcional) → **Enviar pedido pelo WhatsApp**. O número comercial é (51) 99738-3849.
+**Catálogo:** 12 categorias, 82 produtos e fotos originais. Itens de preço único e sem extras têm um botão **+ Adicionar** de um toque; produtos que exigem tamanhos, dois sabores ou complementos abrem uma configuração detalhada. O card também mantém uma opção de visualizar detalhes.
 
-- **Sem formulário de nome/telefone, endereço, entrega/retirada, pagamento ou checkout.** Esses dados e a taxa de entrega são combinados com a loja na conversa.
-- O site apresenta o **subtotal dos itens, sem frete**; mensagem com itens, preços e observações é gerada no navegador. A loja confirma disponibilidade e total final antes do preparo.
-- Cliente precisa tocar em **Enviar** dentro do WhatsApp. O site mantém o carrinho para revisão, oferece link alternativo e não alega recebimento automático.
-- Sem Telegram, Turnstile, gateway ou chamada a `/api/order` no fluxo público. A disponibilidade continua respeitando o horário da loja.
-- A branch **`homologacao/checkout-completo`** preserva o formulário e recursos completos anteriores para evolução isolada, sem promoção automática à produção. Implantar o sistema completo somente após homologação funcional, segurança e testes reais.
-- CI: `npm test`, incluindo testes de montagem da mensagem e interação do carrinho. Confirmar a abertura em Android e iPhone e a operação do WhatsApp comercial em teste real.
+**Carrinho, em duas etapas:** (1) revisar itens, quantidades, adicionais e subtotal, sem frete; (2) informar **nome e WhatsApp com DDD** para pré-registro da intenção. O envio se faz pela API \`/api/whatsapp-intent\`, protegida pelo Cloudflare Turnstile sob demanda. Os preços são sempre recalculados a partir do catálogo no servidor. Somente após o Telegram reconhecer o pré-registro, o site abre o WhatsApp da loja com itens, notas, subtotal e código de referência. O cliente ainda deve tocar em **Enviar** no WhatsApp.
+
+**Registro operacional:** o chat \`TELEGRAM_CHAT_ID\` recebe mensagem com código, nome, telefone, todos os itens, valores e botão **💬 Chamar cliente no WhatsApp**, que já prepara uma mensagem para o atendente. O Telegram representa um **pré-registro do clique no checkout**, não prova que a mensagem foi enviada pelo WhatsApp e **não autoriza o preparo**. Em Preview, mensagens levam o aviso TESTE — NÃO PREPARAR e a página não abre o WhatsApp real.
+
+**Falhas e segurança:** se o bot/Turnstile falhar ou o registro ficar indeterminado, o cliente vê uma explicação e um **link separado para falar com a loja sem registro automático**. Sem fazer alegações falsas de recebimento. O checkout não armazena nome/telefone em localStorage. Credenciais ficam exclusivamente em variáveis Vercel. O registro só usa o Telegram como histórico; **não existe ainda um ledger persistente de deduplicação** em Supabase. Em falhas incertas, a equipe deve reconciliar pelo código. Implementar deduplicação persistente antes de automações mais agressivas.
+
+**Limite essencial:** um cliente que envia mensagem diretamente ao WhatsApp da loja, por contatos externos ou conversa já aberta, não passa pelo checkout e **não é detectável por um link \`wa.me\`**. Capturar todo o tráfego recebido no WhatsApp exigirá WhatsApp Business Platform/Cloud API com webhook oficial, consentimento apropriado e integração específica. O site não pode ler mensagens privadas ou presumir envios externos.
+
+**Testes:** \`npm test\` cobre o formulário, o bot com Telegram/Turnstile simulados, preço recalculado, compra rápida e a responsividade em Chromium. A prova real de entrega ao chat do bot, do recebimento da mensagem e do retorno pelo WhatsApp exige homologação operacional com um pedido explicitamente de teste.
 
 > As seções históricas abaixo documentam APIs/experimentos antigos e não descrevem o formulário vigente na produção.
 
@@ -31,7 +34,8 @@ Cardápio e pré-pedido do Disk Panquecão, Nova Hartz/RS. HTML, CSS e JavaScrip
 | cart.mjs | Opções, quantidades, resumo, armazenamento do carrinho e WhatsApp |
 | order-catalog.mjs | Validação comercial e recálculo de preços |
 | api/order-config.js | Disponibilidade do envio digital e chave pública |
-| api/order.js | Validação no servidor, Turnstile e envio Telegram |
+| api/order.js | Fluxo legado com PDF, Turnstile e Telegram (não chamado pelo checkout atual) |
+| api/whatsapp-intent.js | Novo pré-registro no bot com nome, telefone, itens e botão para chamar o cliente |
 | lib/order-pdf.js | Comanda PDF, 58 mm por padrão |
 | img/cardapio/ | Acervo aprovado de 82 fotografias otimizadas |
 | favicons/oficial/ | Ícones oficiais |
