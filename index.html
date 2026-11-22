@@ -1318,7 +1318,8 @@
             home.hidden = !!selected;
             toolbar.hidden = !selected;
             document.getElementById('categoryCurrent').textContent = titles.get(selected) || '';
-            for (const section of content.querySelectorAll('.category-section')) section.hidden = selected !== null && section.id !== selected;
+            // Mostrar somente a categoria escolhida; a home apresenta apenas os cartões.
+            for (const section of content.querySelectorAll('.category-section')) section.hidden = section.id !== selected;
             picker.value = selected || '';
             for (const link of switcher.querySelectorAll('a')) {
                 if (link.hash === '#' + selected) link.setAttribute('aria-current', 'true');
