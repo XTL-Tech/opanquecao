@@ -61,7 +61,7 @@ module.exports=async function handler(req,res){
   if(!claimed.created){
    if(!claimed.record.provider_checkout_id)return safe(res,409,{error:'Checkout de teste pendente de reconciliação.'});
    return safe(res,200,{sandbox:true,reused:true,link:
-    'https://asaas.com/checkoutSession/show?id='+encodeURIComponent(claimed.record.provider_checkout_id)});
+    'https://sandbox.asaas.com/000/checkoutSession/show/'+encodeURIComponent(claimed.record.provider_checkout_id)});
   }
   const local=claimed.record;
   const base=CANNONICAL+'/backoffice/asaas-return.html?result=';
@@ -103,7 +103,7 @@ module.exports=async function handler(req,res){
     '). Confira o Asaas Sandbox antes de repetir.',providerStatus,providerCode:'UNCONFIRMED'});
   }
   return safe(res,201,{sandbox:true,scenario,amountCents:500,link:
-   'https://asaas.com/checkoutSession/show?id='+encodeURIComponent(result.id)});
+   'https://sandbox.asaas.com/000/checkoutSession/show/'+encodeURIComponent(result.id)});
  }catch(e){
   const status=Number.isInteger(e.status)?e.status:503;
   return safe(res,status,{error:status===503?'Operação de teste temporariamente indisponível.':e.message});
