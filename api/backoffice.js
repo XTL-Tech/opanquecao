@@ -114,6 +114,10 @@ module.exports=async function handler(req,res){
    const actor=await auth.login(req,res,payload(req));
    return respond(res,200,{actor});
   }
+  if(method==='POST'&&act==='request_otp')
+   return respond(res,200,await auth.requestOtp(payload(req)));
+  if(method==='POST'&&act==='login_otp')
+   return respond(res,200,{actor:await auth.loginOtp(req,res,payload(req))});
   const actor=await auth.actor(req);
   if(method==='GET'){
    if(act==='dashboard')return respond(res,200,{actor,...await db.dashboard()});
