@@ -1,5 +1,10 @@
 # Disk Panquecão
 
+## Backoffice MVP (22/11/2026)
+
+Implementado painel responsivo em `/backoffice/`: atendimento de pedidos, clientes, fechamento diário de caixa e ajustes versionados de preço (gestão). Demonstração 100% fictícia: `/backoffice/?demo=1`. Banco exclusivo, Auth e variáveis Vercel ainda não configurados — nenhuma conta administrativa ou pedido real está habilitado. O código funciona em modo fail-closed; não publicar/usar como sistema operacional até realizar a homologação Supabase descrita em [`docs/backoffice-mvp.md`](docs/backoffice-mvp.md). A integração do pré-registro à base é ativada somente após `BACKOFFICE_ENABLED=true` em produção. Não cria cozinha, copa nem motoboy.
+
+
 Cardápio e pré-pedido do Disk Panquecão, Nova Hartz/RS. HTML, CSS e JavaScript, sem framework. Tecnologia XTL TECH.
 
 ## SEO local e compartilhamento das categorias (22/11/2026)
