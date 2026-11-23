@@ -665,7 +665,7 @@ checkoutForm.onsubmit = async event => {
     fallback.hidden = true;
     sending = true;
     refresh();
-    orderStatus.textContent = 'Registrando o pré-pedido no bot da loja…';
+    orderStatus.textContent = 'Registrando o pré-pedido e enviando o cupom térmico ao bot…';
     try {
         let registration;
         if (lastRegistration?.signature === signature) {
@@ -684,7 +684,7 @@ checkoutForm.onsubmit = async event => {
                         : fulfillment,
                     challenge
                 }),
-                signal: AbortSignal.timeout(16000)
+                signal: AbortSignal.timeout(50000)
             });
             const data = await response.json();
             if (!response.ok || data.status !== 'registered' || data.pending) {
@@ -715,7 +715,7 @@ checkoutForm.onsubmit = async event => {
             lines, note, name: customer.name, fulfillment, orderRef: registration.id
         });
         orderStatus.textContent = 'Pré-registro #' + registration.id +
-            ' enviado ao bot. Abrindo WhatsApp: confira a mensagem e toque em Enviar.';
+            ' e cupom térmico enviados ao bot. Abrindo WhatsApp: confira e toque em Enviar.';
         openWhatsApp(whatsappOrderUrl(message));
     } catch (error) {
         orderStatus.textContent = (error?.message || 'Não foi possível registrar no bot.') +
