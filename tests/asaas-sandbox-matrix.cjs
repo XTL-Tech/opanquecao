@@ -16,7 +16,8 @@ assert.match(neonSource,/status IN \('creating','active','uncertain'\)/,
  'Webhook atrasado não pode reativar checkout cancelado, expirado ou pago');
 assert.doesNotMatch(sandboxSource,/https:\/\/api\.asaas\.com\/v3/,
  'Rotas de homologação jamais devem chamar a API de cobrança real');
-assert.match(sandboxSource,/https:\/\/api-sandbox\.asaas\.com\/v3\/checkouts/);
+assert.match(sandboxSource,/https:\/\/api-sandbox\.asaas\.com\/v3/);
+assert.match(sandboxSource,/SANDBOX_API\+'\/checkouts'/);
 const oldEnv=Object.fromEntries(['ASAAS_SANDBOX_ENABLED','ASAAS_SANDBOX_API_KEY',
  'ASAAS_SANDBOX_WEBHOOK_TOKEN','BACKOFFICE_ENABLED','BACKOFFICE_PROVIDER',
  'DATABASE_URL','NEON_AUTH_BASE_URL'].map(x=>[x,process.env[x]]));
