@@ -21,7 +21,10 @@ module.exports=async function handler(req,res){
    !process.env.ASAAS_SANDBOX_WEBHOOK_TOKEN)
    return safe(res,503,{error:'Sandbox ainda não configurado na Vercel.'});
   if(req.body?.action!=='create_sandbox_checkout')return safe(res,400,{error:'Operação inválida.'});
-  const claimed=await db.sandboxClaim(actor.id);
+  const scenario=typeof req.body?.scenario==='string'?req.body.scenario:'both';
+  if(!['both','pix','credit_card'].includes(scenario))
+   return safe(res,400,{error:'Modalidade de checkout inválida.'});
+  const claimed=await db.sandboxClaim(actor.id,scenario);
   if(!claimed.created){
    if(!claimed.record.provider_checkout_id)return safe(res,409,{error:'Checkout de teste pendente de reconciliação.'});
    return safe(res,200,{sandbox:true,reused:true,link:
@@ -30,7 +33,7 @@ module.exports=async function handler(req,res){
   const local=claimed.record;
   const base=CANNONICAL+'/backoffice/asaas-return.html?result=';
   const payload={
-   billingTypes:['PIX','CREDIT_CARD'],
+   billingTypes:scenario==='pix'?['PIX']:scenario==='credit_card'?['CREDIT_CARD']:['PIX','CREDIT_CARD'],
    chargeTypes:['DETACHED'],
    minutesToExpire:30,
    externalReference:local.external_ref,
@@ -55,7 +58,7 @@ module.exports=async function handler(req,res){
    try{await db.sandboxMarkUncertain(local.id);}catch{}
    return safe(res,503,{error:'Criação de checkout incerta. Verifique no Asaas Sandbox antes de repetir.'});
   }
-  return safe(res,201,{sandbox:true,amountCents:500,link:
+  return safe(res,201,{sandbox:true,scenario,amountCents:500,link:
    'https://asaas.com/checkoutSession/show?id='+encodeURIComponent(result.id)});
  }catch(e){
   const status=Number.isInteger(e.status)?e.status:503;

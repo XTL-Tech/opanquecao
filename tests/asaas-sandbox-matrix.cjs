@@ -113,6 +113,21 @@ const fakeFetch=async(url,opts)=>{
  assert.equal(response.code,503);assert.equal(uncertain.length,3);
  global.fetch=fakeFetch;
 
+ // Cenários isolados de Pix/cartão sem chamar endpoints de produção.
+ const modes=[];
+ db.sandboxClaim=async(actorId,scenario)=>{modes.push(scenario);return{created:true,record};};
+ for(const [scenario,expected] of [['pix',['PIX']],['credit_card',['CREDIT_CARD']],['both',['PIX','CREDIT_CARD']]]){
+  response=await req(checkout,'POST',{action:'create_sandbox_checkout',scenario},origin);
+  assert.equal(response.code,201,scenario);
+  assert.equal(response.body.scenario,scenario);
+  assert.deepEqual(hits.at(-1).payload.billingTypes,expected);
+ }
+ assert.deepEqual(modes,['pix','credit_card','both']);
+ const beforeInvalid=hits.length;
+ response=await req(checkout,'POST',{action:'create_sandbox_checkout',scenario:'BOLETO'},origin);
+ assert.equal(response.code,400);
+ assert.equal(hits.length,beforeInvalid,'Boleto não é modalidade suportada no checkout hospedado');
+
  // Matriz de eventos: assinatura inválida, corpo incorreto, tipos permitidos.
  const hook=(event,id='evt_'+event)=>({id,event,
   checkout:{id:'ch_sandbox_matrix_123456',externalReference:record.external_ref}});
@@ -139,7 +154,7 @@ const fakeFetch=async(url,opts)=>{
  // Não há ramificação da função que atualize pagamentos reais ou pedidos.
  const hookSource=fs.readFileSync(require.resolve('../api/asaas-sandbox-webhook'),'utf8');
  assert.doesNotMatch(hookSource,/orderPaid|patchOrder|updateCustomer|purchase\(/i);
- console.log('PASS ASAAS MATRIX: 19 cenários do backend simulados, sem requisições externas ou valores reais.');
+ console.log('PASS ASAAS MATRIX: mais de 20 cenários do backend simulados, sem requisições externas ou valores reais.');
 })().catch(error=>{console.error(error);process.exitCode=1;}).finally(()=>{
  global.fetch=oldFetch;
  for(const [k,v] of Object.entries(oldEnv)){if(v===undefined)delete process.env[k];else process.env[k]=v;}

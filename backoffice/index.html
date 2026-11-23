@@ -67,6 +67,13 @@
       <h3>🧪 Asaas — Checkout Sandbox</h3>
       <p class="hint">Teste separado dos pedidos e do caixa reais. Nenhuma cobrança de produção é criada e nenhum produto vai para preparo.</p>
       <p id="asaasSandboxStatus" class="hint">Consulte os testes disponíveis.</p>
+      <label>Modalidade de teste
+       <select id="asaasScenario">
+        <option value="pix">Pix Sandbox</option>
+        <option value="credit_card">Cartão de crédito Sandbox</option>
+        <option value="both">Pix ou cartão Sandbox</option>
+       </select>
+      </label>
       <button id="asaasSandboxCreate" class="soft" type="button">Criar checkout fictício de R$ 5,00</button>
       <p id="asaasSandboxLink" class="hint"></p>
       <p class="hint">Verifique o resultado no Asaas Sandbox. O retorno da página não confirma pagamento; somente o webhook autenticado altera o status da simulação.</p>
@@ -95,6 +102,15 @@
    <label>Senha<input type="password" id="password" autocomplete="current-password" minlength="8" required placeholder="Sua senha de acesso"></label>
    <button class="primary full" type="submit">Entrar no backoffice</button>
   </form>
+  <button type="button" id="useEmailCode" class="soft full">Entrar com código enviado ao e-mail</button>
+  <form id="otpForm" hidden>
+   <label>E-mail cadastrado da equipe<input type="email" id="otpEmail" autocomplete="email" required maxlength="254" placeholder="seu-email@exemplo.com"></label>
+   <button type="button" id="sendOtp" class="primary full">Enviar código de acesso</button>
+   <p id="otpInstruction" class="hint" role="status" aria-live="polite">Código temporário. Somente colaboradores previamente autorizados podem entrar.</p>
+   <label id="otpCodeWrap" hidden>Código recebido por e-mail<input id="otpCode" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6,8}" maxlength="8" placeholder="000000" required disabled></label>
+   <button id="verifyOtp" class="primary full" type="submit" hidden>Validar código e entrar</button>
+  </form>
+  <button id="usePassword" type="button" class="soft full" hidden>Voltar ao acesso com senha</button>
   <p id="loginError" class="error" role="alert"></p>
   <a class="demo-link" href="/backoffice/?demo=1">Experimentar demonstração com dados fictícios</a>
   <a class="site-link" href="/">← Voltar ao cardápio</a>
