@@ -24,7 +24,7 @@ const oldFetch=global.fetch;
 const original={
  configured:db.configured,
  recent:db.sandboxRecent,claim:db.sandboxClaim,attach:db.sandboxAttach,
- uncertain:db.sandboxMarkUncertain,event:db.sandboxEvent,
+ uncertain:db.sandboxMarkUncertain,reconcile:db.sandboxConfirmAbsent,event:db.sandboxEvent,
  actor:auth.actor,authConfigured:auth.configured
 };
 const secret='test-webhook-token-xxxxxxxxxxxxxxxxxxxxxxxxxxxx';
@@ -45,6 +45,8 @@ db.sandboxClaim=async()=>({created:true,record});
 let attached=[],uncertain=[],hits=[],transitions=[];
 db.sandboxAttach=async(id,providerId)=>attached.push({id,providerId});
 db.sandboxMarkUncertain=async(id)=>uncertain.push(id);
+let reconciled=0;
+db.sandboxConfirmAbsent=async(actorId,id)=>{reconciled++;assert.equal(actorId,'gestor-ficticio');assert.equal(id,record.id);return{reviewed:true};};
 db.sandboxEvent=async(x)=>{transitions.push(x);return {matched:1,inserted:1,updated:1};};
 const origin={host:'opanquecao.vercel.app',origin:'https://opanquecao.vercel.app'};
 async function req(handler,method,body={},headers={}){
@@ -95,9 +97,21 @@ const fakeFetch=async(url,opts)=>{
  assert.equal(diagnostic.body.httpStatus,401);
  assert.equal(diagnostic.body.providerCode,'invalid_token');
  global.fetch=connectionFetch;
- assert.match(neonSource,/status='uncertain' OR created_at/,
+ assert.match(neonSource,/status='uncertain' AND reviewed_at IS NULL/,
   'Checkout incerto deve bloquear novas tentativas mesmo após janela de 10 minutos');
 
+ // Conciliação não executa nenhuma operação no Asaas e exige confirmação explícita.
+ let confirmResponse=await req(checkout,'POST',
+  {action:'confirm_absent_sandbox_checkout',recordId:record.id,confirmation:'NO'},origin);
+ assert.equal(confirmResponse.code,400);
+ assert.equal(reconciled,0);
+ confirmResponse=await req(checkout,'POST',
+  {action:'confirm_absent_sandbox_checkout',recordId:record.id,
+   confirmation:'CONFIRMO_AUSENCIA_NO_ASAAS'},origin);
+ assert.equal(confirmResponse.code,200);
+ assert.equal(confirmResponse.body.reviewed,true);
+ assert.equal(reconciled,1);
+ assert.match(fs.readFileSync('neon/migrations/003_asaas_uncertain_reconciliation.sql','utf8'),/reviewed_by/);
  // Não permitir criação sem autenticação, sem origem legítima ou sem habilitação.
  const before=hits.length;
  response=await req(checkout,'POST',{action:'create_sandbox_checkout'},
@@ -183,6 +197,6 @@ const fakeFetch=async(url,opts)=>{
  for(const [k,v] of Object.entries(oldEnv)){if(v===undefined)delete process.env[k];else process.env[k]=v;}
  Object.assign(db,{configured:original.configured,sandboxRecent:original.recent,
   sandboxClaim:original.claim,sandboxAttach:original.attach,
-  sandboxMarkUncertain:original.uncertain,sandboxEvent:original.event});
+  sandboxMarkUncertain:original.uncertain,sandboxConfirmAbsent:original.reconcile,sandboxEvent:original.event});
  auth.actor=original.actor;auth.configured=original.authConfigured;
 });
