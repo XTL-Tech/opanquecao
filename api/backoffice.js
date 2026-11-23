@@ -2,8 +2,8 @@
 // XTL / Disk Panquecão: todas as operações com PII acontecem no servidor.
 const {randomUUID}=require('node:crypto');
 const c=require('../lib/backoffice-core');
-const db=require('../lib/backoffice-data');
-const auth=require('../lib/backoffice-auth');
+const db=require('../lib/backoffice-neon');
+const auth=require('../lib/backoffice-neon-auth');
 const areas=require('../delivery-areas.json');
 
 function respond(res,status,payload){return res.status(status).json(payload);}
@@ -29,7 +29,7 @@ async function action(req,actor,body){
  if(a==='manual_order'){
   const customer=await db.upsertCustomer({name:c.name(body.name),phone:c.phone(body.phone)});
   const fulfillment=(await import('../fulfillment.mjs')).normalizeFulfillment(body.fulfillment,areas);
-  const catalog=(await db.query('restaurant_catalogs',{filter:{...db.scope,select:'catalog',limit:1}}))?.[0]?.catalog;
+  const catalog=(await db.getCatalog()).catalog;
   if(!catalog)throw new db.StoreError('Catálogo indisponível.');
   const {priceOrder}=await import('../order-catalog.mjs');
   const items=priceOrder(catalog,body.lines);
@@ -92,7 +92,7 @@ async function action(req,actor,body){
    c.fail('Seleção de produto inválida.');
   return {catalog:await db.changePrice({
    category:body.category,product:body.product,variant:body.variant,
-   priceCents:c.cents(body.priceCents),revision:body.revision
+   priceCents:c.cents(body.priceCents),revision:body.revision,actorId:actor.id
   })};
  }
  throw new db.StoreError('Ação desconhecida.',404);
@@ -103,21 +103,22 @@ module.exports=async function handler(req,res){
  try{
   const method=req.method||'GET';
   const act=method==='GET'?String(req.query?.action||'status'):req.body?.action;
-  if(method==='GET'&&act==='status')return respond(res,200,{enabled:db.configured()&&
-   !!process.env.SUPABASE_URL&&!!process.env.SUPABASE_SECRET_KEY&&!!process.env.SUPABASE_PUBLISHABLE_KEY});
+  if(method==='GET'&&act==='status')return respond(res,200,{enabled:db.configured()&&auth.configured(),provider:'neon'});
   if(!['GET','POST'].includes(method))return respond(res,405,{error:'Método inválido.'});
   if(method==='POST')auth.originGuard(req);
   if(method==='POST'&&act==='logout'){
-   auth.clearCookies(res);return respond(res,200,{ok:true});
+   await auth.logout(req,res);return respond(res,200,{ok:true});
   }
-  if(!db.configured())throw new db.StoreError('Backoffice ainda não configurado para uso real.');
+  if(!db.configured()||!auth.configured())throw new db.StoreError('Backoffice Neon/Auth ainda não configurado para uso real.');
   if(method==='POST'&&act==='login'){
    const actor=await auth.login(req,res,payload(req));
    return respond(res,200,{actor});
   }
-  const actor=await auth.actor(req,res);
+  const actor=await auth.actor(req);
   if(method==='GET'){
    if(act==='dashboard')return respond(res,200,{actor,...await db.dashboard()});
+   if(act==='catalog')return respond(res,200,{catalog:await db.getCatalog()});
+   if(act==='customers')return respond(res,200,{customers:await db.searchCustomers(req.query?.term,req.query?.cursor||0)});
    if(act==='events')return respond(res,200,{events:await db.events(requireId(req.query?.id))});
    if(act==='session')return respond(res,200,{actor});
    return respond(res,404,{error:'Recurso não encontrado.'});
