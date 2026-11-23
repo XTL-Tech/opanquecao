@@ -213,8 +213,17 @@
   card.hidden=false;btn.disabled=true;
   try{
    const info=await request('/api/asaas-sandbox');
-   btn.disabled=!info.enabled;
    const latest=info.recent?.[0];
+   const unresolved=info.recent?.find(x=>x.status==='uncertain'&&!x.reviewed_at&&x.scenario===$('#asaasScenario').value);
+   btn.disabled=!info.enabled||!!unresolved;
+   const resolve=$('#asaasSandboxResolve');
+   resolve.hidden=!unresolved;
+   resolve.dataset.id=unresolved?.id||'';
+   resolve.dataset.reference=unresolved?.external_ref||'';
+   if(unresolved){
+    $('#asaasSandboxLink').textContent='⚠️ Checkout pendente de conciliação no Asaas Sandbox. Referência: '+
+     unresolved.external_ref+'. Não tente criar outro até confirmar que esta tentativa não existe no Asaas.';
+   }
    $('#asaasSandboxStatus').textContent=info.enabled?
     'Sandbox configurado · Último teste: '+(latest?latest.status+' ('+time(latest.created_at)+')':'nenhum'):
     'Configure chave e webhook Sandbox na Vercel para liberar os testes.';
@@ -428,6 +437,33 @@
   $('#manualCategory').addEventListener('change',fillProduct);
   $('#manualProduct').addEventListener('change',fillVariant);
   $('#countedCash').addEventListener('input',updateDifference);
+  $('#asaasScenario').addEventListener('change',()=>refreshAsaas());
+  $('#asaasSandboxResolve').addEventListener('click',async()=>{
+   const b=$('#asaasSandboxResolve'),reference=b.dataset.reference;
+   if(!reference)return;
+   const typed=prompt('Verifique primeiro no painel oficial do Asaas Sandbox que NÃO existe checkout para a referência '+reference+
+    '. Para confirmar a ausência e liberar novo teste, digite exatamente a referência:');
+   if(typed!==reference)return show('Reconciliação cancelada. Nenhum registro alterado.',true);
+   b.disabled=true;
+   try{
+    await request('/api/asaas-sandbox',{action:'confirm_absent_sandbox_checkout',
+     recordId:b.dataset.id,confirmation:'CONFIRMO_AUSENCIA_NO_ASAAS'});
+    $('#asaasSandboxLink').textContent='Tentativa anterior revisada pela gestão; nenhuma cobrança real registrada.';
+    show('Revisão registrada. Confira novamente a conexão Asaas antes de um novo checkout.');
+   }catch(e){show(e.message,true);}
+   finally{b.disabled=false;await refreshAsaas();}
+  });
+  $('#asaasSandboxProbe').addEventListener('click',async()=>{
+   const b=$('#asaasSandboxProbe');b.disabled=true;
+   const status=$('#asaasSandboxProbeStatus');status.textContent='Verificando conexão sem gerar cobrança...';
+   try{
+    const result=await request('/api/asaas-sandbox',{action:'check_sandbox_connection'});
+    status.textContent=result.connected?'✅ Chave Sandbox aceita (HTTP '+result.httpStatus+').':
+     '⚠️ Falha na conexão Sandbox ('+(result.httpStatus?'HTTP '+result.httpStatus:'rede')+
+     ', código '+result.providerCode+'). Verifique sua API Key e as restrições da conta.';
+   }catch(e){status.textContent='⚠️ Falha no teste de conexão: '+e.message;}
+   finally{b.disabled=false;}
+  });
   $('#asaasSandboxCreate').addEventListener('click',async()=>{
    const b=$('#asaasSandboxCreate');b.disabled=true;
    try{
@@ -435,11 +471,14 @@
     const label={pix:'Pix',credit_card:'cartão de crédito',both:'Pix ou cartão'}[scenario];
     if(!label||!confirm('Criar checkout FICTÍCIO de R$ 5,00 ('+label+') no Asaas Sandbox?'))return;
     const result=await request('/api/asaas-sandbox',{action:'create_sandbox_checkout',scenario});
-    const a=el('a','Abrir página de teste do Asaas');a.href=result.link;
+    const a=el('a','🔗 ABRIR CHECKOUT PIX/CARTÃO NO ASAAS');a.href=result.link;
     a.target='_blank';a.rel='noopener noreferrer';
     $('#asaasSandboxLink').replaceChildren(a);
-    show('Checkout fictício criado. Confira o Asaas Sandbox, sem pagamento real.');
-   }catch(e){show(e.message,true);}
+    show('Checkout fictício criado. Toque no link destacado para abrir a página do Asaas.');
+   }catch(e){
+    $('#asaasSandboxLink').textContent='⚠️ '+e.message;
+    show(e.message,true);
+   }
    finally{await refreshAsaas();}
   });
   $('#customerForm').addEventListener('submit',async e=>{

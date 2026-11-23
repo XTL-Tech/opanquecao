@@ -16,7 +16,8 @@ assert.match(neonSource,/status IN \('creating','active','uncertain'\)/,
  'Webhook atrasado não pode reativar checkout cancelado, expirado ou pago');
 assert.doesNotMatch(sandboxSource,/https:\/\/api\.asaas\.com\/v3/,
  'Rotas de homologação jamais devem chamar a API de cobrança real');
-assert.match(sandboxSource,/https:\/\/api-sandbox\.asaas\.com\/v3\/checkouts/);
+assert.match(sandboxSource,/https:\/\/api-sandbox\.asaas\.com\/v3/);
+assert.match(sandboxSource,/SANDBOX_API\+'\/checkouts'/);
 const oldEnv=Object.fromEntries(['ASAAS_SANDBOX_ENABLED','ASAAS_SANDBOX_API_KEY',
  'ASAAS_SANDBOX_WEBHOOK_TOKEN','BACKOFFICE_ENABLED','BACKOFFICE_PROVIDER',
  'DATABASE_URL','NEON_AUTH_BASE_URL'].map(x=>[x,process.env[x]]));
@@ -24,7 +25,7 @@ const oldFetch=global.fetch;
 const original={
  configured:db.configured,
  recent:db.sandboxRecent,claim:db.sandboxClaim,attach:db.sandboxAttach,
- uncertain:db.sandboxMarkUncertain,event:db.sandboxEvent,
+ uncertain:db.sandboxMarkUncertain,reconcile:db.sandboxConfirmAbsent,event:db.sandboxEvent,
  actor:auth.actor,authConfigured:auth.configured
 };
 const secret='test-webhook-token-xxxxxxxxxxxxxxxxxxxxxxxxxxxx';
@@ -45,6 +46,8 @@ db.sandboxClaim=async()=>({created:true,record});
 let attached=[],uncertain=[],hits=[],transitions=[];
 db.sandboxAttach=async(id,providerId)=>attached.push({id,providerId});
 db.sandboxMarkUncertain=async(id)=>uncertain.push(id);
+let reconciled=0;
+db.sandboxConfirmAbsent=async(actorId,id)=>{reconciled++;assert.equal(actorId,'gestor-ficticio');assert.equal(id,record.id);return{reviewed:true};};
 db.sandboxEvent=async(x)=>{transitions.push(x);return {matched:1,inserted:1,updated:1};};
 const origin={host:'opanquecao.vercel.app',origin:'https://opanquecao.vercel.app'};
 async function req(handler,method,body={},headers={}){
@@ -77,6 +80,39 @@ const fakeFetch=async(url,opts)=>{
  assert.match(hits[0].payload.callback.successUrl,/asaas-return\.html/);
  assert.equal(attached.length,1);
 
+ // Diagnóstico de chave e acesso é GET somente-leitura para o Asaas, sem checkout.
+ const connectionFetch=global.fetch;
+ global.fetch=async(url,opts)=>{
+  assert.equal(String(url),'https://api-sandbox.asaas.com/v3/myAccount/status/');
+  assert.equal(opts.method,'GET');
+  assert.equal(opts.body,undefined);
+  return providerResponse({general:'APPROVED'},200);
+ };
+ let diagnostic=await req(checkout,'POST',{action:'check_sandbox_connection'},origin);
+ assert.equal(diagnostic.code,200);assert.equal(diagnostic.body.connected,true);
+ assert.equal(diagnostic.body.httpStatus,200);
+ assert.equal(diagnostic.body.environment,'sandbox');
+ global.fetch=async()=>providerResponse({errors:[{code:'invalid_token'}]},401);
+ diagnostic=await req(checkout,'POST',{action:'check_sandbox_connection'},origin);
+ assert.equal(diagnostic.code,200);assert.equal(diagnostic.body.connected,false);
+ assert.equal(diagnostic.body.httpStatus,401);
+ assert.equal(diagnostic.body.providerCode,'invalid_token');
+ global.fetch=connectionFetch;
+ assert.match(neonSource,/status='uncertain' AND reviewed_at IS NULL/,
+  'Checkout incerto deve bloquear novas tentativas mesmo após janela de 10 minutos');
+
+ // Conciliação não executa nenhuma operação no Asaas e exige confirmação explícita.
+ let confirmResponse=await req(checkout,'POST',
+  {action:'confirm_absent_sandbox_checkout',recordId:record.id,confirmation:'NO'},origin);
+ assert.equal(confirmResponse.code,400);
+ assert.equal(reconciled,0);
+ confirmResponse=await req(checkout,'POST',
+  {action:'confirm_absent_sandbox_checkout',recordId:record.id,
+   confirmation:'CONFIRMO_AUSENCIA_NO_ASAAS'},origin);
+ assert.equal(confirmResponse.code,200);
+ assert.equal(confirmResponse.body.reviewed,true);
+ assert.equal(reconciled,1);
+ assert.match(fs.readFileSync('neon/migrations/003_asaas_uncertain_reconciliation.sql','utf8'),/reviewed_by/);
  // Não permitir criação sem autenticação, sem origem legítima ou sem habilitação.
  const before=hits.length;
  response=await req(checkout,'POST',{action:'create_sandbox_checkout'},
@@ -105,6 +141,8 @@ const fakeFetch=async(url,opts)=>{
  global.fetch=async()=>providerResponse({errors:[{code:'invalid_object'}]},400);
  response=await req(checkout,'POST',{action:'create_sandbox_checkout'},origin);
  assert.equal(response.code,503);assert.equal(uncertain.length,1);
+ assert.equal(response.body.providerStatus,400);
+ assert.equal(response.body.providerCode,'invalid_object');
  global.fetch=async()=>{throw Error('ETIMEDOUT');};
  response=await req(checkout,'POST',{action:'create_sandbox_checkout'},origin);
  assert.equal(response.code,503);assert.equal(uncertain.length,2);
@@ -160,6 +198,6 @@ const fakeFetch=async(url,opts)=>{
  for(const [k,v] of Object.entries(oldEnv)){if(v===undefined)delete process.env[k];else process.env[k]=v;}
  Object.assign(db,{configured:original.configured,sandboxRecent:original.recent,
   sandboxClaim:original.claim,sandboxAttach:original.attach,
-  sandboxMarkUncertain:original.uncertain,sandboxEvent:original.event});
+  sandboxMarkUncertain:original.uncertain,sandboxConfirmAbsent:original.reconcile,sandboxEvent:original.event});
  auth.actor=original.actor;auth.configured=original.authConfigured;
 });
