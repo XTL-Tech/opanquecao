@@ -1,6 +1,7 @@
 'use strict';
 
 const { orderPdf } = require('../lib/order-pdf');
+const backoffice=require('../lib/backoffice-data');
 const { loadCatalog } = require('../lib/catalog-source');
 const { loadStoreStatus } = require('../lib/store-hours-source');
 const deliveryAreas = require('../delivery-areas.json');
@@ -170,6 +171,32 @@ module.exports = async function handler(req, res) {
             error:'Não foi possível gerar o cupom para a loja. Tente novamente ou contate o estabelecimento.'
         });
     }
+    // Backoffice: persistir e reivindicar referência ANTES de emitir o alerta.
+    // Em produção, se habilitado, banco indisponível => fail-closed, sem
+    // notificações soltas e sem dois pedidos com o mesmo requestId.
+    // Preview NÃO cria cliente/pedido real, mesmo com variáveis configuradas.
+    let persisted = false;
+    if (backoffice.configured() && !preview) {
+        try {
+            const customer=await backoffice.upsertCustomer({name:clean(name,80),phone:normalizedPhone});
+            const claimed=await backoffice.createOrder({
+                requestId,customer,items:validated,fulfillment:deliveryDetails,
+                note:clean(note,400),origin:'site',status:'pending_customer',telegramState:'pending'
+            });
+            if (!claimed.created) {
+                return claimed.record.telegram_state==='sent'
+                    ? res.status(201).json({id,status:'registered',test:false,replayed:true})
+                    : res.status(202).json({id,pending:true,
+                        error:'Este pré-pedido já existe, mas o envio ao Telegram requer conferência. Não reenvie automaticamente.'});
+            }
+            persisted=true;
+        } catch {
+            console.warn(JSON.stringify({event:'whatsapp_intent',id,status:'database_unavailable'}));
+            return res.status(503).json({
+                error:'Não foi possível registrar o pedido com segurança. Fale com a loja no WhatsApp.'
+            });
+        }
+    }
     const parts = splitTelegram((preview ? '🧪 TESTE — NÃO PREPARAR!\n\n' : '') + operatorText);
     let started = false;
     let firstTelegramMessageId = null;
@@ -220,9 +247,21 @@ module.exports = async function handler(req, res) {
         });
         const receiptResult = await sentReceipt.json();
         if (!sentReceipt.ok || receiptResult.ok !== true) throw new Error('Falha no cupom Telegram');
+        if(persisted){
+            try {
+                await backoffice.patchOrder(requestId,{telegram_state:'eq.pending'},{telegram_state:'sent'});
+            }catch{
+                return res.status(202).json({id,pending:true,
+                    error:'A loja pode ter recebido o pré-pedido, mas o registro no painel requer conferência. Não reenvie.'});
+            }
+        }
         console.info(JSON.stringify({ event: 'whatsapp_intent', id, status: 'registered', receipt: true, preview }));
         return res.status(201).json({ id, status: 'registered', test: preview });
     } catch {
+        if(persisted){
+            try { await backoffice.patchOrder(requestId,{telegram_state:'eq.pending'},{telegram_state:'uncertain'}); }
+            catch { /* Status incerto deve ser conferido manualmente. */ }
+        }
         console.warn(JSON.stringify({ event: 'whatsapp_intent', id, status: 'uncertain', preview }));
         // Pode ter chegado ao Telegram mesmo se a resposta falhar. Não reenviar automaticamente.
         return res.status(202).json({

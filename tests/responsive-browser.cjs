@@ -397,6 +397,31 @@ function within(rect,width){
             assert.match(opened,/Bacon/,'Link público de produto abriu ficha errada em '+width);
             console.log('PASS SEO Chromium '+width+': 12 páginas, 82 nomes, imagens e links diretos para ficha.');
         }
+        // Backoffice DEMO: teste real da interface, sempre sem credenciais ou dados de clientes.
+        for(const width of [390,1440]){
+            await cdp.call('Emulation.setDeviceMetricsOverride',{
+                width,height:width===390?844:900,deviceScaleFactor:1,mobile:width<900
+            });
+            await cdp.call('Page.navigate',{url:'http://127.0.0.1:'+port+'/backoffice/index.html?demo=1'});
+            await waitFor(()=>cdp.eval(
+                'location.pathname==="/backoffice/index.html" && !document.getElementById("appShell").hidden && document.querySelectorAll("#ordersTable tr").length===4'
+            ),10000);
+            const dimensions=await cdp.eval('({scroll:document.documentElement.scrollWidth,width:innerWidth,rows:document.querySelectorAll("#ordersTable tr").length,notice:!document.getElementById("demoRibbon").hidden})');
+            assert.ok(dimensions.scroll<=width+2,'Rolagem lateral no backoffice '+width+': '+JSON.stringify(dimensions));
+            assert.equal(dimensions.notice,true,'Backoffice não sinaliza dados fictícios');
+            await cdp.eval('document.querySelector("#ordersTable .td-btn").click()');
+            await waitFor(()=>cdp.eval('document.getElementById("detailDialog").open'),4000);
+            assert.equal(await cdp.eval('document.querySelectorAll("#detailBody .lines li").length'),1);
+            await cdp.eval('document.getElementById("detailDialog").close();document.querySelector("[data-tab=customers]").click()');
+            assert.equal(await cdp.eval('!document.getElementById("tab-customers").hidden'),true);
+            await cdp.eval('document.querySelector("[data-tab=cash]").click()');
+            assert.equal(await cdp.eval('document.querySelectorAll("#cashCards .cash-tile").length'),6);
+            await cdp.eval('document.querySelector("[data-tab=catalog]").click()');
+            assert.ok(await cdp.eval('document.querySelectorAll("#catalogTable tr").length>=82'),
+                'Não carregou editor de preços no backoffice '+width);
+            await shot('backoffice-demo-'+width);
+            console.log('PASS BACKOFFICE Chromium '+width+': navegação, pedido, clientes, caixa, preços e dados fictícios.');
+        }
         console.log('PASS responsividade em Chromium real, sem pedido enviado.');
     }finally{
         try{socket?.close()}catch{}

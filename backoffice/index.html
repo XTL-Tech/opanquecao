@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<meta name="theme-color" content="#681b30">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; font-src 'self'; form-action 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'">
+<title>Backoffice | Disk Panquecão</title>
+<link rel="icon" href="/img/logo-disk-panquecao.webp">
+<link rel="stylesheet" href="/backoffice/style.css">
+<script src="/backoffice/app.js" defer></script>
+</head>
+<body>
+<div id="appShell" hidden>
+ <aside class="sidebar" aria-label="Navegação principal">
+  <div class="brand"><img src="/img/logo-disk-panquecao.webp" alt="Disk Panquecão"><div><strong>DISK PANQUECÃO</strong><span>Central de atendimento</span></div></div>
+  <div class="side-caption">OPERAÇÃO</div>
+  <nav id="navigation" class="nav">
+   <button data-tab="orders" class="active" type="button"><span aria-hidden="true">▤</span> Pedidos <span id="pendingCount" class="count"></span></button>
+   <button data-tab="customers" type="button"><span aria-hidden="true">♙</span> Clientes</button>
+   <button data-tab="cash" type="button"><span aria-hidden="true">▣</span> Caixa diário</button>
+   <button data-tab="catalog" type="button"><span aria-hidden="true">≡</span> Preços do cardápio</button>
+  </nav>
+  <div class="sidebar-foot"><div id="staffLabel">—</div><small id="staffRole"></small><button id="logout" class="soft" type="button">Sair da conta</button><small>Gestão por <b>XTL TECH</b></small></div>
+ </aside>
+ <div class="workspace">
+  <header class="topbar">
+   <div><span class="eyebrow">DISK PANQUECÃO · GESTÃO</span><h1 id="pageTitle">Pedidos</h1><p id="pageSubtitle">Acompanhe os pedidos, do primeiro contato à entrega.</p></div>
+   <div class="header-actions"><span id="todayText" class="date-tag"></span><button type="button" id="refresh" class="soft">↻ Atualizar</button></div>
+  </header>
+  <div id="demoRibbon" class="demo-ribbon" hidden>DEMONSTRAÇÃO — DADOS FICTÍCIOS · ALTERAÇÕES NÃO SÃO SALVAS NA LOJA</div>
+  <div id="notice" role="status" aria-live="polite" hidden></div>
+  <main>
+   <section id="tab-orders">
+    <div class="stats" id="orderStats"></div>
+    <div class="toolbar"><input id="orderSearch" type="search" placeholder="Buscar código, cliente ou telefone" aria-label="Buscar pedidos">
+      <select id="orderStatusFilter" aria-label="Filtrar status">
+       <option value="">Todos os status</option><option value="pending_customer">Aguardando cliente</option>
+       <option value="awaiting_acceptance">Aguardando aceite</option><option value="accepted">Aceitos</option>
+       <option value="completed">Concluídos</option><option value="delivered">Entregues</option><option value="cancelled">Cancelados</option>
+      </select>
+      <button class="primary" id="newOrder" type="button">+ Pedido manual</button>
+    </div>
+    <div class="table-wrap"><table><thead><tr><th>Pedido</th><th>Cliente</th><th>Modalidade</th><th>Subtotal</th><th>Situação</th><th>Horário</th><th></th></tr></thead><tbody id="ordersTable"></tbody></table></div>
+    <p id="ordersEmpty" class="empty" hidden>Nenhum pedido encontrado.</p>
+    <small class="hint">Pré-pedido não é pedido confirmado. Só aceite após contato com o cliente. Pagamento é registrado manualmente quando recebido.</small>
+   </section>
+   <section id="tab-customers" hidden>
+    <div class="section-head"><div><h2>Cadastro de clientes</h2><p>Consulta e atualização de contatos. Dados pessoais acessíveis somente à equipe autorizada.</p></div><button class="primary" id="newCustomer" type="button">+ Novo cliente</button></div>
+    <div class="toolbar"><input id="clientSearch" type="search" placeholder="Buscar nome ou telefone" aria-label="Buscar clientes"></div>
+    <div class="table-wrap"><table><thead><tr><th>Nome</th><th>WhatsApp</th><th>Observações</th><th></th></tr></thead><tbody id="customersTable"></tbody></table></div>
+   </section>
+   <section id="tab-cash" hidden>
+    <div class="section-head"><div><h2>Fechamento do dia</h2><p>Somente pedidos entregues e com pagamento confirmado entram no fechamento.</p></div><span id="cashStatus" class="status-tag"></span></div>
+    <div class="cash-grid" id="cashCards"></div>
+    <form id="cashForm" class="form-card">
+      <h3>Conferência do dinheiro</h3>
+      <div class="form-grid"><label>Dinheiro contado no caixa (R$)<input id="countedCash" inputmode="decimal" required placeholder="0,00"></label>
+      <label>Observações do fechamento<input id="cashNotes" maxlength="500" placeholder="Opcional"></label></div>
+      <p id="cashDifference" class="hint">Informe quanto há em dinheiro físico.</p>
+      <button class="primary" type="submit">Confirmar fechamento diário</button>
+      <p class="hint">O fechamento é definitivo no MVP. Divergências e estornos devem ser reconciliados pela gestão.</p>
+    </form>
+    <div class="section-head"><h3>Histórico de fechamentos</h3></div>
+    <div class="table-wrap"><table><thead><tr><th>Data</th><th>Pedidos</th><th>Vendas</th><th>Dinheiro</th><th>Diferença</th></tr></thead><tbody id="closingsTable"></tbody></table></div>
+   </section>
+   <section id="tab-catalog" hidden>
+    <div class="section-head"><div><h2>Preços do cardápio</h2><p>Edição controlada de preços, tamanhos e adicionais. Nomes, fotos e receitas permanecem inalterados.</p></div><span class="status-tag">Gestão</span></div>
+    <div class="toolbar"><input id="catalogSearch" type="search" placeholder="Pesquisar produto ou categoria" aria-label="Pesquisar cardápio"></div>
+    <div id="catalogNotice" class="hint"></div>
+    <div class="table-wrap"><table><thead><tr><th>Categoria / Produto</th><th>Variação</th><th>Preço vigente</th><th></th></tr></thead><tbody id="catalogTable"></tbody></table></div>
+   </section>
+  </main>
+ </div>
+</div>
+<section id="loginScreen" class="login-screen">
+ <div class="login-card">
+  <img src="/img/logo-disk-panquecao.webp" alt="Disk Panquecão" class="login-logo">
+  <p class="eyebrow">XTL TECH · BACKOFFICE</p>
+  <h1>Central de atendimento</h1>
+  <p>Acesse os pedidos, clientes, caixa e valores do cardápio.</p>
+  <div id="setupNotice" class="setup-notice" hidden>O painel real aguarda a configuração do banco exclusivo e das contas autorizadas. Enquanto isso, você pode experimentar a demonstração com dados fictícios.</div>
+  <form id="loginForm">
+   <label>E-mail de acesso<input type="email" id="email" autocomplete="username" required placeholder="atendimento@exemplo.com"></label>
+   <label>Senha<input type="password" id="password" autocomplete="current-password" minlength="8" required placeholder="Sua senha de acesso"></label>
+   <button class="primary full" type="submit">Entrar no backoffice</button>
+  </form>
+  <p id="loginError" class="error" role="alert"></p>
+  <a class="demo-link" href="/backoffice/?demo=1">Experimentar demonstração com dados fictícios</a>
+  <a class="site-link" href="/">← Voltar ao cardápio</a>
+ </div>
+</section>
+<dialog id="detailDialog" class="dialog"><div class="dialog-content"><header class="dialog-head"><div><span class="eyebrow" id="detailEyebrow">PEDIDO</span><h2 id="detailTitle">Pedido</h2></div><button type="button" class="close" data-close="detailDialog" aria-label="Fechar">×</button></header><div id="detailBody"></div><footer id="detailActions" class="dialog-actions"></footer></div></dialog>
+<dialog id="customerDialog" class="dialog"><form id="customerForm" class="dialog-content"><header class="dialog-head"><h2 id="customerFormTitle">Cliente</h2><button type="button" class="close" data-close="customerDialog" aria-label="Fechar">×</button></header><input type="hidden" id="customerId"><label>Nome<input id="customerName" required maxlength="80"></label><label>WhatsApp com DDD<input id="customerPhone" required inputmode="tel"></label><label>Observações internas<textarea id="customerNotes" maxlength="500" rows="3"></textarea></label><button class="primary full" type="submit">Salvar cliente</button></form></dialog>
+<dialog id="manualDialog" class="dialog"><form id="manualForm" class="dialog-content"><header class="dialog-head"><h2>Novo pedido manual</h2><button type="button" class="close" data-close="manualDialog" aria-label="Fechar">×</button></header>
+<p class="hint">Use quando o cliente fizer contato diretamente. O valor é recalculado pelo catálogo no servidor.</p>
+<label>Nome do cliente<input name="name" required maxlength="80"></label><label>WhatsApp com DDD<input name="phone" inputmode="tel" required></label>
+<label>Atendimento<select name="type"><option value="pickup">Retirada</option><option value="table">Mesa</option><option value="delivery">Entrega</option></select></label>
+<div id="manualTable" hidden><label>Mesa/comanda<input name="table" maxlength="12"></label></div>
+<div id="manualDelivery" hidden><div class="form-grid"><label>Cidade<select id="manualCity"><option value="Nova Hartz">Nova Hartz</option><option value="Araricá">Araricá</option></select></label><label>Bairro<select id="manualNeighborhood"></select></label></div><label>Rua ou estrada<input id="manualStreet"></label><label>Número<input id="manualNumber"></label><label>Complemento<input id="manualComplement"></label></div>
+<div class="form-grid"><label>Categoria<select id="manualCategory"></select></label><label>Produto<select id="manualProduct"></select></label></div><div class="form-grid"><label>Opção<select id="manualVariant"></select></label><label>Quantidade<input id="manualQuantity" type="number" min="1" max="20" value="1"></label></div>
+<label>Observações<input id="manualNote" maxlength="400"></label>
+<button class="primary full" type="submit">Criar pedido manual</button><p class="hint">Personalizações complexas e dois sabores devem ser montados pelo cardápio público.</p>
+</form></dialog>
+<dialog id="priceDialog" class="dialog"><form id="priceForm" class="dialog-content"><header class="dialog-head"><h2>Alterar preço</h2><button type="button" class="close" data-close="priceDialog" aria-label="Fechar">×</button></header><p id="priceDescription"></p><input type="hidden" id="priceCategory"><input type="hidden" id="priceProduct"><input type="hidden" id="priceVariant"><label>Novo preço (R$)<input id="newPrice" inputmode="decimal" placeholder="32,00" required></label><p class="hint">Esta mudança afeta somente pedidos novos. Os pedidos antigos preservam o preço registrado.</p><button class="primary full" type="submit">Salvar preço</button></form></dialog>
+</body></html>
