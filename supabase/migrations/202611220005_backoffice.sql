@@ -100,6 +100,12 @@ revoke all on public.restaurant_customers from public,anon,authenticated;
 revoke all on public.restaurant_orders from public,anon,authenticated;
 revoke all on public.restaurant_order_events from public,anon,authenticated;
 revoke all on public.restaurant_cash_closings from public,anon,authenticated;
+grant select,insert,update on public.restaurant_staff to service_role;
+grant select,insert,update on public.restaurant_customers to service_role;
+grant select,insert,update on public.restaurant_orders to service_role;
+grant select,insert on public.restaurant_order_events to service_role;
+grant select,insert on public.restaurant_cash_closings to service_role;
+grant usage,select on sequence public.restaurant_order_events_event_id_seq to service_role;
 
 -- Lock curto por dia para serializar liquidações e fechamento.
 -- Impede contabilizar pedido após encerramento do respectivo dia.
