@@ -55,7 +55,14 @@
   if(!response.ok)throw Error(data.error||'Não foi possível concluir a operação.');
   return data;
  }
- function client(id){return S.data?.customers.find(x=>x.id===id)||null;}
+ function client(id){
+  const known=S.data?.customers.find(x=>x.id===id);
+  if(known)return known;
+  // Pedidos trazem nome/telefone em JOIN paginado, sem ter de ler
+  // todos os milhares de clientes da base.
+  const order=S.data?.orders.find(x=>x.customer_id===id);
+  return order?{id,name:order.customer_name,phone:order.customer_phone}:null;
+ }
  async function demoAction(action,body){
   const d=S.data;
   if(action==='order_status'){const o=d.orders.find(x=>x.request_id===body.id);o.status=body.next;
@@ -109,10 +116,21 @@
  }
  async function reload(){
   try{
-   if(!S.demo)S.data=await request('/api/backoffice?action=dashboard');
-   else S.data.cash=tally();
+   if(!S.demo){
+    const next=await request('/api/backoffice?action=dashboard');
+    if(S.data?.catalog)next.catalog=S.data.catalog;
+    S.data=next;S.moreOrders=next.orders.length>=80;
+   }else S.data.cash=tally();
    render();
   }catch(e){show(e.message,true);if(!S.demo&&/login|sessão|Conta sem/i.test(e.message))loggedOut();}
+ }
+ async function ensureCatalog(force=false){
+  if(S.demo||(!force&&S.data?.catalog?.catalog))return;
+  try{
+   const result=await request('/api/backoffice?action=catalog');
+   S.data.catalog=result.catalog;
+   if(S.tab==='catalog')renderCatalog();
+  }catch(e){show(e.message,true);}
  }
  function showTab(tab){
   S.tab=tab;for(const name of ['orders','customers','cash','catalog'])$('#tab-'+name).hidden=name!==tab;
@@ -122,7 +140,10 @@
    cash:['Caixa diário','Conferência e fechamento dos pagamentos recebidos.'],
    catalog:['Preços do cardápio','Ajuste de valores, com histórico e autorização.']};
   $('#pageTitle').textContent=meta[tab][0];$('#pageSubtitle').textContent=meta[tab][1];
-  if(S.data)renderTab();
+  if(S.data){
+   renderTab();if(tab==='catalog')ensureCatalog(true);
+   if(tab==='cash')refreshAsaas();
+  }
  }
  function render(){if(!S.data)return;$('#todayText').textContent='📅 '+S.data.today.split('-').reverse().join('/');
   $('#staffLabel').textContent=S.actor.email||'Atendente';
@@ -131,18 +152,42 @@
   renderTab();
  }
  function renderTab(){if(S.tab==='orders')renderOrders();if(S.tab==='customers')renderCustomers();if(S.tab==='cash')renderCash();if(S.tab==='catalog')renderCatalog();}
+ async function lookupOrders(more=false){
+  if(S.demo||!S.data)return renderOrders();
+  try{
+   const term=$('#orderSearch').value.trim(),status=$('#orderStatusFilter').value;
+   const last=more?S.data.orders.at(-1):null;
+   const q=new URLSearchParams({action:'orders',term,status});
+   if(last?.created_at&&last.request_id){
+    q.set('before',last.created_at);q.set('beforeId',last.request_id);
+   }
+   const result=await request('/api/backoffice?'+q.toString());
+   const rows=result.orders||[];
+   S.moreOrders=rows.length>50;
+   const page=rows.slice(0,50);
+   if(more){
+    const existing=new Set(S.data.orders.map(x=>x.request_id));
+    S.data.orders.push(...page.filter(x=>!existing.has(x.request_id)));
+   }else S.data.orders=page;
+   renderOrders();
+  }catch(e){show(e.message,true);}
+ }
  function renderOrders(){
   const orders=S.data.orders,term=$('#orderSearch').value.trim().toLowerCase(),filter=$('#orderStatusFilter').value;
-  clear($('#orderStats'));stat('#orderStats','Aguardando cliente',orders.filter(o=>o.status==='pending_customer').length);
-  stat('#orderStats','Aguardando aceite',orders.filter(o=>o.status==='awaiting_acceptance').length);
-  stat('#orderStats','Em atendimento',orders.filter(o=>['accepted','completed'].includes(o.status)).length);
-  stat('#orderStats','Entregues',orders.filter(o=>o.status==='delivered').length);
+  const counts=S.data.queueCounts||{};
+  clear($('#orderStats'));stat('#orderStats','Aguardando cliente',counts.pending_customer??orders.filter(o=>o.status==='pending_customer').length);
+  stat('#orderStats','Aguardando aceite',counts.awaiting_acceptance??orders.filter(o=>o.status==='awaiting_acceptance').length);
+  stat('#orderStats','Em atendimento',S.data.queueCounts?
+   (counts.accepted||0)+(counts.completed||0):orders.filter(o=>['accepted','completed'].includes(o.status)).length);
+  stat('#orderStats','Entregues e pagos hoje',S.data.queueCounts?
+   S.data.cash.orders:orders.filter(o=>o.status==='delivered').length);
   const target=$('#ordersTable');clear(target);
   const matches=orders.filter(o=>{
    const cl=client(o.customer_id),s=[o.ref_code,cl?.name,cl?.phone].join(' ').toLowerCase();
    return (!filter||o.status===filter)&&(!term||s.includes(term));
   });
   $('#ordersEmpty').hidden=matches.length>0;
+  $('#moreOrders').hidden=S.demo||(!S.moreOrders&&orders.length<80);
   for(const o of matches){
    const tr=el('tr');td(tr,'#'+o.ref_code,'td-primary');const who=td(tr,client(o.customer_id)?.name||'Cliente indisponível');
    who.append(el('small',client(o.customer_id)?.phone||'', 'td-secondary'));
@@ -159,6 +204,21 @@
    const tr=el('tr');td(tr,c.name,'td-primary');td(tr,c.phone);td(tr,c.notes?.slice(0,80)||'—');
    td(tr,null).append(button('Editar',()=>openCustomer(c),'td-btn'));target.append(tr);
   }
+ }
+ async function refreshAsaas(){
+  const card=$('#asaasSandboxCard'),btn=$('#asaasSandboxCreate');
+  if(S.demo||S.actor?.role!=='manager'){
+   card.hidden=true;return;
+  }
+  card.hidden=false;btn.disabled=true;
+  try{
+   const info=await request('/api/asaas-sandbox');
+   btn.disabled=!info.enabled;
+   const latest=info.recent?.[0];
+   $('#asaasSandboxStatus').textContent=info.enabled?
+    'Sandbox configurado · Último teste: '+(latest?latest.status+' ('+time(latest.created_at)+')':'nenhum'):
+    'Configure chave e webhook Sandbox na Vercel para liberar os testes.';
+  }catch(e){btn.disabled=true;$('#asaasSandboxStatus').textContent='Sandbox indisponível: '+e.message;}
  }
  function renderCash(){
   const data=S.data,date=data.today,closing=data.closings.find(x=>x.business_date===date);
@@ -276,7 +336,10 @@
   openDialog('detailDialog');
  }
  async function mutate(action,body,success){
-  try{await run(action,body);await reload();closeDialog('detailDialog');closeDialog('customerDialog');closeDialog('priceDialog');closeDialog('manualDialog');show(S.demo?'DEMONSTRAÇÃO: '+success:success);}
+  try{
+   const result=await run(action,body);
+   if(action==='catalog_price'&&result?.catalog)S.data.catalog=result.catalog;
+   await reload();closeDialog('detailDialog');closeDialog('customerDialog');closeDialog('priceDialog');closeDialog('manualDialog');show(S.demo?'DEMONSTRAÇÃO: '+success:success);}
   catch(e){show(e.message,true);}
  }
  function openCustomer(c){
@@ -333,15 +396,50 @@
   for(const b of document.querySelectorAll('[data-close]'))b.addEventListener('click',()=>closeDialog(b.dataset.close));
   $('#navigation').addEventListener('click',e=>{const b=e.target.closest('[data-tab]');if(b)showTab(b.dataset.tab);});
   $('#refresh').addEventListener('click',reload);
-  $('#orderSearch').addEventListener('input',renderOrders);$('#orderStatusFilter').addEventListener('change',renderOrders);
-  $('#clientSearch').addEventListener('input',renderCustomers);$('#catalogSearch').addEventListener('input',renderCatalog);
+  $('#orderSearch').addEventListener('input',()=>{
+    if(S.demo)return renderOrders();
+    clearTimeout(S.orderSearchTimer);
+    S.orderSearchTimer=setTimeout(()=>lookupOrders(),450);
+  });
+  $('#orderStatusFilter').addEventListener('change',()=>lookupOrders());
+  $('#moreOrders').addEventListener('click',()=>lookupOrders(true));
+  $('#clientSearch').addEventListener('input',()=>{
+    clearTimeout(S.searchTimer);
+    if(S.demo)return renderCustomers();
+    S.searchTimer=setTimeout(async()=>{
+      if(S.tab!=='customers')return;
+      try{
+        const term=$('#clientSearch').value.trim();
+        const result=await request('/api/backoffice?action=customers&term='+encodeURIComponent(term));
+        S.data.customers=result.customers;
+        renderCustomers();
+      }catch(e){show(e.message,true);}
+    },450);
+  });
+  $('#catalogSearch').addEventListener('input',renderCatalog);
   $('#newCustomer').addEventListener('click',()=>openCustomer(null));
-  $('#newOrder').addEventListener('click',async()=>{$('#manualForm').reset();await fillManual();updateManualType();openDialog('manualDialog');});
+  $('#newOrder').addEventListener('click',async()=>{
+    await ensureCatalog();
+    if(!S.data?.catalog?.catalog)return show('Catálogo indisponível.',true);
+    $('#manualForm').reset();await fillManual();updateManualType();openDialog('manualDialog');
+  });
   $('#manualForm').elements.type.addEventListener('change',updateManualType);
   $('#manualCity').addEventListener('change',fillNeighborhood);
   $('#manualCategory').addEventListener('change',fillProduct);
   $('#manualProduct').addEventListener('change',fillVariant);
   $('#countedCash').addEventListener('input',updateDifference);
+  $('#asaasSandboxCreate').addEventListener('click',async()=>{
+   const b=$('#asaasSandboxCreate');b.disabled=true;
+   try{
+    if(!confirm('Criar um checkout FICTÍCIO de R$ 5,00 no Asaas Sandbox?'))return;
+    const result=await request('/api/asaas-sandbox',{action:'create_sandbox_checkout'});
+    const a=el('a','Abrir página de teste do Asaas');a.href=result.link;
+    a.target='_blank';a.rel='noopener noreferrer';
+    $('#asaasSandboxLink').replaceChildren(a);
+    show('Checkout fictício criado. Confira o Asaas Sandbox, sem pagamento real.');
+   }catch(e){show(e.message,true);}
+   finally{await refreshAsaas();}
+  });
   $('#customerForm').addEventListener('submit',async e=>{
    e.preventDefault();
    await mutate('customer_save',{id:$('#customerId').value||null,name:$('#customerName').value,

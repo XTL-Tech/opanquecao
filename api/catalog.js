@@ -5,9 +5,13 @@ module.exports = async function handler(req, res) {
 
     // Só o catálogo em arquivo pode ser cacheado na CDN. O modo Supabase
     // permanece fail-closed e sem cache até existir publicação/versão atômica.
-    const fromDb = usesSupabaseCatalog();
+    const fromDb = usesSupabaseCatalog() || process.env.CATALOG_SOURCE === 'neon';
+    // A borda Vercel cacheia o catálogo por 30 s. Nenhuma consulta periódica
+    // ao Neon, mas mudanças podem levar até 30 s para aparecer ao público.
     res.setHeader('Cache-Control', fromDb
-        ? 'no-store'
+        ? (process.env.CATALOG_SOURCE === 'neon'
+            ? 'public, max-age=0, s-maxage=30, stale-while-revalidate=30'
+            : 'no-store')
         : 'public, max-age=30, s-maxage=300, stale-while-revalidate=60');
     try {
         // Responder 200 diretamente evita o 307 e a segunda requisição ao JSON.

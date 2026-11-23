@@ -44,6 +44,7 @@
     </div>
     <div class="table-wrap"><table><thead><tr><th>Pedido</th><th>Cliente</th><th>Modalidade</th><th>Subtotal</th><th>Situação</th><th>Horário</th><th></th></tr></thead><tbody id="ordersTable"></tbody></table></div>
     <p id="ordersEmpty" class="empty" hidden>Nenhum pedido encontrado.</p>
+    <button id="moreOrders" class="soft" type="button">Carregar pedidos anteriores</button>
     <small class="hint">Pré-pedido não é pedido confirmado. Só aceite após contato com o cliente. Pagamento é registrado manualmente quando recebido.</small>
    </section>
    <section id="tab-customers" hidden>
@@ -62,6 +63,14 @@
       <button class="primary" type="submit">Confirmar fechamento diário</button>
       <p class="hint">O fechamento é definitivo no MVP. Divergências e estornos devem ser reconciliados pela gestão.</p>
     </form>
+    <div id="asaasSandboxCard" class="form-card">
+      <h3>🧪 Asaas — Checkout Sandbox</h3>
+      <p class="hint">Teste separado dos pedidos e do caixa reais. Nenhuma cobrança de produção é criada e nenhum produto vai para preparo.</p>
+      <p id="asaasSandboxStatus" class="hint">Consulte os testes disponíveis.</p>
+      <button id="asaasSandboxCreate" class="soft" type="button">Criar checkout fictício de R$ 5,00</button>
+      <p id="asaasSandboxLink" class="hint"></p>
+      <p class="hint">Verifique o resultado no Asaas Sandbox. O retorno da página não confirma pagamento; somente o webhook autenticado altera o status da simulação.</p>
+    </div>
     <div class="section-head"><h3>Histórico de fechamentos</h3></div>
     <div class="table-wrap"><table><thead><tr><th>Data</th><th>Pedidos</th><th>Vendas</th><th>Dinheiro</th><th>Diferença</th></tr></thead><tbody id="closingsTable"></tbody></table></div>
    </section>
