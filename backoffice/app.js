@@ -174,10 +174,13 @@
  }
  function renderOrders(){
   const orders=S.data.orders,term=$('#orderSearch').value.trim().toLowerCase(),filter=$('#orderStatusFilter').value;
-  clear($('#orderStats'));stat('#orderStats','Aguardando cliente',orders.filter(o=>o.status==='pending_customer').length);
-  stat('#orderStats','Aguardando aceite',orders.filter(o=>o.status==='awaiting_acceptance').length);
-  stat('#orderStats','Em atendimento',orders.filter(o=>['accepted','completed'].includes(o.status)).length);
-  stat('#orderStats','Entregues',orders.filter(o=>o.status==='delivered').length);
+  const counts=S.data.queueCounts||{};
+  clear($('#orderStats'));stat('#orderStats','Aguardando cliente',counts.pending_customer??orders.filter(o=>o.status==='pending_customer').length);
+  stat('#orderStats','Aguardando aceite',counts.awaiting_acceptance??orders.filter(o=>o.status==='awaiting_acceptance').length);
+  stat('#orderStats','Em atendimento',S.data.queueCounts?
+   (counts.accepted||0)+(counts.completed||0):orders.filter(o=>['accepted','completed'].includes(o.status)).length);
+  stat('#orderStats','Entregues e pagos hoje',S.data.queueCounts?
+   S.data.cash.orders:orders.filter(o=>o.status==='delivered').length);
   const target=$('#ordersTable');clear(target);
   const matches=orders.filter(o=>{
    const cl=client(o.customer_id),s=[o.ref_code,cl?.name,cl?.phone].join(' ').toLowerCase();
