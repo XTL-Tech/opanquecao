@@ -1,7 +1,7 @@
 'use strict';
 const assert=require('node:assert/strict');
 const {randomUUID}=require('node:crypto');
-const db=require('../lib/backoffice-data');
+const db=require('../lib/backoffice-neon');
 const handler=require('../api/whatsapp-intent');
 const example='11111111-1111-4111-8111-111111111111';
 const record={customer:{id:example}};
