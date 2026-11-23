@@ -214,8 +214,12 @@
   try{
    const info=await request('/api/asaas-sandbox');
    const latest=info.recent?.[0];
-   const unresolved=info.recent?.find(x=>x.status==='uncertain'&&x.scenario===$('#asaasScenario').value);
+   const unresolved=info.recent?.find(x=>x.status==='uncertain'&&!x.reviewed_at&&x.scenario===$('#asaasScenario').value);
    btn.disabled=!info.enabled||!!unresolved;
+   const resolve=$('#asaasSandboxResolve');
+   resolve.hidden=!unresolved;
+   resolve.dataset.id=unresolved?.id||'';
+   resolve.dataset.reference=unresolved?.external_ref||'';
    if(unresolved){
     $('#asaasSandboxLink').textContent='⚠️ Checkout pendente de conciliação no Asaas Sandbox. Referência: '+
      unresolved.external_ref+'. Não tente criar outro até confirmar que esta tentativa não existe no Asaas.';
@@ -434,6 +438,21 @@
   $('#manualProduct').addEventListener('change',fillVariant);
   $('#countedCash').addEventListener('input',updateDifference);
   $('#asaasScenario').addEventListener('change',()=>refreshAsaas());
+  $('#asaasSandboxResolve').addEventListener('click',async()=>{
+   const b=$('#asaasSandboxResolve'),reference=b.dataset.reference;
+   if(!reference)return;
+   const typed=prompt('Verifique primeiro no painel oficial do Asaas Sandbox que NÃO existe checkout para a referência '+reference+
+    '. Para confirmar a ausência e liberar novo teste, digite exatamente a referência:');
+   if(typed!==reference)return show('Reconciliação cancelada. Nenhum registro alterado.',true);
+   b.disabled=true;
+   try{
+    await request('/api/asaas-sandbox',{action:'confirm_absent_sandbox_checkout',
+     recordId:b.dataset.id,confirmation:'CONFIRMO_AUSENCIA_NO_ASAAS'});
+    $('#asaasSandboxLink').textContent='Tentativa anterior revisada pela gestão; nenhuma cobrança real registrada.';
+    show('Revisão registrada. Confira novamente a conexão Asaas antes de um novo checkout.');
+   }catch(e){show(e.message,true);}
+   finally{b.disabled=false;await refreshAsaas();}
+  });
   $('#asaasSandboxProbe').addEventListener('click',async()=>{
    const b=$('#asaasSandboxProbe');b.disabled=true;
    const status=$('#asaasSandboxProbeStatus');status.textContent='Verificando conexão sem gerar cobrança...';
