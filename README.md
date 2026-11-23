@@ -2,7 +2,7 @@
 
 ## Backoffice MVP (22/11/2026)
 
-Implementado painel responsivo em `/backoffice/`: atendimento de pedidos, clientes, fechamento diário de caixa e ajustes versionados de preço (gestão). Demonstração 100% fictícia: `/backoffice/?demo=1`. Banco exclusivo, Auth e variáveis Vercel ainda não configurados — nenhuma conta administrativa ou pedido real está habilitado. O código funciona em modo fail-closed; não publicar/usar como sistema operacional até realizar a homologação Supabase descrita em [`docs/backoffice-mvp.md`](docs/backoffice-mvp.md). A integração do pré-registro à base é ativada somente após `BACKOFFICE_ENABLED=true` em produção. Não cria cozinha, copa nem motoboy.
+Implementado painel responsivo em `/backoffice/`: pedidos, clientes, caixa e preços. Demonstração fictícia: `/backoffice/?demo=1`. Infraestrutura escolhida: **Vercel + Neon PostgreSQL + Neon Managed Auth**, com driver HTTP sem pool TCP, consultas limitadas e catálogo carregado sob demanda. Módulo de homologação **Asaas Sandbox** exclusivo para gestor no Caixa: checkout fictício de R$ 5,00, webhooks autenticados e deduplicados, sem afetar caixa real. O código e testes estão preparados, mas **Neon e credenciais do Asaas ainda precisam ser conectados; BACKOFFICE_ENABLED desativado por padrão**. Ativação detalhada em [`docs/backoffice-mvp.md`](docs/backoffice-mvp.md). Não cria cozinha, copa nem motoboy.
 
 
 Cardápio e pré-pedido do Disk Panquecão, Nova Hartz/RS. HTML, CSS e JavaScript, sem framework. Tecnologia XTL TECH.
