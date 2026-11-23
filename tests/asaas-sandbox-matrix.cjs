@@ -138,11 +138,12 @@ const fakeFetch=async(url,opts)=>{
  assert.equal(hits.length,before);
  db.sandboxClaim=async()=>({created:true,record});
  // Falhas/timeout do provedor => não fingir pagamento nem repetir silenciosamente.
- global.fetch=async()=>providerResponse({errors:[{code:'invalid_object'}]},400);
+ global.fetch=async()=>providerResponse({errors:[{code:'invalid_object',description:'Para gerar cobranças com Pix é necessário criar uma chave Pix no Asaas.'}]},400);
  response=await req(checkout,'POST',{action:'create_sandbox_checkout'},origin);
  assert.equal(response.code,503);assert.equal(uncertain.length,1);
  assert.equal(response.body.providerStatus,400);
  assert.equal(response.body.providerCode,'invalid_object');
+ assert.match(response.body.error,/Cadastre uma chave Pix/);
  global.fetch=async()=>{throw Error('ETIMEDOUT');};
  response=await req(checkout,'POST',{action:'create_sandbox_checkout'},origin);
  assert.equal(response.code,503);assert.equal(uncertain.length,2);
