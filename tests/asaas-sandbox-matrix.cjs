@@ -77,6 +77,27 @@ const fakeFetch=async(url,opts)=>{
  assert.match(hits[0].payload.callback.successUrl,/asaas-return\.html/);
  assert.equal(attached.length,1);
 
+ // Diagnóstico de chave e acesso é GET somente-leitura para o Asaas, sem checkout.
+ const connectionFetch=global.fetch;
+ global.fetch=async(url,opts)=>{
+  assert.equal(String(url),'https://api-sandbox.asaas.com/v3/myAccount/status/');
+  assert.equal(opts.method,'GET');
+  assert.equal(opts.body,undefined);
+  return providerResponse({general:'APPROVED'},200);
+ };
+ let diagnostic=await req(checkout,'POST',{action:'check_sandbox_connection'},origin);
+ assert.equal(diagnostic.code,200);assert.equal(diagnostic.body.connected,true);
+ assert.equal(diagnostic.body.httpStatus,200);
+ assert.equal(diagnostic.body.environment,'sandbox');
+ global.fetch=async()=>providerResponse({errors:[{code:'invalid_token'}]},401);
+ diagnostic=await req(checkout,'POST',{action:'check_sandbox_connection'},origin);
+ assert.equal(diagnostic.code,200);assert.equal(diagnostic.body.connected,false);
+ assert.equal(diagnostic.body.httpStatus,401);
+ assert.equal(diagnostic.body.providerCode,'invalid_token');
+ global.fetch=connectionFetch;
+ assert.match(neonSource,/status='uncertain' OR created_at/,
+  'Checkout incerto deve bloquear novas tentativas mesmo após janela de 10 minutos');
+
  // Não permitir criação sem autenticação, sem origem legítima ou sem habilitação.
  const before=hits.length;
  response=await req(checkout,'POST',{action:'create_sandbox_checkout'},
@@ -105,6 +126,8 @@ const fakeFetch=async(url,opts)=>{
  global.fetch=async()=>providerResponse({errors:[{code:'invalid_object'}]},400);
  response=await req(checkout,'POST',{action:'create_sandbox_checkout'},origin);
  assert.equal(response.code,503);assert.equal(uncertain.length,1);
+ assert.equal(response.body.providerStatus,400);
+ assert.equal(response.body.providerCode,'invalid_object');
  global.fetch=async()=>{throw Error('ETIMEDOUT');};
  response=await req(checkout,'POST',{action:'create_sandbox_checkout'},origin);
  assert.equal(response.code,503);assert.equal(uncertain.length,2);
