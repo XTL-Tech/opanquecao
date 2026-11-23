@@ -20,7 +20,7 @@ module.exports=async function handler(req,res){
  if(!raw||typeof raw!=='object'||Array.isArray(raw)||
   JSON.stringify(raw).length>24000)return res.status(400).json({error:'Evento inválido.'});
  if(typeof raw.id!=='string'||raw.id.length>180||
-  !/^[a-zA-Z0-9_-]+$/.test(raw.id)||
+  !/^[a-zA-Z0-9_-]+(?:&[0-9]+)?$/.test(raw.id)||
   typeof raw.checkout?.id!=='string'||raw.checkout.id.length>200||
   !/^[a-zA-Z0-9_-]+$/.test(raw.checkout.id)||
   !EVENTS.has(raw.event))return res.status(400).json({error:'Evento não reconhecido.'});
