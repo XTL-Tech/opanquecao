@@ -30,6 +30,13 @@ module.exports=async function handler(req,res){
   if(process.env.ASAAS_SANDBOX_ENABLED!=='true'||!process.env.ASAAS_SANDBOX_API_KEY||
    !process.env.ASAAS_SANDBOX_WEBHOOK_TOKEN)
    return safe(res,503,{error:'Sandbox ainda não configurado na Vercel.'});
+  if(req.body?.action==='confirm_absent_sandbox_checkout'){
+   if(req.body?.confirmation!=='CONFIRMO_AUSENCIA_NO_ASAAS')
+    return safe(res,400,{error:'Confirmação explícita necessária.'});
+   const answer=await db.sandboxConfirmAbsent(actor.id,req.body.recordId);
+   audit('asaas_sandbox_manual_reconciliation',{providerCode:'CONFIRMED_ABSENT'});
+   return safe(res,200,answer);
+  }
   if(req.body?.action==='check_sandbox_connection'){
    // Diagnóstico somente-leitura, explicitamente solicitado por gestor autenticado.
    try{
