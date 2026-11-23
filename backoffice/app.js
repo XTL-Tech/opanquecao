@@ -29,7 +29,7 @@
  function fakeId(n){return '00000000-0000-4000-8000-'+String(n).padStart(12,'0');}
  function fakeOrder(n,status,product,sub,method='pickup',paid='pending'){
   const id=fakeId(n),stamp=new Date(Date.now()-n*1800000).toISOString();
-  return {restaurant_id:'opanquecao',request_id:id,ref_code:id.slice(0,8).toUpperCase(),
+  return {restaurant_id:'opanquecao',request_id:id,ref_code:String(n).padStart(8,'0'),
    customer_id:fakeId(100+n),origin:n===3?'manual':'site',status,
    telegram_state:'sent',items:[{quantity:1,category:'panquecas-salgadas',
     product,option:'M',cents:sub,flavors:[],freeExtras:[],paidExtras:[],note:''}],
@@ -89,7 +89,7 @@
    if(!d.customers.some(x=>x.id===customer.id))d.customers.unshift(customer);
    const item=body.lines[0],id=fakeId(20+d.orders.length);
    const order={...fakeOrder(20+d.orders.length,'awaiting_acceptance',item.product,item.cents*item.quantity,body.fulfillment.type),
-    request_id:id,ref_code:id.slice(0,8).toUpperCase(),customer_id:customer.id,
+    request_id:id,ref_code:String(20+d.orders.length).padStart(8,'0'),customer_id:customer.id,
     fulfillment:body.fulfillment,items:body.lines,note:body.note,origin:'manual',payment_status:'pending'};
    d.orders.unshift(order);return {order};
   }
