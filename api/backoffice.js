@@ -51,7 +51,10 @@ async function action(req,actor,body){
   const change={status:body.next,updated_by:actor.id};
   if(body.next==='accepted')change.accepted_at=new Date().toISOString();
   if(body.next==='delivered')change.delivered_at=new Date().toISOString();
-  return {order:await db.patchOrder(id,{status:'eq.'+order.status},change)};
+  return {order:await db.patchOrder(id,{
+   status:'eq.'+order.status,
+   ...(body.next==='cancelled'?{payment_status:'eq.pending'}:{})
+  },change)};
  }
  if(a==='order_fee'){
   const id=requireId(body.id),order=await db.getOrder(id);
@@ -59,8 +62,10 @@ async function action(req,actor,body){
   if(order.fulfillment?.type!=='delivery'||!['pending_customer','awaiting_acceptance'].includes(order.status)||order.payment_status!=='pending')
    c.fail('Taxa só pode ser definida antes do aceite da entrega.');
   const fee=c.cents(body.feeCents,10000);
-  return {order:await db.patchOrder(id,{status:'eq.'+order.status,payment_status:'eq.pending'},
-    {delivery_fee_cents:fee,updated_by:actor.id})};
+  return {order:await db.patchOrder(id,{
+    status:'eq.'+order.status,payment_status:'eq.pending',
+    delivery_fee_cents:order.delivery_fee_cents===null?'is.null':'eq.'+order.delivery_fee_cents
+   },{delivery_fee_cents:fee,updated_by:actor.id})};
  }
  if(a==='order_paid'){
   const id=requireId(body.id),order=await db.getOrder(id);
