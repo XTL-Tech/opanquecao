@@ -16,8 +16,11 @@ assert.equal(policyFor('/cardapio.json'), 'public, max-age=30, must-revalidate')
 assert.equal(policyFor('/img/(.*)'), 'public, max-age=86400, must-revalidate');
 assert.equal(policyFor('/favicons/(.*)'), 'public, max-age=86400, must-revalidate');
 assert.equal(config.functions['api/catalog.js']?.includeFiles,'cardapio.json');
-assert.equal(headers.some(item => item.source.startsWith('/api')), false,
-  'APIs não podem herdar cache estático sem revisão explícita');
+assert.equal(policyFor('/api/backoffice'), 'private, no-store, max-age=0',
+  'Backoffice precisa de no-store explícito para PII');
+assert.equal(headers.some(item => item.source.startsWith('/api') &&
+  item.source !== '/api/backoffice'), false,
+  'Outras APIs não podem herdar cache estático sem revisão explícita');
 
 const orderSource = fs.readFileSync(path.join(root, 'api', 'order.js'), 'utf8');
 assert.match(orderSource, /setHeader\('Cache-Control',\s*'no-store'\)/,
