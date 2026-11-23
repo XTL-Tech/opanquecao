@@ -11,6 +11,13 @@ function errorCode(data){
  const code=String(data?.errors?.[0]?.code||data?.error?.code||'provider_error');
  return /^[A-Za-z0-9_-]{1,64}$/.test(code)?code:'provider_error';
 }
+function rejectionHint(data){
+ const descriptions=Array.isArray(data?.errors)?data.errors.map(e=>String(e?.description||'')):[];
+ const hints=[];
+ if(descriptions.some(d=>/chave pix/i.test(d)))hints.push('Cadastre uma chave Pix na conta Asaas Sandbox.');
+ if(descriptions.some(d=>/situação cadastral/i.test(d)))hints.push('Confira a aprovação cadastral da conta Asaas Sandbox.');
+ return hints.join(' ');
+}
 function audit(event,detail={}) {
  console.warn(JSON.stringify({event,environment:'asaas-sandbox',...detail}));
 }
@@ -88,7 +95,7 @@ module.exports=async function handler(req,res){
     audit('asaas_sandbox_checkout_rejected',{httpStatus:providerStatus,providerCode,scenario});
     try{await db.sandboxMarkUncertain(local.id);}catch{audit('asaas_sandbox_state_failed',{scenario});}
     return safe(res,503,{error:'Asaas recusou a criação (HTTP '+providerStatus+
-     ', código '+providerCode+'). Confira a configuração Sandbox e concilie antes de repetir.',
+     ', código '+providerCode+'). '+(rejectionHint(result)||'Confira a configuração Sandbox.')+' Concilie antes de repetir.',
      providerStatus,providerCode});
    }
    if(typeof result?.id!=='string'||result.id.length<5||result.id.length>200||
