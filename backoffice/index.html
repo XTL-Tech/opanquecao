@@ -74,8 +74,10 @@
         <option value="both">Pix ou cartão Sandbox</option>
        </select>
       </label>
+      <button id="asaasSandboxProbe" class="soft" type="button">Verificar conexão Asaas (não cria cobrança)</button>
+      <p id="asaasSandboxProbeStatus" class="hint" role="status" aria-live="polite"></p>
       <button id="asaasSandboxCreate" class="soft" type="button">Criar checkout fictício de R$ 5,00</button>
-      <p id="asaasSandboxLink" class="hint"></p>
+      <p id="asaasSandboxLink" class="hint" role="status" aria-live="polite"></p>
       <p class="hint">Verifique o resultado no Asaas Sandbox. O retorno da página não confirma pagamento; somente o webhook autenticado altera o status da simulação.</p>
     </div>
     <div class="section-head"><h3>Histórico de fechamentos</h3></div>
