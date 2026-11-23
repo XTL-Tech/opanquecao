@@ -205,10 +205,33 @@
    td(tr,null).append(button('Editar',()=>openCustomer(c),'td-btn'));target.append(tr);
   }
  }
+ const scenarioLabel={pix:'Pix',credit_card:'Cartão',both:'Pix ou cartão'};
+ const sandboxStatus={creating:'Em criação',active:'Ativo',paid:'Pago (simulado)',expired:'Expirado',canceled:'Cancelado',uncertain:'Conciliar'};
+ async function refreshAsaasHistory(){
+  const status=$('#asaasHistoryStatus'),checkouts=$('#asaasHistoryCheckouts'),events=$('#asaasHistoryEvents');
+  clear(checkouts);clear(events);
+  if(S.demo||S.actor?.role!=='manager'){status.textContent='';return;}
+  const btn=$('#asaasHistoryRefresh');btn.disabled=true;status.textContent='Consultando registros do Sandbox...';
+  try{
+   const info=await request('/api/asaas-sandbox?view=history');
+   if(info.mode!=='sandbox')throw Error('Ambiente inesperado.');
+   if(S.demo||S.actor?.role!=='manager')return;
+   for(const x of info.checkouts||[]){
+    const row=el('tr');td(row,time(x.created_at));td(row,scenarioLabel[x.scenario]||'—');td(row,x.external_ref);
+    td(row,(sandboxStatus[x.status]||'—')+(x.reviewed_at?' · revisado':''));checkouts.append(row);
+   }
+   for(const x of info.events||[]){
+    const row=el('tr');td(row,time(x.processed_at));td(row,x.event_type);td(row,x.external_ref);
+    td(row,sandboxStatus[x.status]||'—');events.append(row);
+   }
+   status.textContent=(info.checkouts?.length||0)+' checkout(s), '+(info.events?.length||0)+' evento(s) recebido(s).';
+  }catch(e){status.textContent='Histórico indisponível. Consulte o painel oficial do Asaas.';}
+  finally{btn.disabled=false;}
+ }
  async function refreshAsaas(){
   const card=$('#asaasSandboxCard'),btn=$('#asaasSandboxCreate');
   if(S.demo||S.actor?.role!=='manager'){
-   card.hidden=true;return;
+   card.hidden=true;clear($('#asaasHistoryCheckouts'));clear($('#asaasHistoryEvents'));$('#asaasHistoryStatus').textContent='';return;
   }
   card.hidden=false;btn.disabled=true;
   try{
@@ -437,6 +460,8 @@
   $('#manualCategory').addEventListener('change',fillProduct);
   $('#manualProduct').addEventListener('change',fillVariant);
   $('#countedCash').addEventListener('input',updateDifference);
+  $('#asaasHistoryRefresh').addEventListener('click',refreshAsaasHistory);
+  $('#asaasHistory').addEventListener('toggle',()=>{if($('#asaasHistory').open)refreshAsaasHistory();});
   $('#asaasScenario').addEventListener('change',()=>refreshAsaas());
   $('#asaasSandboxResolve').addEventListener('click',async()=>{
    const b=$('#asaasSandboxResolve'),reference=b.dataset.reference;

@@ -24,7 +24,7 @@ const oldEnv=Object.fromEntries(['ASAAS_SANDBOX_ENABLED','ASAAS_SANDBOX_API_KEY'
 const oldFetch=global.fetch;
 const original={
  configured:db.configured,
- recent:db.sandboxRecent,claim:db.sandboxClaim,attach:db.sandboxAttach,
+ recent:db.sandboxRecent,history:db.sandboxEventHistory,claim:db.sandboxClaim,attach:db.sandboxAttach,
  uncertain:db.sandboxMarkUncertain,reconcile:db.sandboxConfirmAbsent,event:db.sandboxEvent,
  actor:auth.actor,authConfigured:auth.configured
 };
@@ -40,6 +40,7 @@ db.configured=()=>true;
 auth.configured=()=>true;
 auth.actor=async()=>({id:'gestor-ficticio',role:'manager'});
 db.sandboxRecent=async()=>[];
+db.sandboxEventHistory=async()=>[];
 const record={id:'2b18ec00-44d0-4b37-9c55-71eb444f199b',
  external_ref:'dp-sandbox-test-matrix',amount_cents:500};
 db.sandboxClaim=async()=>({created:true,record});
@@ -50,10 +51,10 @@ let reconciled=0;
 db.sandboxConfirmAbsent=async(actorId,id)=>{reconciled++;assert.equal(actorId,'gestor-ficticio');assert.equal(id,record.id);return{reviewed:true};};
 db.sandboxEvent=async(x)=>{transitions.push(x);return {matched:1,inserted:1,updated:1};};
 const origin={host:'opanquecao.vercel.app',origin:'https://opanquecao.vercel.app'};
-async function req(handler,method,body={},headers={}){
+async function req(handler,method,body={},headers={},query={}){
  const response={code:0,headers:{},setHeader(key,val){this.headers[key]=val;return this;},
  status(status){this.code=status;return this;},json(payload){this.body=payload;return this;}};
- await handler({method,body,headers},response);
+ await handler({method,body,headers,query},response);
  return response;
 }
 const providerResponse=(body,status=200)=>({ok:status>=200&&status<300,status,json:async()=>body});
@@ -67,6 +68,23 @@ const fakeFetch=async(url,opts)=>{
  assert.equal(response.code,200);
  assert.equal(response.body.enabled,true);
  assert.equal(response.body.mode,'sandbox');
+ // Histórico consulta apenas registros sintéticos do gestor, sem chamada ao Asaas.
+ const testCheckout={external_ref:'dp-sandbox-ficticio',scenario:'pix',status:'paid',amount_cents:500,
+  created_at:'2026-11-23T10:00:00Z',changed_at:'2026-11-23T10:01:00Z',reviewed_at:null,provider_checkout_id:'nao-expor'};
+ db.sandboxRecent=async(actorId)=>{assert.equal(actorId,'gestor-ficticio');return[testCheckout];};
+ db.sandboxEventHistory=async(actorId)=>{assert.equal(actorId,'gestor-ficticio');return[{event_type:'CHECKOUT_PAID',
+  processed_at:'2026-11-23T10:01:00Z',external_ref:testCheckout.external_ref,scenario:'pix',status:'paid'}];};
+ const history=await req(checkout,'GET',{},origin,{view:'history'});
+ assert.equal(history.code,200);assert.equal(history.body.mode,'sandbox');
+ assert.equal(history.body.checkouts[0].status,'paid');assert.equal(history.body.events[0].event_type,'CHECKOUT_PAID');
+ assert.equal(history.body.checkouts[0].provider_checkout_id,undefined);
+ assert.equal(history.headers['Cache-Control'],'private, no-store');
+ assert.equal(hits.length,0,'Histórico não pode chamar o provedor');
+ auth.actor=async()=>({id:'atendente-ficticio',role:'attendant'});
+ assert.equal((await req(checkout,'GET',{},origin,{view:'history'})).code,403);
+ auth.actor=async()=>({id:'gestor-ficticio',role:'manager'});
+ db.sandboxRecent=async()=>[];db.sandboxEventHistory=async()=>[];
+ assert.match(neonSource,/WHERE s\.created_by=\$1 ORDER BY e\.processed_at DESC LIMIT 30/);
  response=await req(checkout,'POST',{action:'create_sandbox_checkout'},origin);
  assert.equal(response.code,201,'Criação de checkout simulado');
  assert.equal(response.body.amountCents,500);
@@ -198,7 +216,7 @@ const fakeFetch=async(url,opts)=>{
 })().catch(error=>{console.error(error);process.exitCode=1;}).finally(()=>{
  global.fetch=oldFetch;
  for(const [k,v] of Object.entries(oldEnv)){if(v===undefined)delete process.env[k];else process.env[k]=v;}
- Object.assign(db,{configured:original.configured,sandboxRecent:original.recent,
+ Object.assign(db,{configured:original.configured,sandboxRecent:original.recent,sandboxEventHistory:original.history,
   sandboxClaim:original.claim,sandboxAttach:original.attach,
   sandboxMarkUncertain:original.uncertain,sandboxConfirmAbsent:original.reconcile,sandboxEvent:original.event});
  auth.actor=original.actor;auth.configured=original.authConfigured;

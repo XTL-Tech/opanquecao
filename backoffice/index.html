@@ -80,6 +80,17 @@
       <p id="asaasSandboxLink" class="hint" role="status" aria-live="polite"></p>
       <button id="asaasSandboxResolve" class="soft" type="button" hidden>Conferi no Asaas: não existe esse checkout</button>
       <p class="hint">A liberação acima exige conferir primeiro a referência no painel oficial Asaas Sandbox. O registro incerto permanece no histórico.</p>
+      <details id="asaasHistory">
+       <summary>Histórico e logs de homologação</summary>
+       <p class="hint">Últimos 10 checkouts e 30 eventos processados deste gestor. Não contém dados de clientes nem credenciais. As falhas de entrega e os retornos completos do Asaas ficam no painel oficial.</p>
+       <button id="asaasHistoryRefresh" class="soft" type="button">Atualizar histórico</button>
+       <p id="asaasHistoryStatus" class="hint" role="status" aria-live="polite"></p>
+       <h4>Checkouts de teste</h4>
+       <div class="table-wrap"><table><thead><tr><th>Data</th><th>Modalidade</th><th>Referência</th><th>Situação</th></tr></thead><tbody id="asaasHistoryCheckouts"></tbody></table></div>
+       <h4>Webhooks processados</h4>
+       <div class="table-wrap"><table><thead><tr><th>Recebido em</th><th>Evento</th><th>Referência</th><th>Situação atual</th></tr></thead><tbody id="asaasHistoryEvents"></tbody></table></div>
+       <p class="hint"><a href="https://sandbox.asaas.com/customerConfigIntegrations/logs" target="_blank" rel="noopener noreferrer">Logs de requisições no Asaas Sandbox</a> · <a href="https://sandbox.asaas.com/customerConfigIntegrations/webhookLogs" target="_blank" rel="noopener noreferrer">Logs de entrega dos webhooks</a> · <a href="https://vercel.com/samuelwhite777s-projects/opanquecao/logs" target="_blank" rel="noopener noreferrer">Logs da aplicação na Vercel</a></p>
+      </details>
       <p class="hint">Verifique o resultado no Asaas Sandbox. O retorno da página não confirma pagamento; somente o webhook autenticado altera o status da simulação.</p>
     </div>
     <div class="section-head"><h3>Histórico de fechamentos</h3></div>
