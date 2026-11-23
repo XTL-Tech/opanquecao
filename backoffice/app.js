@@ -137,7 +137,10 @@
    cash:['Caixa diário','Conferência e fechamento dos pagamentos recebidos.'],
    catalog:['Preços do cardápio','Ajuste de valores, com histórico e autorização.']};
   $('#pageTitle').textContent=meta[tab][0];$('#pageSubtitle').textContent=meta[tab][1];
-  if(S.data){renderTab();if(tab==='catalog')ensureCatalog();}
+  if(S.data){
+   renderTab();if(tab==='catalog')ensureCatalog();
+   if(tab==='cash')refreshAsaas();
+  }
  }
  function render(){if(!S.data)return;$('#todayText').textContent='📅 '+S.data.today.split('-').reverse().join('/');
   $('#staffLabel').textContent=S.actor.email||'Atendente';
@@ -174,6 +177,21 @@
    const tr=el('tr');td(tr,c.name,'td-primary');td(tr,c.phone);td(tr,c.notes?.slice(0,80)||'—');
    td(tr,null).append(button('Editar',()=>openCustomer(c),'td-btn'));target.append(tr);
   }
+ }
+ async function refreshAsaas(){
+  const card=$('#asaasSandboxCard'),btn=$('#asaasSandboxCreate');
+  if(S.demo||S.actor?.role!=='manager'){
+   card.hidden=true;return;
+  }
+  card.hidden=false;btn.disabled=true;
+  try{
+   const info=await request('/api/asaas-sandbox');
+   btn.disabled=!info.enabled;
+   const latest=info.recent?.[0];
+   $('#asaasSandboxStatus').textContent=info.enabled?
+    'Sandbox configurado · Último teste: '+(latest?latest.status+' ('+time(latest.created_at)+')':'nenhum'):
+    'Configure chave e webhook Sandbox na Vercel para liberar os testes.';
+  }catch(e){btn.disabled=true;$('#asaasSandboxStatus').textContent='Sandbox indisponível: '+e.message;}
  }
  function renderCash(){
   const data=S.data,date=data.today,closing=data.closings.find(x=>x.business_date===date);
@@ -374,6 +392,18 @@
   $('#manualCategory').addEventListener('change',fillProduct);
   $('#manualProduct').addEventListener('change',fillVariant);
   $('#countedCash').addEventListener('input',updateDifference);
+  $('#asaasSandboxCreate').addEventListener('click',async()=>{
+   const b=$('#asaasSandboxCreate');b.disabled=true;
+   try{
+    if(!confirm('Criar um checkout FICTÍCIO de R$ 5,00 no Asaas Sandbox?'))return;
+    const result=await request('/api/asaas-sandbox',{action:'create_sandbox_checkout'});
+    const a=el('a','Abrir página de teste do Asaas');a.href=result.link;
+    a.target='_blank';a.rel='noopener noreferrer';
+    $('#asaasSandboxLink').replaceChildren(a);
+    show('Checkout fictício criado. Confira o Asaas Sandbox, sem pagamento real.');
+   }catch(e){show(e.message,true);}
+   finally{await refreshAsaas();}
+  });
   $('#customerForm').addEventListener('submit',async e=>{
    e.preventDefault();
    await mutate('customer_save',{id:$('#customerId').value||null,name:$('#customerName').value,
