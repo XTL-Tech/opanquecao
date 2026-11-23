@@ -1,6 +1,6 @@
 'use strict';
 
-const { randomUUID } = require('node:crypto');
+const { orderPdf } = require('../lib/order-pdf');
 const { loadCatalog } = require('../lib/catalog-source');
 const { loadStoreStatus } = require('../lib/store-hours-source');
 const deliveryAreas = require('../delivery-areas.json');
@@ -149,8 +149,30 @@ module.exports = async function handler(req, res) {
         '?text=' + encodeURIComponent('Olá, ' + clean(name, 60) + '! Aqui é o Disk Panquecão. ' +
             'Vimos seu pré-pedido #' + id + ' no nosso cardápio. ' +
             'Você chegou a enviar a mensagem com o pedido no WhatsApp? Podemos confirmar os detalhes por aqui?');
+    // O fluxo ativo usa /api/whatsapp-intent; o PDF 58 mm já existia
+    // no checkout legado. Reaproveitamos o gerador com preços validados
+    // NO SERVIDOR e frete SEMPRE a confirmar (nunca inventar taxa).
+    // Gerar antes de alertar a loja evita uma mensagem sem cupom caso
+    // haja falha de renderização.
+    const subtotal = validated.reduce((total, line) => total + line.cents * line.quantity, 0);
+    let receipt;
+    try {
+        receipt = await orderPdf({
+            id, name: clean(name, 80), phone: '+55' + normalizedPhone,
+            items: validated, subtotal, money,
+            fulfillment: { ...deliveryDetails, feeCents: null },
+            payment: { method: 'pending', label: 'A confirmar', changeForCents: null },
+            testMode: preview, awaitingWhatsApp: true
+        });
+    } catch {
+        console.warn(JSON.stringify({event:'whatsapp_intent',id,status:'pdf_error',preview}));
+        return res.status(503).json({
+            error:'Não foi possível gerar o cupom para a loja. Tente novamente ou contate o estabelecimento.'
+        });
+    }
     const parts = splitTelegram((preview ? '🧪 TESTE — NÃO PREPARAR!\n\n' : '') + operatorText);
     let started = false;
+    let firstTelegramMessageId = null;
     try {
         for (const [index, part] of parts.entries()) {
             started = true;
@@ -169,8 +191,36 @@ module.exports = async function handler(req, res) {
             });
             const data = await send.json();
             if (!send.ok || data.ok !== true) throw new Error('Falha Telegram');
+            if (index === 0 && Number.isSafeInteger(data.result?.message_id)) {
+                firstTelegramMessageId = data.result.message_id;
+            }
         }
-        console.info(JSON.stringify({ event: 'whatsapp_intent', id, status: 'registered', preview }));
+        // O segundo envio é o cupom térmico anexado ao mesmo pré-pedido.
+        // É PDF, não comando de impressão: o equipamento físico exige
+        // conexão local configurada e homologada à parte.
+        const form = new FormData();
+        form.set('chat_id', config.chat);
+        form.set('caption', (preview ? '🧪 TESTE — NÃO PREPARAR!\n' : '') +
+            '🧾 CUPOM TÉRMICO — PRÉ-PEDIDO #' + id + '\n' +
+            '⚠️ AGUARDANDO CONFIRMAÇÃO DO CLIENTE PELO WHATSAPP. NÃO PREPARAR.\n' +
+            'Subtotal dos produtos: ' + money(subtotal) + '\n' +
+            (deliveryDetails.type === 'delivery'
+                ? 'Frete e total final: A CONFIRMAR PELA LOJA.'
+                : 'Pagamento: A CONFIRMAR.'));
+        form.set('document', new Blob([receipt], { type: 'application/pdf' }),
+            (preview ? 'TESTE-NAO-PREPARAR-' : 'PRE-PEDIDO-') + id + '-cupom-termico.pdf');
+        if (firstTelegramMessageId !== null) {
+            form.set('reply_to_message_id', String(firstTelegramMessageId));
+        }
+        started = true;
+        const sentReceipt = await fetch('https://api.telegram.org/bot' + config.token + '/sendDocument', {
+            method: 'POST',
+            body: form,
+            signal: AbortSignal.timeout(12000)
+        });
+        const receiptResult = await sentReceipt.json();
+        if (!sentReceipt.ok || receiptResult.ok !== true) throw new Error('Falha no cupom Telegram');
+        console.info(JSON.stringify({ event: 'whatsapp_intent', id, status: 'registered', receipt: true, preview }));
         return res.status(201).json({ id, status: 'registered', test: preview });
     } catch {
         console.warn(JSON.stringify({ event: 'whatsapp_intent', id, status: 'uncertain', preview }));
@@ -178,7 +228,7 @@ module.exports = async function handler(req, res) {
         return res.status(202).json({
             id, pending: true,
             error: started
-                ? 'O registro pode ter chegado ao bot, mas não foi possível confirmar. Fale com a loja pelo WhatsApp.'
+                ? 'O pré-pedido pode ter chegado ao bot, mas não foi possível confirmar o cupom. Não reenvie automaticamente; confirme com a loja pelo WhatsApp.'
                 : 'Não foi possível registrar no bot. Fale com a loja pelo WhatsApp.'
         });
     }

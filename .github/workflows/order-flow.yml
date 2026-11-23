@@ -28,6 +28,14 @@ jobs:
         run: node tests/cache-policy.cjs
       - name: Conferir responsividade real no Chromium
         run: node tests/responsive-browser.cjs
+      - name: Guardar cupom térmico fictício para revisão
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cupom-termico-58mm-ficticio
+          path: artifacts/thermal/*.pdf
+          if-no-files-found: ignore
+          retention-days: 7
       - name: Guardar capturas de telas para revisão
         if: always()
         uses: actions/upload-artifact@v4
