@@ -14,7 +14,7 @@ let lastScrolledSection = null;
 w.HTMLElement.prototype.scrollIntoView=function(){ lastScrolledSection = this.id || this.closest('[id]')?.id || null };
 Object.defineProperty(global,'navigator',{configurable:true,value:w.navigator});
 Object.defineProperty(w.navigator,'geolocation',{configurable:true,value:{getCurrentPosition(success){success({coords:{latitude:-29.585,longitude:-50.938,accuracy:18}})}}});
-let mockEnabled=false,verified=true,deliver=true,calls=0,intentCalls=0,tokenCb,lastOrder,lastTelegramCaption,lastBotMessage;
+let mockEnabled=false,verified=true,deliver=true,calls=0,intentCalls=0,intentDocuments=0,tokenCb,lastOrder,lastTelegramCaption,lastBotMessage,lastThermalCaption;
 const checkoutLogs=[];
 const originalInfo=console.info;
 console.info=entry=>{
@@ -29,9 +29,19 @@ Object.assign(process.env,{TELEGRAM_BOT_TOKEN:'fake',TELEGRAM_CHAT_ID:'fake',TUR
 global.fetch=async (url,init)=>{
  if(url.endsWith('siteverify'))return {ok:true,json:async()=>({success:verified})};
  if(url.endsWith('sendDocument')){
-  calls++;lastTelegramCaption=init.body.get('caption'); const pdf=await PDFDocument.load(await init.body.get('document').arrayBuffer());
+  const caption=init.body.get('caption');
+  const pdf=await PDFDocument.load(await init.body.get('document').arrayBuffer());
   assert.ok(Math.abs(pdf.getPage(0).getWidth()-58*72/25.4)<0.1);
-  assert.match(init.body.get('caption'),/TESTE - NAO PREPARAR/);
+  if(caption.includes('CUPOM TÉRMICO')){
+    intentDocuments++;lastThermalCaption=caption;
+    assert.match(caption,/TESTE — NÃO PREPARAR/);
+    assert.match(caption,/Frete e total final: A CONFIRMAR PELA LOJA/);
+    assert.match(init.body.get('document').name,/TESTE-NAO-PREPARAR-[A-F0-9]{8}-cupom-termico.pdf/);
+    assert.equal(init.body.get('reply_to_message_id'),'4321');
+    return {ok:true,json:async()=>({ok:true,result:{message_id:4322}})};
+  }
+  calls++;lastTelegramCaption=caption;
+  assert.match(caption,/TESTE - NAO PREPARAR/);
   assert.match(init.body.get('document').name,/TESTE-nao-preparar/);
   return {ok:deliver,json:async()=>({ok:deliver})};
  }
@@ -215,6 +225,7 @@ assert.equal(metaCalls().filter(args=>args[1]==='Purchase').length,0,
 assert.doesNotMatch(JSON.stringify(metaCalls()),/Cliente fictício|99999-9999|Rua das Flores|\-29\.585/,
     'Eventos Meta não devem enviar nome, telefone, endereço nem GPS');
 assert.equal(calls,0,'A API PDF legada não deve ser chamada');
+assert.equal(intentDocuments,1,'Pré-registro deve anexar cupom térmico em PDF');
 assert.equal(intentCalls,1,'Pré-registro deve chegar ao bot: '+d.querySelector('#orderStatus').textContent);
 assert.match(lastBotMessage.text,/Cliente fictício/);
 assert.match(lastBotMessage.text,/Embalagens separadas/);
@@ -238,6 +249,7 @@ assert.match(directMessage,/Referência: #[0-9A-F]{8}/);
 assert.doesNotMatch(directMessage,/Forma: Pix|WhatsApp: 51|Taxa: R\$/);
 await submit();
 assert.equal(intentCalls,1,'Não duplicar pré-registro na mesma sessão sem alterações');
+assert.equal(intentDocuments,1,'Não duplicar cupom térmico na mesma sessão sem alterações');
 assert.equal(metaCalls().filter(args=>args[1]==='Lead').length,1,
     'Não duplicar conversão Meta ao reabrir o mesmo pré-registro');
 assert.equal(d.querySelector('#cartEmpty').hidden,true,'Carrinho deve permanecer até confirmação');
@@ -323,6 +335,7 @@ assert.throws(()=>priceOrder(catalog,[{category:'panquecas-salgadas',product:'Ba
 checkout.elements.orderNote.value='';
 await submit();
 assert.equal(calls,0);
+assert.equal(intentDocuments,2,'Novo carrinho deve gerar novo cupom térmico');
 directMessage=new URL(d.querySelector('#whatsappOrderLink').href).searchParams.get('text');
 assert.match(directMessage,/Sabores: Bacon \/ Calabresa/);
 assert.match(directMessage,/^\d+\. \d+x /m);
