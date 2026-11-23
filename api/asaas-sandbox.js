@@ -28,6 +28,13 @@ module.exports=async function handler(req,res){
   const actor=await auth.actor(req);
   if(actor.role!=='manager')return safe(res,403,{error:'Teste de pagamentos disponível somente para gestão.'});
   if(req.method==='GET'){
+   if(req.query?.view==='history'){
+    const [checkouts,events]=await Promise.all([db.sandboxRecent(actor.id),db.sandboxEventHistory(actor.id)]);
+    return safe(res,200,{mode:'sandbox',checkouts:checkouts.map(x=>({
+     external_ref:x.external_ref,scenario:x.scenario,status:x.status,amount_cents:x.amount_cents,
+     created_at:x.created_at,changed_at:x.changed_at,reviewed_at:x.reviewed_at
+    })),events});
+   }
    return safe(res,200,{mode:'sandbox',enabled:process.env.ASAAS_SANDBOX_ENABLED==='true'&&
     !!process.env.ASAAS_SANDBOX_API_KEY&&!!process.env.ASAAS_SANDBOX_WEBHOOK_TOKEN,
     recent:await db.sandboxRecent(actor.id)});
