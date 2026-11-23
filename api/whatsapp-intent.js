@@ -162,7 +162,7 @@ module.exports = async function handler(req, res) {
             items: validated, subtotal, money,
             fulfillment: { ...deliveryDetails, feeCents: null },
             payment: { method: 'pending', label: 'A confirmar', changeForCents: null },
-            testMode: preview
+            testMode: preview, awaitingWhatsApp: true
         });
     } catch {
         console.warn(JSON.stringify({event:'whatsapp_intent',id,status:'pdf_error',preview}));
