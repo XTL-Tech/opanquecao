@@ -402,9 +402,9 @@ function within(rect,width){
             await cdp.call('Emulation.setDeviceMetricsOverride',{
                 width,height:width===390?844:900,deviceScaleFactor:1,mobile:width<900
             });
-            await cdp.call('Page.navigate',{url:'http://127.0.0.1:'+port+'/backoffice/?demo=1'});
+            await cdp.call('Page.navigate',{url:'http://127.0.0.1:'+port+'/backoffice/index.html?demo=1'});
             await waitFor(()=>cdp.eval(
-                'location.pathname==="/backoffice/" && !document.getElementById("appShell").hidden && document.querySelectorAll("#ordersTable tr").length===4'
+                'location.pathname==="/backoffice/index.html" && !document.getElementById("appShell").hidden && document.querySelectorAll("#ordersTable tr").length===4'
             ),10000);
             const dimensions=await cdp.eval('({scroll:document.documentElement.scrollWidth,width:innerWidth,rows:document.querySelectorAll("#ordersTable tr").length,notice:!document.getElementById("demoRibbon").hidden})');
             assert.ok(dimensions.scroll<=width+2,'Rolagem lateral no backoffice '+width+': '+JSON.stringify(dimensions));
