@@ -476,6 +476,39 @@
    if(!S.demo)try{await run('logout',{});}catch{}
    location.href='/backoffice/';
   });
+  const otpForm=$('#otpForm'),passwordForm=$('#loginForm');
+  $('#useEmailCode').addEventListener('click',()=>{
+   passwordForm.hidden=true;otpForm.hidden=false;$('#useEmailCode').hidden=true;
+   $('#usePassword').hidden=false;$('#loginError').textContent='';
+   $('#otpEmail').value=$('#email').value;$('#otpEmail').focus();
+  });
+  $('#usePassword').addEventListener('click',()=>{
+   otpForm.hidden=true;passwordForm.hidden=false;$('#useEmailCode').hidden=false;
+   $('#usePassword').hidden=true;$('#loginError').textContent='';
+   $('#email').value=$('#otpEmail').value;$('#email').focus();
+  });
+  $('#sendOtp').addEventListener('click',async()=>{
+   $('#loginError').textContent='';
+   if(!$('#otpEmail').checkValidity())return $('#otpEmail').reportValidity();
+   const btn=$('#sendOtp');btn.disabled=true;
+   try{
+    await run('request_otp',{email:$('#otpEmail').value.trim()});
+    $('#otpInstruction').textContent='Se o e-mail estiver autorizado, enviaremos um código temporário. Confira a caixa de entrada e o spam. Um novo envio poderá ser solicitado após o intervalo de segurança.';
+    $('#otpCode').disabled=false;$('#otpCodeWrap').hidden=false;$('#verifyOtp').hidden=false;$('#otpCode').focus();
+   }catch(err){$('#loginError').textContent=err.message;}
+   finally{btn.disabled=false;}
+  });
+  otpForm.addEventListener('submit',async e=>{
+   e.preventDefault();$('#loginError').textContent='';
+   if(!otpForm.reportValidity())return;
+   const btn=$('#verifyOtp');btn.disabled=true;
+   try{
+    const result=await run('login_otp',{email:$('#otpEmail').value.trim(),otp:$('#otpCode').value.trim()});
+    S.actor=result.actor;$('#loginScreen').hidden=true;$('#appShell').hidden=false;await reload();
+    $('#otpCode').value='';
+   }catch(err){$('#loginError').textContent=err.message;}
+   finally{btn.disabled=false;}
+  });
   $('#loginForm').addEventListener('submit',async e=>{
    e.preventDefault();$('#loginError').textContent='';
    try{const response=await run('login',{email:$('#email').value,password:$('#password').value});
@@ -488,7 +521,7 @@
    $('#demoRibbon').hidden=false;render();return;
   }
   try{const status=await request('/api/backoffice?action=status');
-   if(!status.enabled){$('#setupNotice').hidden=false;$('#loginForm').querySelector('button[type=submit]').disabled=true;}
+   if(!status.enabled){$('#setupNotice').hidden=false;$('#loginForm').querySelector('button[type=submit]').disabled=true;$('#useEmailCode').disabled=true;}
    else{const session=await request('/api/backoffice?action=session');
     S.actor=session.actor;$('#loginScreen').hidden=true;$('#appShell').hidden=false;await reload();}
   }catch{/* Sessão ausente: a tela de login permanece visível. */}
