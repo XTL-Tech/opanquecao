@@ -431,8 +431,10 @@
   $('#asaasSandboxCreate').addEventListener('click',async()=>{
    const b=$('#asaasSandboxCreate');b.disabled=true;
    try{
-    if(!confirm('Criar um checkout FICTÍCIO de R$ 5,00 no Asaas Sandbox?'))return;
-    const result=await request('/api/asaas-sandbox',{action:'create_sandbox_checkout'});
+    const scenario=$('#asaasScenario').value;
+    const label={pix:'Pix',credit_card:'cartão de crédito',both:'Pix ou cartão'}[scenario];
+    if(!label||!confirm('Criar checkout FICTÍCIO de R$ 5,00 ('+label+') no Asaas Sandbox?'))return;
+    const result=await request('/api/asaas-sandbox',{action:'create_sandbox_checkout',scenario});
     const a=el('a','Abrir página de teste do Asaas');a.href=result.link;
     a.target='_blank';a.rel='noopener noreferrer';
     $('#asaasSandboxLink').replaceChildren(a);
