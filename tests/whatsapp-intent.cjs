@@ -93,6 +93,10 @@ const run=async(payload=base,method='POST',host='opanquecao.vercel.app')=>{
     assert.match(sent.text,/R\$\s*20,00/); // Valor recalculado pelo catálogo, nunca usa cents:1
     assert.doesNotMatch(sent.text,/R\$\s*0,02/);
     assert.match(sent.text,/Retirada no estabelecimento/);
+    if (process.env.CI) {
+        fs.mkdirSync('artifacts/thermal',{recursive:true});
+        fs.writeFileSync('artifacts/thermal/cupom-58mm-ficticio.pdf',receipt.bytes);
+    }
     assert.match(receipt.caption,/R\$\s*20,00/,'Cupom deve usar preços validados do servidor');
     assert.doesNotMatch(receipt.caption,/R\$\s*0,02/);
     const delivery = {type:'delivery',city:'Nova Hartz',neighborhood:'Centro',
