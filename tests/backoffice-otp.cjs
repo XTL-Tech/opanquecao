@@ -4,7 +4,7 @@ const fs=require('node:fs');
 const db=require('../lib/backoffice-neon');
 const auth=require('../lib/backoffice-neon-auth');
 const backoffice=require('../api/backoffice');
-const original={staff:db.staff,claim:db.claimStaffOtp,fetch:global.fetch};
+const original={staff:db.staff,claim:db.claimStaffOtp,release:db.releaseStaffOtp,fetch:global.fetch};
 const keys=['DATABASE_URL','BACKOFFICE_ENABLED','BACKOFFICE_PROVIDER','NEON_AUTH_BASE_URL'];
 const oldEnv=Object.fromEntries(keys.map(k=>[k,process.env[k]]));
 Object.assign(process.env,{
@@ -14,7 +14,8 @@ Object.assign(process.env,{
 });
 const identity={id:'user-backoffice-otp-manager-1',name:'Gestor',email:'gestor@exemplo.invalid'};
 db.staff=async id=>id===identity.id?{user_id:id,email:identity.email,role:'manager',active:true}:null;
-let claimCount=0,providerCalls=[],authorized=true,otpCorrect=true;
+let claimCount=0,providerCalls=[],authorized=true,otpCorrect=true,releaseCount=0;
+db.releaseStaffOtp=async()=>{releaseCount++;};
 db.claimStaffOtp=async email=>{claimCount++;return authorized&&claimCount===1&&email===identity.email;};
 global.fetch=async(url,opts)=>{
  const path=String(url).split('/').at(-1);
@@ -63,6 +64,14 @@ async function request(action,body={},h=headers){
  const stranger=await request('request_otp',{email:'nao-autorizado@exemplo.invalid'});
  assert.equal(stranger.code,200);assert.equal(providerCalls.length,1);
  assert.deepEqual(stranger.body,throttle.body,'Não identificar se e-mail é autorizado');
+ const savedFetch=global.fetch;
+ authorized=true;claimCount=0;
+ global.fetch=async()=>({ok:false,status:404,headers:new Headers(),json:async()=>({error:{code:'ENDPOINT_NOT_FOUND'}})});
+ const unavailable=await request('request_otp',{email:identity.email});
+ assert.equal(unavailable.code,503);
+ assert.equal(releaseCount,1,'Falha de envio precisa liberar bloqueio OTP');
+ assert.doesNotMatch(unavailable.body.error,/Credenciais inválidas/);
+ global.fetch=savedFetch;
  const badOrigin=await request('request_otp',{email:identity.email},{...headers,origin:'https://site-malicioso.invalid'});
  assert.equal(badOrigin.code,403);assert.equal(providerCalls.length,1);
  const badEmail=await request('request_otp',{email:'nao-e-email'});
@@ -79,6 +88,6 @@ async function request(action,body={},h=headers){
  assert.equal(rejected.code,401);
  console.log('PASS OTP BACKOFFICE: allowlist, 90s throttle, anti-enumeracao, CSRF, sessao HttpOnly e codigos invalidos.');
 })().catch(err=>{console.error(err);process.exitCode=1;}).finally(()=>{
- db.staff=original.staff;db.claimStaffOtp=original.claim;global.fetch=original.fetch;
+ db.staff=original.staff;db.claimStaffOtp=original.claim;db.releaseStaffOtp=original.release;global.fetch=original.fetch;
  for(const [k,v] of Object.entries(oldEnv)){if(v===undefined)delete process.env[k];else process.env[k]=v;}
 });
