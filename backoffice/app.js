@@ -124,8 +124,8 @@
    render();
   }catch(e){show(e.message,true);if(!S.demo&&/login|sessão|Conta sem/i.test(e.message))loggedOut();}
  }
- async function ensureCatalog(){
-  if(S.demo||S.data?.catalog?.catalog)return;
+ async function ensureCatalog(force=false){
+  if(S.demo||(!force&&S.data?.catalog?.catalog))return;
   try{
    const result=await request('/api/backoffice?action=catalog');
    S.data.catalog=result.catalog;
@@ -141,7 +141,7 @@
    catalog:['Preços do cardápio','Ajuste de valores, com histórico e autorização.']};
   $('#pageTitle').textContent=meta[tab][0];$('#pageSubtitle').textContent=meta[tab][1];
   if(S.data){
-   renderTab();if(tab==='catalog')ensureCatalog();
+   renderTab();if(tab==='catalog')ensureCatalog(true);
    if(tab==='cash')refreshAsaas();
   }
  }
