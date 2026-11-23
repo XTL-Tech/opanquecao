@@ -7,6 +7,8 @@
     "jsdom": "^31.0.1"
   },
   "scripts": {
-    "test": "node tests/backoffice.cjs && node tests/backoffice-ingest.cjs && node tests/meta-pixel.cjs && node tests/seo-share.cjs && node tests/catalog-integrity.cjs && node tests/fulfillment.cjs && node tests/whatsapp-order.cjs && node tests/whatsapp-intent.cjs && node tests/order-flow.cjs && node tests/catalog-source.cjs && node tests/supabase-health.cjs && node tests/order-idempotency.cjs && node tests/ai-discovery.cjs && node tests/order-qr.cjs && node tests/order-barcode.cjs && node tests/checkout-steps.cjs && node tests/delivery-triage.cjs && node tests/performance.cjs && node tests/baguete-names.cjs && node tests/store-hours.cjs && node tests/store-hours-api.cjs && node tests/store-hours-order.cjs && node tests/store-hours-preview.cjs && node tests/demo-full-flow.cjs && node tests/security-hardening.cjs"
+    "test": "node tests/neon-backoffice.cjs && node tests/backoffice-ingest.cjs && node tests/meta-pixel.cjs && node tests/seo-share.cjs && node tests/catalog-integrity.cjs && node tests/fulfillment.cjs && node tests/whatsapp-order.cjs && node tests/whatsapp-intent.cjs && node tests/order-flow.cjs && node tests/catalog-source.cjs && node tests/supabase-health.cjs && node tests/order-idempotency.cjs && node tests/ai-discovery.cjs && node tests/order-qr.cjs && node tests/order-barcode.cjs && node tests/checkout-steps.cjs && node tests/delivery-triage.cjs && node tests/performance.cjs && node tests/baguete-names.cjs && node tests/store-hours.cjs && node tests/store-hours-api.cjs && node tests/store-hours-order.cjs && node tests/store-hours-preview.cjs && node tests/demo-full-flow.cjs && node tests/security-hardening.cjs",
+    "db:neon:dry-run": "node scripts/neon-setup.cjs --dry-run",
+    "db:neon:setup": "node scripts/neon-setup.cjs"
   }
 }
