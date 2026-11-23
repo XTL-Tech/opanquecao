@@ -55,7 +55,14 @@
   if(!response.ok)throw Error(data.error||'Não foi possível concluir a operação.');
   return data;
  }
- function client(id){return S.data?.customers.find(x=>x.id===id)||null;}
+ function client(id){
+  const known=S.data?.customers.find(x=>x.id===id);
+  if(known)return known;
+  // Pedidos trazem nome/telefone em JOIN paginado, sem ter de ler
+  // todos os milhares de clientes da base.
+  const order=S.data?.orders.find(x=>x.customer_id===id);
+  return order?{id,name:order.customer_name,phone:order.customer_phone}:null;
+ }
  async function demoAction(action,body){
   const d=S.data;
   if(action==='order_status'){const o=d.orders.find(x=>x.request_id===body.id);o.status=body.next;
@@ -114,6 +121,14 @@
    render();
   }catch(e){show(e.message,true);if(!S.demo&&/login|sessão|Conta sem/i.test(e.message))loggedOut();}
  }
+ async function ensureCatalog(){
+  if(S.demo||S.data?.catalog?.catalog)return;
+  try{
+   const result=await request('/api/backoffice?action=catalog');
+   S.data.catalog=result.catalog;
+   if(S.tab==='catalog')renderCatalog();
+  }catch(e){show(e.message,true);}
+ }
  function showTab(tab){
   S.tab=tab;for(const name of ['orders','customers','cash','catalog'])$('#tab-'+name).hidden=name!==tab;
   document.querySelectorAll('[data-tab]').forEach(n=>n.classList.toggle('active',n.dataset.tab===tab));
@@ -122,7 +137,7 @@
    cash:['Caixa diário','Conferência e fechamento dos pagamentos recebidos.'],
    catalog:['Preços do cardápio','Ajuste de valores, com histórico e autorização.']};
   $('#pageTitle').textContent=meta[tab][0];$('#pageSubtitle').textContent=meta[tab][1];
-  if(S.data)renderTab();
+  if(S.data){renderTab();if(tab==='catalog')ensureCatalog();}
  }
  function render(){if(!S.data)return;$('#todayText').textContent='📅 '+S.data.today.split('-').reverse().join('/');
   $('#staffLabel').textContent=S.actor.email||'Atendente';
@@ -334,9 +349,26 @@
   $('#navigation').addEventListener('click',e=>{const b=e.target.closest('[data-tab]');if(b)showTab(b.dataset.tab);});
   $('#refresh').addEventListener('click',reload);
   $('#orderSearch').addEventListener('input',renderOrders);$('#orderStatusFilter').addEventListener('change',renderOrders);
-  $('#clientSearch').addEventListener('input',renderCustomers);$('#catalogSearch').addEventListener('input',renderCatalog);
+  $('#clientSearch').addEventListener('input',()=>{
+    clearTimeout(S.searchTimer);
+    if(S.demo)return renderCustomers();
+    S.searchTimer=setTimeout(async()=>{
+      if(S.tab!=='customers')return;
+      try{
+        const term=$('#clientSearch').value.trim();
+        const result=await request('/api/backoffice?action=customers&term='+encodeURIComponent(term));
+        S.data.customers=result.customers;
+        renderCustomers();
+      }catch(e){show(e.message,true);}
+    },450);
+  });
+  $('#catalogSearch').addEventListener('input',renderCatalog);
   $('#newCustomer').addEventListener('click',()=>openCustomer(null));
-  $('#newOrder').addEventListener('click',async()=>{$('#manualForm').reset();await fillManual();updateManualType();openDialog('manualDialog');});
+  $('#newOrder').addEventListener('click',async()=>{
+    await ensureCatalog();
+    if(!S.data?.catalog?.catalog)return show('Catálogo indisponível.',true);
+    $('#manualForm').reset();await fillManual();updateManualType();openDialog('manualDialog');
+  });
   $('#manualForm').elements.type.addEventListener('change',updateManualType);
   $('#manualCity').addEventListener('change',fillNeighborhood);
   $('#manualCategory').addEventListener('change',fillProduct);
