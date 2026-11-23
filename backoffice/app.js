@@ -116,8 +116,11 @@
  }
  async function reload(){
   try{
-   if(!S.demo)S.data=await request('/api/backoffice?action=dashboard');
-   else S.data.cash=tally();
+   if(!S.demo){
+    const next=await request('/api/backoffice?action=dashboard');
+    if(S.data?.catalog)next.catalog=S.data.catalog;
+    S.data=next;S.moreOrders=next.orders.length>=80;
+   }else S.data.cash=tally();
    render();
   }catch(e){show(e.message,true);if(!S.demo&&/login|sessão|Conta sem/i.test(e.message))loggedOut();}
  }
@@ -149,6 +152,26 @@
   renderTab();
  }
  function renderTab(){if(S.tab==='orders')renderOrders();if(S.tab==='customers')renderCustomers();if(S.tab==='cash')renderCash();if(S.tab==='catalog')renderCatalog();}
+ async function lookupOrders(more=false){
+  if(S.demo||!S.data)return renderOrders();
+  try{
+   const term=$('#orderSearch').value.trim(),status=$('#orderStatusFilter').value;
+   const last=more?S.data.orders.at(-1):null;
+   const q=new URLSearchParams({action:'orders',term,status});
+   if(last?.created_at&&last.request_id){
+    q.set('before',last.created_at);q.set('beforeId',last.request_id);
+   }
+   const result=await request('/api/backoffice?'+q.toString());
+   const rows=result.orders||[];
+   S.moreOrders=rows.length>50;
+   const page=rows.slice(0,50);
+   if(more){
+    const existing=new Set(S.data.orders.map(x=>x.request_id));
+    S.data.orders.push(...page.filter(x=>!existing.has(x.request_id)));
+   }else S.data.orders=page;
+   renderOrders();
+  }catch(e){show(e.message,true);}
+ }
  function renderOrders(){
   const orders=S.data.orders,term=$('#orderSearch').value.trim().toLowerCase(),filter=$('#orderStatusFilter').value;
   clear($('#orderStats'));stat('#orderStats','Aguardando cliente',orders.filter(o=>o.status==='pending_customer').length);
@@ -161,6 +184,7 @@
    return (!filter||o.status===filter)&&(!term||s.includes(term));
   });
   $('#ordersEmpty').hidden=matches.length>0;
+  $('#moreOrders').hidden=S.demo||(!S.moreOrders&&orders.length<80);
   for(const o of matches){
    const tr=el('tr');td(tr,'#'+o.ref_code,'td-primary');const who=td(tr,client(o.customer_id)?.name||'Cliente indisponível');
    who.append(el('small',client(o.customer_id)?.phone||'', 'td-secondary'));
@@ -309,7 +333,10 @@
   openDialog('detailDialog');
  }
  async function mutate(action,body,success){
-  try{await run(action,body);await reload();closeDialog('detailDialog');closeDialog('customerDialog');closeDialog('priceDialog');closeDialog('manualDialog');show(S.demo?'DEMONSTRAÇÃO: '+success:success);}
+  try{
+   const result=await run(action,body);
+   if(action==='catalog_price'&&result?.catalog)S.data.catalog=result.catalog;
+   await reload();closeDialog('detailDialog');closeDialog('customerDialog');closeDialog('priceDialog');closeDialog('manualDialog');show(S.demo?'DEMONSTRAÇÃO: '+success:success);}
   catch(e){show(e.message,true);}
  }
  function openCustomer(c){
@@ -366,7 +393,13 @@
   for(const b of document.querySelectorAll('[data-close]'))b.addEventListener('click',()=>closeDialog(b.dataset.close));
   $('#navigation').addEventListener('click',e=>{const b=e.target.closest('[data-tab]');if(b)showTab(b.dataset.tab);});
   $('#refresh').addEventListener('click',reload);
-  $('#orderSearch').addEventListener('input',renderOrders);$('#orderStatusFilter').addEventListener('change',renderOrders);
+  $('#orderSearch').addEventListener('input',()=>{
+    if(S.demo)return renderOrders();
+    clearTimeout(S.orderSearchTimer);
+    S.orderSearchTimer=setTimeout(()=>lookupOrders(),450);
+  });
+  $('#orderStatusFilter').addEventListener('change',()=>lookupOrders());
+  $('#moreOrders').addEventListener('click',()=>lookupOrders(true));
   $('#clientSearch').addEventListener('input',()=>{
     clearTimeout(S.searchTimer);
     if(S.demo)return renderCustomers();
