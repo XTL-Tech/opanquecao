@@ -32,6 +32,7 @@ create table if not exists dp.customers (
   updated_at timestamptz not null default now()
 );
 create index if not exists dp_customers_created_idx on dp.customers (created_at desc);
+create index if not exists dp_customers_name_prefix_idx on dp.customers (lower(name) text_pattern_ops);
 create table if not exists dp.orders (
   request_id uuid primary key,
   ref_code text not null unique check (ref_code ~ '^[A-F0-9]{8}$'),
