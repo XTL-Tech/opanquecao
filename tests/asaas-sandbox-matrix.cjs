@@ -70,7 +70,7 @@ const fakeFetch=async(url,opts)=>{
  response=await req(checkout,'POST',{action:'create_sandbox_checkout'},origin);
  assert.equal(response.code,201,'Criação de checkout simulado');
  assert.equal(response.body.amountCents,500);
- assert.match(response.body.link,/^https:\/\/asaas\.com\/checkoutSession\/show\?id=/);
+ assert.match(response.body.link,/^https:\/\/sandbox\.asaas\.com\/000\/checkoutSession\/show\//);
  assert.equal(hits.length,1);
  assert.equal(hits[0].url,'https://api-sandbox.asaas.com/v3/checkouts');
  assert.equal(hits[0].token,'SANDBOX_FAKE_KEY_NO_REAL_CHARGES');
@@ -138,11 +138,12 @@ const fakeFetch=async(url,opts)=>{
  assert.equal(hits.length,before);
  db.sandboxClaim=async()=>({created:true,record});
  // Falhas/timeout do provedor => não fingir pagamento nem repetir silenciosamente.
- global.fetch=async()=>providerResponse({errors:[{code:'invalid_object'}]},400);
+ global.fetch=async()=>providerResponse({errors:[{code:'invalid_object',description:'Para gerar cobranças com Pix é necessário criar uma chave Pix no Asaas.'}]},400);
  response=await req(checkout,'POST',{action:'create_sandbox_checkout'},origin);
  assert.equal(response.code,503);assert.equal(uncertain.length,1);
  assert.equal(response.body.providerStatus,400);
  assert.equal(response.body.providerCode,'invalid_object');
+ assert.match(response.body.error,/Cadastre uma chave Pix/);
  global.fetch=async()=>{throw Error('ETIMEDOUT');};
  response=await req(checkout,'POST',{action:'create_sandbox_checkout'},origin);
  assert.equal(response.code,503);assert.equal(uncertain.length,2);
@@ -167,7 +168,7 @@ const fakeFetch=async(url,opts)=>{
  assert.equal(hits.length,beforeInvalid,'Boleto não é modalidade suportada no checkout hospedado');
 
  // Matriz de eventos: assinatura inválida, corpo incorreto, tipos permitidos.
- const hook=(event,id='evt_'+event)=>({id,event,
+ const hook=(event,id='evt_'+event+'&25774134')=>({id,event,
   checkout:{id:'ch_sandbox_matrix_123456',externalReference:record.external_ref}});
  response=await req(webhook,'GET');
  assert.equal(response.code,405);
@@ -183,6 +184,7 @@ const fakeFetch=async(url,opts)=>{
   assert.equal(response.code,200,event);
  }
  assert.equal(transitions.length,4);
+ assert.equal(transitions[0].id,'evt_CHECKOUT_CREATED&25774134');
  assert.equal(transitions.find(x=>x.event==='CHECKOUT_PAID').checkout,'ch_sandbox_matrix_123456');
  process.env.ASAAS_SANDBOX_ENABLED='false';
  response=await req(webhook,'POST',hook('CHECKOUT_PAID'),{'asaas-access-token':secret});

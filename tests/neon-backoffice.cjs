@@ -100,7 +100,7 @@ const cookie='better-auth.session_token=opaque_fake_session';
  assert.equal(r.code,200);assert.equal(r.body.enabled,true);
  r=await run(asaas,'POST','create_sandbox_checkout',{}, {...goodOrigin,cookie});
  assert.equal(r.code,201);assert.equal(r.body.sandbox,true);
- assert.match(r.body.link,/asaas\.com\/checkoutSession/);
+ assert.match(r.body.link,/^https:\/\/sandbox\.asaas\.com\/000\/checkoutSession\/show\//);
  assert.ok(asasaPayload);
  const hook={id:'evt_sandbox_1',event:'CHECKOUT_PAID',
   checkout:{id:'ch_sandbox_test_123',externalReference:'dp-sandbox-demo-123'}};
