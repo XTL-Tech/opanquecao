@@ -434,6 +434,20 @@ function within(rect,width){
             await shot('backoffice-demo-'+width);
             console.log('PASS BACKOFFICE Chromium '+width+': navegação, pedido, clientes, caixa, preços e dados fictícios.');
         }
+        // XTL FOOD: smoke test das 19 telas em Chromium, somente dados fictícios.
+        for(const width of [390,1440]){
+            await cdp.call('Emulation.setDeviceMetricsOverride',{width,height:width===390?844:900,deviceScaleFactor:1,mobile:width<900});
+            await cdp.call('Page.navigate',{url:'http://127.0.0.1:'+port+'/xtl-food/index.html'});
+            await waitFor(()=>cdp.eval('location.pathname==="/xtl-food/index.html" && document.querySelectorAll("#nav button").length===19'),6000);
+            const tabs=await cdp.eval('Array.from(document.querySelectorAll("#nav button"),b=>b.textContent)');
+            for(let i=0;i<tabs.length;i++){
+                await cdp.eval('document.querySelectorAll("#nav button")['+i+'].click()');
+                assert.equal(await cdp.eval('document.querySelector("#title").textContent'),tabs[i]);
+                assert.ok(await cdp.eval('document.querySelector("#content").childElementCount>0'));
+                assert.ok(await cdp.eval('document.documentElement.scrollWidth<=innerWidth+2'),'XTL FOOD overflow: '+tabs[i]);
+            }
+            console.log('PASS XTL FOOD Chromium '+width+': 19 telas navegáveis sem overflow.');
+        }
         console.log('PASS responsividade em Chromium real, sem pedido enviado.');
     }finally{
         try{socket?.close()}catch{}
