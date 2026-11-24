@@ -113,7 +113,7 @@ const response=()=>({code:0,headers:{},setHeader(k,v){this.headers[k]=v;},status
  assert.equal(d.getElementById('appShell').hidden,false);
  assert.equal(d.getElementById('demoRibbon').hidden,false);
  assert.equal(d.querySelectorAll('#ordersTable tr').length,4);
- assert.ok(publicFetches>0);
+ assert.equal(publicFetches,0,'A abertura demo não exige catálogo');
  d.querySelector('[data-tab="customers"]').click();
  assert.equal(d.getElementById('tab-customers').hidden,false);
  assert.equal(d.querySelectorAll('#customersTable tr').length,4);
@@ -126,6 +126,7 @@ const response=()=>({code:0,headers:{},setHeader(k,v){this.headers[k]=v;},status
  assert.equal(d.querySelectorAll('#customersTable tr').length,5,'Cadastro demo deve funcionar');
  d.querySelector('[data-tab="catalog"]').click();
  assert.equal(d.getElementById('tab-catalog').hidden,false);
+ await settle();assert.equal(publicFetches,1);
  assert.ok(d.querySelectorAll('#catalogTable tr').length>=82);
  d.querySelector('#catalogTable .td-btn').click();
  assert.equal(d.getElementById('priceDialog').open,true);
