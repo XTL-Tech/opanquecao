@@ -7,7 +7,7 @@
   return n;
  };
  const demo=new URLSearchParams(location.search).get('demo')==='1';
- const S={actor:null,data:null,tab:'orders',selected:null,areas:null,demo};
+ const S={actor:null,data:null,tab:'orders',selected:null,areas:null,demo,catalogLoadedAt:0,catalogPending:null};
  const label={pending_customer:'Aguardando cliente',awaiting_acceptance:'Aguardando aceite',
   accepted:'Aceito',completed:'Concluído',delivered:'Entregue',cancelled:'Cancelado'};
  const payment={cash:'Dinheiro',pix:'Pix',credit:'Crédito',debit:'Débito',other:'Outro'};
@@ -54,6 +54,12 @@
   let data;try{data=await response.json();}catch{throw Error('O servidor não respondeu com dados válidos.');}
   if(!response.ok)throw Error(data.error||'Não foi possível concluir a operação.');
   return data;
+ }
+ // Somente arquivos públicos: não envia cookies e respeita o cache HTTP estático.
+ async function staticData(url){
+  const response=await fetch(url,{credentials:'omit',cache:'default'});
+  if(!response.ok)throw Error('Dados públicos indisponíveis.');
+  return response.json();
  }
  function client(id){
   const known=S.data?.customers.find(x=>x.id===id);
@@ -125,12 +131,23 @@
   }catch(e){show(e.message,true);if(!S.demo&&/login|sessão|Conta sem/i.test(e.message))loggedOut();}
  }
  async function ensureCatalog(force=false){
-  if(S.demo||(!force&&S.data?.catalog?.catalog))return;
-  try{
-   const result=await request('/api/backoffice?action=catalog');
-   S.data.catalog=result.catalog;
-   if(S.tab==='catalog')renderCatalog();
-  }catch(e){show(e.message,true);}
+  if(!S.data||!S.actor)return;
+  if(S.data.catalog?.catalog&&(S.demo||(!force&&Date.now()-S.catalogLoadedAt<30000)))return;
+  if(S.catalogPending)return S.catalogPending;
+  const actor=S.actor;
+  const pending=(async()=>{
+   try{
+    const result=S.demo?{catalog:{catalog:await staticData('/cardapio.json'),revision:1}}:
+      await request('/api/backoffice?action=catalog');
+    if(S.actor!==actor||!S.data)return;
+    S.data.catalog=result.catalog;S.catalogLoadedAt=Date.now();
+    if(S.tab==='catalog')renderCatalog();
+   }catch(e){
+    if(S.actor===actor){if(S.tab==='catalog'&&!S.data?.catalog?.catalog)$('#catalogNotice').textContent='Catálogo indisponível. Toque em Atualizar para tentar novamente.';show(e.message,true);}
+   }
+  })();
+  S.catalogPending=pending;
+  try{await pending;}finally{if(S.catalogPending===pending)S.catalogPending=null;}
  }
  function showTab(tab){
   S.tab=tab;for(const name of ['orders','customers','cash','catalog'])$('#tab-'+name).hidden=name!==tab;
@@ -141,7 +158,7 @@
    catalog:['Preços do cardápio','Ajuste de valores, com histórico e autorização.']};
   $('#pageTitle').textContent=meta[tab][0];$('#pageSubtitle').textContent=meta[tab][1];
   if(S.data){
-   renderTab();if(tab==='catalog')ensureCatalog(true);
+   renderTab();if(tab==='catalog')ensureCatalog();
    if(tab==='cash')refreshAsaas();
   }
  }
@@ -284,6 +301,7 @@
  }
  function renderCatalog(){
   const catalog=S.data.catalog?.catalog, target=$('#catalogTable');clear(target);
+  if(!catalog){$('#catalogNotice').textContent='Carregando cardápio...';return;}
   const canEdit=S.actor.role==='manager'&&(S.demo||S.data.catalogWritable!==false);
   $('#catalogNotice').textContent=canEdit?'Alterações registradas com revisão do catálogo. Pedido antigo não muda de preço.':
    'Somente uma conta de gestão pode alterar valores.';
@@ -370,7 +388,7 @@
  async function mutate(action,body,success){
   try{
    const result=await run(action,body);
-   if(action==='catalog_price'&&result?.catalog)S.data.catalog=result.catalog;
+   if(action==='catalog_price'&&result?.catalog){S.data.catalog=result.catalog;S.catalogLoadedAt=Date.now();}
    await reload();closeDialog('detailDialog');closeDialog('customerDialog');closeDialog('priceDialog');closeDialog('manualDialog');show(S.demo?'DEMONSTRAÇÃO: '+success:success);}
   catch(e){show(e.message,true);}
  }
@@ -390,7 +408,7 @@
   if(!S.data?.catalog?.catalog)return;
   const cats=S.data.catalog.catalog.categorias.filter(x=>x.id!=='panquecas-2-sabores');clear($('#manualCategory'));
   for(const cat of cats){const o=el('option',cat.titulo);o.value=cat.id;$('#manualCategory').append(o);}
-  await fillProduct();await fillNeighborhood();
+  await fillProduct();
  }
  async function fillProduct(){
   clear($('#manualProduct'));const cat=S.data.catalog.catalog.categorias.find(x=>x.id===$('#manualCategory').value);
@@ -410,7 +428,7 @@
   }
  }
  async function fillNeighborhood(){
-  if(!S.areas){try{S.areas=await request('/delivery-areas.json');}catch{S.areas={cities:{}};}}
+  if(!S.areas){try{S.areas=await staticData('/delivery-areas.json');}catch{S.areas={cities:{}};}}
   clear($('#manualNeighborhood'));
   for(const a of S.areas.cities?.[$('#manualCity').value]||[]){
    const option=el('option',a.name);option.value=a.name;$('#manualNeighborhood').append(option);
@@ -419,15 +437,16 @@
  function updateManualType(){
   const type=$('#manualForm').elements.type.value;
   $('#manualDelivery').hidden=type!=='delivery';$('#manualTable').hidden=type!=='table';
+  if(type==='delivery')fillNeighborhood();
  }
  function parseMobilePrice(text){
   const match=/R\$\s*(\d+),(\d{2})/.exec(text||'');return match?Number(match[1])*100+Number(match[2]):null;
  }
- function loggedOut(){S.actor=null;S.data=null;$('#appShell').hidden=true;$('#loginScreen').hidden=false;}
+ function loggedOut(){S.actor=null;S.data=null;S.catalogLoadedAt=0;S.catalogPending=null;$('#appShell').hidden=true;$('#loginScreen').hidden=false;}
  async function boot(){
   for(const b of document.querySelectorAll('[data-close]'))b.addEventListener('click',()=>closeDialog(b.dataset.close));
   $('#navigation').addEventListener('click',e=>{const b=e.target.closest('[data-tab]');if(b)showTab(b.dataset.tab);});
-  $('#refresh').addEventListener('click',reload);
+  $('#refresh').addEventListener('click',async()=>{await reload();if(S.tab==='catalog')await ensureCatalog(true);if(S.tab==='cash')await refreshAsaas();});
   $('#orderSearch').addEventListener('input',()=>{
     if(S.demo)return renderOrders();
     clearTimeout(S.orderSearchTimer);
@@ -582,15 +601,21 @@
    }catch(err){$('#loginError').textContent=err.message;}
   });
   if(S.demo){
-   const catalog=await request('/cardapio.json');S.data=sample(catalog);
+   S.data=sample(null);
    S.actor={role:'manager',email:'demonstracao@exemplo.invalid'};$('#loginScreen').hidden=true;$('#appShell').hidden=false;
    $('#demoRibbon').hidden=false;render();return;
   }
-  try{const status=await request('/api/backoffice?action=status');
-   if(!status.enabled){$('#setupNotice').hidden=false;$('#loginForm').querySelector('button[type=submit]').disabled=true;$('#useEmailCode').disabled=true;}
-   else{const session=await request('/api/backoffice?action=session');
-    S.actor=session.actor;$('#loginScreen').hidden=true;$('#appShell').hidden=false;await reload();}
-  }catch{/* Sessão ausente: a tela de login permanece visível. */}
+  // Uma única consulta quando existe sessão: dashboard já autentica e retorna o ator.
+  try{
+   const next=await request('/api/backoffice?action=dashboard');
+   S.actor=next.actor;S.data=next;S.moreOrders=next.orders.length>=80;
+   $('#loginScreen').hidden=true;$('#appShell').hidden=false;render();
+  }catch{
+   // Sem sessão, diferencia a ausência de configuração sem atrasar o painel autenticado.
+   try{const status=await request('/api/backoffice?action=status');
+    if(!status.enabled){$('#setupNotice').hidden=false;$('#loginForm').querySelector('button[type=submit]').disabled=true;$('#useEmailCode').disabled=true;}
+   }catch{/* A tela de login permanece visível. */}
+  }
  }
  boot().catch(err=>{$('#loginError').textContent='Não foi possível iniciar o painel: '+err.message;});
 })();
