@@ -142,6 +142,25 @@ const cookie='better-auth.session_token=opaque_fake_session';
  d.querySelector('[data-tab=orders]').click();d.querySelector('[data-tab=catalog]').click();
  assert.equal(catalogFetches,1,'Reabrir catálogo demo não deve gerar download');
  assert.equal(fetches,0);
+ // Sessão fictícia autenticada: não faz status + session + dashboard em série.
+ const realDom=new JSDOM(html,{url:'https://opanquecao.vercel.app/backoffice/',runScripts:'outside-only'});
+ const rw=realDom.window,rd=rw.document,paths=[];
+ rw.fetch=async(url,opts)=>{
+  paths.push(url);assert.equal(opts.cache,'no-store');
+  if(url==='/api/backoffice?action=dashboard')return{ok:true,json:async()=>({
+   actor:{id:'fake-manager',role:'manager',email:'fake@example.invalid'},today:core.businessDate(),
+   orders:[],customers:[],closings:[],catalog:null,cash:{orders:0,total_cents:0,cash_cents:0,pix_cents:0,credit_cents:0,debit_cents:0,other_cents:0}})};
+  if(url==='/api/backoffice?action=catalog')return{ok:true,json:async()=>({catalog:{catalog,revision:1}})};
+  throw Error('Consulta inesperada: '+url);
+ };
+ rw.eval(frontend);await new Promise(resolve=>setTimeout(resolve,40));
+ assert.equal(rd.querySelector('#appShell').hidden,false);
+ assert.deepEqual(paths,['/api/backoffice?action=dashboard']);
+ rd.querySelector('[data-tab=catalog]').click();await new Promise(resolve=>setTimeout(resolve,40));
+ assert.ok(rd.querySelectorAll('#catalogTable tr').length>=82);
+ rd.querySelector('[data-tab=orders]').click();rd.querySelector('[data-tab=catalog]').click();
+ assert.deepEqual(paths,['/api/backoffice?action=dashboard','/api/backoffice?action=catalog']);
+ realDom.window.close();dom.window.close();
  assert.doesNotMatch(frontend,/SUPABASE_SECRET_KEY|DATABASE_URL|ASAAS_SANDBOX_API_KEY/);
  console.log('PASS NEON BACKOFFICE: esquema privado, sessões gerenciadas, permissão, preços lazy, demo isolada, Asaas sandbox e webhook autenticado.');
 })().catch(err=>{console.error(err);process.exitCode=1;});
