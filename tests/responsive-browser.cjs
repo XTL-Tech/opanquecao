@@ -6,8 +6,13 @@ const {spawn,spawnSync}=require('node:child_process');
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const root=process.cwd();
 const mime={'.html':'text/html','.mjs':'text/javascript','.js':'text/javascript','.json':'application/json','.css':'text/css','.webp':'image/webp','.png':'image/png','.svg':'image/svg+xml','.ico':'image/x-icon'};
+let delayDemoCatalog=false,demoCatalogRequests=0;
 const server=http.createServer((req,res)=>{
     const url=new URL(req.url,'http://localhost');
+    if(delayDemoCatalog&&url.pathname==='/cardapio.json'){
+        demoCatalogRequests++;
+        setTimeout(()=>{res.writeHead(200,{'Content-Type':'application/json'});res.end(fs.readFileSync(path.join(root,'cardapio.json')));},1200);return;
+    }
     if(url.pathname==='/api/catalog'){
         res.writeHead(200,{'Content-Type':'application/json'});
         res.end(fs.readFileSync(path.join(root,'cardapio.json')));return;
@@ -398,14 +403,19 @@ function within(rect,width){
             console.log('PASS SEO Chromium '+width+': 12 páginas, 82 nomes, imagens e links diretos para ficha.');
         }
         // Backoffice DEMO: teste real da interface, sempre sem credenciais ou dados de clientes.
+        delayDemoCatalog=true;
         for(const width of [390,1440]){
             await cdp.call('Emulation.setDeviceMetricsOverride',{
                 width,height:width===390?844:900,deviceScaleFactor:1,mobile:width<900
             });
+            demoCatalogRequests=0;
             await cdp.call('Page.navigate',{url:'http://127.0.0.1:'+port+'/backoffice/index.html?demo=1'});
             await waitFor(()=>cdp.eval(
                 'location.pathname==="/backoffice/index.html" && !document.getElementById("appShell").hidden && document.querySelectorAll("#ordersTable tr").length===4'
             ),10000);
+            assert.equal(demoCatalogRequests,0,'A tela de pedidos não pode aguardar o cardápio');
+            const readyMs=await cdp.eval('Math.round(performance.now())');
+            console.log('PERF BACKOFFICE '+width+': painel pronto observado em '+readyMs+'ms; zero downloads do catálogo no boot.');
             const dimensions=await cdp.eval('({scroll:document.documentElement.scrollWidth,width:innerWidth,rows:document.querySelectorAll("#ordersTable tr").length,notice:!document.getElementById("demoRibbon").hidden})');
             assert.ok(dimensions.scroll<=width+2,'Rolagem lateral no backoffice '+width+': '+JSON.stringify(dimensions));
             assert.equal(dimensions.notice,true,'Backoffice não sinaliza dados fictícios');
@@ -417,6 +427,8 @@ function within(rect,width){
             await cdp.eval('document.querySelector("[data-tab=cash]").click()');
             assert.equal(await cdp.eval('document.querySelectorAll("#cashCards .cash-tile").length'),6);
             await cdp.eval('document.querySelector("[data-tab=catalog]").click()');
+            await waitFor(()=>cdp.eval('document.querySelectorAll("#catalogTable tr").length>=82'),6000);
+            assert.equal(demoCatalogRequests,1,'Catálogo carregado uma vez sob demanda');
             assert.ok(await cdp.eval('document.querySelectorAll("#catalogTable tr").length>=82'),
                 'Não carregou editor de preços no backoffice '+width);
             await shot('backoffice-demo-'+width);
