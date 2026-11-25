@@ -94,8 +94,8 @@
           "nome": "Coração",
           "ingredientes": "Coração ao molho, mussarela e orégano",
           "tamanhos": {
-            "M": "R$ 28,00",
-            "G": "R$ 38,00"
+            "M": "R$ 30,00",
+            "G": "R$ 40,00"
           }
         },
         {
@@ -439,17 +439,17 @@
         {
           "nome": "Baguete Carne de Panela",
           "ingredientes": "Pão baguete, maionese verde, ketchup, mostarda, queijo na chapa, batata palha e carne de panela",
-          "preco": "R$ 25,00"
+          "preco": "R$ 30,00"
         },
         {
           "nome": "Baguete Frango",
           "ingredientes": "Pão baguete, maionese verde, ketchup, mostarda, queijo na chapa, batata palha e frango",
-          "preco": "R$ 25,00"
+          "preco": "R$ 30,00"
         },
         {
           "nome": "Baguete Coração de Frango",
           "ingredientes": "Pão baguete, maionese verde, ketchup, mostarda, queijo na chapa, batata palha e coração de frango",
-          "preco": "R$ 25,00"
+          "preco": "R$ 30,00"
         }
       ]
     },
