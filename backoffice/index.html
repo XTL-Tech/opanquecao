@@ -17,6 +17,7 @@
   <div class="brand"><img src="/img/logo-disk-panquecao.webp" alt="Disk Panquecão"><div><strong>DISK PANQUECÃO</strong><span>Central de atendimento</span></div></div>
   <div class="side-caption">OPERAÇÃO</div>
   <nav id="navigation" class="nav">
+   <button data-tab="comandas" type="button">Mesas e comandas</button>
    <button data-tab="orders" class="active" type="button"><span aria-hidden="true">▤</span> Pedidos <span id="pendingCount" class="count"></span></button>
    <button data-tab="kitchen" data-superadmin hidden type="button">Cozinha</button>
    <button data-tab="courier" data-superadmin hidden type="button">Motoboy</button>
@@ -105,6 +106,9 @@
       <p class="hint">Verifique o resultado no Asaas Sandbox. O retorno da página não confirma pagamento; somente o webhook autenticado altera o status da simulação.</p>
     </div>
 </section>
+   <section id="tab-comandas" hidden>
+    <form id="comandaForm" class="form-card"><h2>Abrir comanda</h2><p class="hint">CPF usado somente para identificar a comanda. Não é exibido na produção ou na TV.</p><div class="form-grid"><label>CPF<input name="cpf" inputmode="numeric" maxlength="14" autocomplete="off" required></label><label>Mesa<input name="table" type="number" min="1" max="999" required></label><label>Nome<input name="name" maxlength="80" required></label><label>Telefone<input name="phone" inputmode="tel" required></label></div><button id="comandaOpen" type="submit" class="primary" disabled>Abrir comanda</button><p id="comandaStatus" class="hint" role="status"></p></form><div id="comandaList"></div>
+   </section>
    <section id="tab-bi" hidden>
     <div id="biScreen" class="bi-screen">
      <header class="bi-head"><div><span class="bi-brand">XTL FOOD · DISK PANQUECÃO</span><h2>Central de indicadores</h2><p id="biDate">—</p></div><div class="bi-actions"><span id="biStatus" class="bi-status" role="status">Aguardando dados</span><button id="biPrivacy" type="button" class="soft" aria-pressed="false">Ocultar valores</button><button id="biFullscreen" type="button" class="primary">Modo TV</button></div></header>
@@ -156,7 +160,7 @@
 <dialog id="customerDialog" class="dialog"><form id="customerForm" class="dialog-content"><header class="dialog-head"><h2 id="customerFormTitle">Cliente</h2><button type="button" class="close" data-close="customerDialog" aria-label="Fechar">×</button></header><input type="hidden" id="customerId"><label>Nome<input id="customerName" required maxlength="80"></label><label>WhatsApp com DDD<input id="customerPhone" required inputmode="tel"></label><label>Observações internas<textarea id="customerNotes" maxlength="500" rows="3"></textarea></label><button class="primary full" type="submit">Salvar cliente</button></form></dialog>
 <dialog id="manualDialog" class="dialog"><form id="manualForm" class="dialog-content"><header class="dialog-head"><h2>Novo pedido manual</h2><button type="button" class="close" data-close="manualDialog" aria-label="Fechar">×</button></header>
 <p class="hint">Use quando o cliente fizer contato diretamente. O valor é recalculado pelo catálogo no servidor.</p>
-<label>Nome do cliente<input name="name" required maxlength="80"></label><label>WhatsApp com DDD<input name="phone" inputmode="tel" required></label>
+<p id="manualComandaHint" class="hint" hidden></p><label>Nome do cliente<input name="name" required maxlength="80"></label><label>WhatsApp com DDD<input name="phone" inputmode="tel" required></label>
 <label>Atendimento<select name="type"><option value="pickup">Retirada</option><option value="table">Mesa</option><option value="delivery">Entrega</option></select></label>
 <div id="manualTable" hidden><label>Mesa/comanda<input name="table" maxlength="12"></label></div>
 <div id="manualDelivery" hidden><div class="form-grid"><label>Cidade<select id="manualCity"><option value="Nova Hartz">Nova Hartz</option><option value="Araricá">Araricá</option></select></label><label>Bairro<select id="manualNeighborhood"></select></label></div><label>Rua ou estrada<input id="manualStreet"></label><label>Número<input id="manualNumber"></label><label>Complemento<input id="manualComplement"></label></div>
