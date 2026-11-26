@@ -158,11 +158,13 @@
  function showTab(tab){
   if(S.data?.operational)return;
   if(['kitchen','courier','integrations'].includes(tab)&&S.actor?.role!=='admin')return;
-  if(tab==='reports'&&!['admin','manager'].includes(S.actor?.role))return;
+  if(['reports','bi'].includes(tab)&&!['admin','manager'].includes(S.actor?.role))return;
+  if(tab!=='bi')exitBiTV();
   $('#tab-operational').hidden=true;
-  S.tab=tab;for(const name of ['orders','customers','cash','catalog','after-sales','reports','integrations'])$('#tab-'+name).hidden=name!==tab;
+  S.tab=tab;for(const name of ['orders','customers','cash','catalog','after-sales','reports','integrations','bi'])$('#tab-'+name).hidden=name!==tab;
   document.querySelectorAll('[data-tab]').forEach(n=>n.classList.toggle('active',n.dataset.tab===tab));
   const meta={orders:['Pedidos','Acompanhe cada pedido, do primeiro contato à entrega.'],
+   bi:['BI ao vivo','Visão executiva com atualização automática e modo TV.'],
    reports:['Relatórios gerenciais','Resultados comerciais e indicadores operacionais.'],integrations:['Integrações XTL','Ambiente técnico restrito.'],
    kitchen:['Fila da cozinha','Visão de superadmin'],courier:['Entregas','Visão de superadmin'],
    'after-sales':['Pós-venda','Acompanhe a satisfação 30 minutos após a entrega.'],
@@ -191,7 +193,7 @@
   $('#pageTitle').textContent=kitchen?'Fila da cozinha':'Entregas';
   $('#pageSubtitle').textContent=kitchen?'Pedidos aceitos e em preparo.':'Pedidos preparados e suas entregas em andamento.';
   $('#navigation').hidden=!isAdmin;
-  for(const name of ['orders','customers','cash','catalog','after-sales','reports','integrations'])$('#tab-'+name).hidden=true;
+  for(const name of ['orders','customers','cash','catalog','after-sales','reports','integrations','bi'])$('#tab-'+name).hidden=true;
   const section=$('#tab-operational');section.hidden=false;
   const list=$('#operationalQueue');clear(list);
   const orders=data.orders||[];
@@ -349,7 +351,67 @@
   const blob=new Blob(['\ufeff'+rows.map(row=>row.map(esc).join(';')).join('\r\n')],{type:'text/csv;charset=utf-8'});
   const url=URL.createObjectURL(blob),a=el('a');a.href=url;a.download='xtl-food-relatorio-'+reportData.period.from+'-'+reportData.period.to+'.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
  }
- function renderTab(){if(S.tab==='reports')void refreshReports();if(S.tab==='integrations')void refreshAsaas();if(['kitchen','courier'].includes(S.tab))void adminOperational(S.tab);if(S.tab==='orders')renderOrders();if(S.tab==='customers')renderCustomers();if(S.tab==='cash')renderCash();if(S.tab==='catalog')renderCatalog();if(S.tab==='after-sales')refreshAfterSales();}
+ let biBusy=false,biData=null,biLastOK=0,biPrivate=false;
+ const biFmt=n=>Number(n||0).toLocaleString('pt-BR');
+ const biMoney=n=>biPrivate?'••••':money(Number(n||0));
+ const biMinutes=n=>n==null?'—':biFmt(n)+' min';
+ function biMetric(label,value,financial=false){
+  const card=el('div',null,'bi-metric');card.append(el('small',label),el('strong',financial&&biPrivate?'••••':String(value)));return card;
+ }
+ function biBars(title,rows,format,mask=false){
+  const panel=el('article',null,'bi-panel');panel.append(el('h3',title));
+  const max=Math.max(1,...rows.map(r=>Number(r[1])||0));
+  if(!rows.length){panel.append(el('p','Sem registros','bi-muted'));return panel;}
+  for(const [name,value] of rows){
+   const row=el('div',null,'bi-bar-row'),line=el('div',null,'bi-bar-label');
+   line.append(el('span',name),el('strong',mask&&biPrivate?'••••':format(value)));
+   const track=el('progress');track.max=max;track.value=Math.max(0,Number(value)||0);
+   track.setAttribute('aria-label',name);row.append(line);
+   if(!(mask&&biPrivate))row.append(track);panel.append(row);
+  }
+  return panel;
+ }
+ function drawBI(data){
+  const t=data.totals||{},f=data.followup||{},m=data.timing||{};
+  const queue=Object.fromEntries((data.queue||[]).map(x=>[x.status,x.orders]));
+  const q=(...states)=>states.reduce((n,k)=>n+Number(queue[k]||0),0);
+  $('#biDate').textContent=(data.day||'').split('-').reverse().join('/')+' · Caixa '+(data.cash_closed?'fechado':'aberto');
+  const cards=$('#biCards'),charts=$('#biCharts');clear(cards);clear(charts);
+  const kpis=[['Receita de hoje',biMoney(t.revenue_cents),true],['Pedidos recebidos hoje',biFmt(m.received)],['Pagos e concluídos',biFmt(t.orders)],['Ticket médio',t.orders?biMoney(Math.round(Number(t.revenue_cents)/t.orders)):'—',true],['Clientes compradores',biFmt(t.customers)],['Em preparo',biFmt(q('accepted','preparing'))],['Em entrega',biFmt(q('out_for_delivery'))],['Pós-venda pendente',biFmt(f.due)],['Problemas em aberto',biFmt(f.issues)],['Tempo até aceite',biMinutes(m.accept_minutes)],['Tempo de entrega',biMinutes(m.delivery_minutes)],['Cancelados hoje',biFmt(m.cancelled)]];
+  for(const [label,value,financial] of kpis)cards.append(biMetric(label,value,financial));
+  charts.append(biBars('Vendas dos últimos 7 dias',(data.daily||[]).map(x=>[x.day.slice(5).split('-').reverse().join('/'),x.revenue_cents]),biMoney,true));
+  charts.append(biBars('Fila operacional agora',[['Aguardando confirmação',q('pending_customer','awaiting_acceptance')],['Cozinha',q('accepted','preparing')],['Devolvidos',q('returned_to_attendant')],['Preparados',q('completed')],['Em entrega',q('out_for_delivery')]],biFmt));
+  charts.append(biBars('Meios de pagamento hoje',(data.methods||[]).map(x=>[payment[x.method]||x.method||'Não informado',x.revenue_cents]),biMoney,true));
+  charts.append(biBars('Produtos mais vendidos hoje',(data.products||[]).map(x=>[x.product,x.quantity]),biFmt));
+ }
+ async function refreshBI(){
+  if(biBusy||S.demo||S.tab!=='bi'||document.hidden||!['admin','manager'].includes(S.actor?.role))return;
+  const actor=S.actor;biBusy=true;
+  try{
+   const d=await request('/api/backoffice?action=live_bi');
+   if(S.actor!==actor||S.tab!=='bi')return;
+   if(!d.totals||!d.generated_at)throw Error('Resposta de BI incompleta.');
+   biData=d;biLastOK=Date.now();drawBI(d);
+   $('#biStatus').textContent='● Atualizado '+new Date(d.generated_at).toLocaleTimeString('pt-BR');
+   $('#biStatus').classList.remove('bi-stale');
+  }catch(e){
+   if(S.actor!==actor||S.tab!=='bi')return;
+   if(/login|sessão|autorizad|exclusivo/i.test(e.message)){exitBiTV();biData=null;clear($('#biCards'));clear($('#biCharts'));loggedOut();return;}
+   $('#biStatus').textContent=biLastOK?'⚠ Dados desatualizados · última atualização '+new Date(biLastOK).toLocaleTimeString('pt-BR'):'⚠ Indicadores indisponíveis';
+   $('#biStatus').classList.add('bi-stale');
+  }finally{biBusy=false;}
+ }
+ function exitBiTV(){
+  document.body.classList.remove('bi-tv');$('#biFullscreen').textContent='Modo TV';
+  if(document.fullscreenElement===document.documentElement&&document.exitFullscreen)document.exitFullscreen().catch(()=>{});
+ }
+ async function toggleBiTV(){
+  if(S.tab!=='bi'||!['admin','manager'].includes(S.actor?.role))return;
+  if(document.body.classList.contains('bi-tv')){exitBiTV();return;}
+  document.body.classList.add('bi-tv');$('#biFullscreen').textContent='Sair do modo TV';
+  try{if(document.documentElement.requestFullscreen)await document.documentElement.requestFullscreen();}catch{/* CSS fullscreen remains available on TV browsers. */}
+ }
+ function renderTab(){if(S.tab==='bi')void refreshBI();if(S.tab==='reports')void refreshReports();if(S.tab==='integrations')void refreshAsaas();if(['kitchen','courier'].includes(S.tab))void adminOperational(S.tab);if(S.tab==='orders')renderOrders();if(S.tab==='customers')renderCustomers();if(S.tab==='cash')renderCash();if(S.tab==='catalog')renderCatalog();if(S.tab==='after-sales')refreshAfterSales();}
  async function lookupOrders(more=false){
   if(S.demo||!S.data)return renderOrders();
   try{
@@ -627,8 +689,13 @@
  function parseMobilePrice(text){
   const match=/R\$\s*(\d+),(\d{2})/.exec(text||'');return match?Number(match[1])*100+Number(match[2]):null;
  }
- function loggedOut(){S.actor=null;S.data=null;S.catalogLoadedAt=0;S.catalogPending=null;$('#appShell').hidden=true;$('#loginScreen').hidden=false;}
+ function loggedOut(){exitBiTV();biData=null;biLastOK=0;clear($('#biCards'));clear($('#biCharts'));S.actor=null;S.data=null;S.catalogLoadedAt=0;S.catalogPending=null;$('#appShell').hidden=true;$('#loginScreen').hidden=false;}
  async function boot(){
+  $('#biFullscreen').addEventListener('click',toggleBiTV);
+  $('#biPrivacy').addEventListener('click',()=>{biPrivate=!biPrivate;$('#biPrivacy').setAttribute('aria-pressed',String(biPrivate));$('#biPrivacy').textContent=biPrivate?'Mostrar valores':'Ocultar valores';if(biData)drawBI(biData);});
+  document.addEventListener('fullscreenchange',()=>{if(!document.fullscreenElement&&document.body.classList.contains('bi-tv'))exitBiTV();});
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden&&S.tab==='bi')void refreshBI();});
+  if(!S.demo)setInterval(()=>{if(S.tab==='bi')void refreshBI();},30000);
   $('#reportForm').addEventListener('submit',e=>{e.preventDefault();void refreshReports();});
   $('#reportExport').addEventListener('click',exportReports);
   setInterval(()=>{if(S.actor&&!S.demo&&!S.data?.operational&&!document.hidden)void refreshAfterSales();},60000);
