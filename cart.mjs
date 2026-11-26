@@ -529,46 +529,95 @@ checkoutForm.elements.deliveryCity.addEventListener('change', populateDeliveryNe
 setDeliveryMode();
 
 
-let savedAddresses=[],savedNext=null,savedLoading=false;
+let savedAddresses=[],savedNext=null,savedLoading=false,activeAccount=null,accountEpoch=0,accountCheck=null,profileEdited=false,localLogout=false;
 const savedStatus=byId('savedAccountStatus'),savedSelect=byId('savedAddressSelect');
+const accountNav=byId('customerAccountNav'),accountJoin=byId('accountJoinLink'),accountLogout=byId('checkoutAccountLogout'),accountReload=byId('loadSavedAccount');
 function savedMessage(msg){if(savedStatus)savedStatus.textContent=msg;}
+function showAccountState(){
+ const connected=!!activeAccount;
+ if(accountNav)accountNav.textContent=connected?'Minha conta · conectada':'Minha conta';
+ if(accountJoin)accountJoin.textContent=connected?'Gerenciar minha conta ↗':'Entrar ou criar conta →';
+ if(accountLogout)accountLogout.hidden=!connected;
+ if(accountReload)accountReload.hidden=!connected;
+ if(byId('savedAccountHeading'))byId('savedAccountHeading').textContent=connected?'Você já é de casa!':'Seja de casa!';
+ if(byId('savedAccountPitch'))byId('savedAccountPitch').textContent=connected?'Sua conta está conectada. Escolha onde receber. PanqueCoins em breve.':'Crie sua conta, salve seus endereços e prepare-se para acumular PanqueCoins quando o programa for liberado. Você também pode pedir sem cadastro.';
+ const loyalty=byId('loyaltyAccountLink');if(loyalty)loyalty.textContent=connected?'Minha conta →':'Quero fazer parte →';
+}
 function displaySavedAddresses(){
  if(!savedSelect)return;
+ const current=savedSelect.value;
  savedSelect.replaceChildren(new Option('Escolha um endereço',''));
  for(const a of savedAddresses)savedSelect.add(new Option(a.label+' · '+a.data.city,a.id));
- byId('savedAddresses').hidden=false;
+ if(savedAddresses.some(a=>a.id===current))savedSelect.value=current;
+ byId('savedAddresses').hidden=!activeAccount||!savedAddresses.length;
  byId('moreSavedAddresses').hidden=!savedNext;
 }
+function clearAccountFields(){
+ accountEpoch++;activeAccount=null;profileEdited=false;savedAddresses=[];savedNext=null;
+ for(const field of ['customerName','customerPhone','deliveryCity','deliveryNeighborhood','deliveryOtherNeighborhood','deliveryStreet','deliveryNumber','deliveryComplement','deliveryReference'])checkoutForm.elements[field].value='';
+ neighborhoodSelect.replaceChildren(new Option('Selecione primeiro a cidade',''));neighborhoodSelect.disabled=true;
+ clearLocation();updateOtherNeighborhood();displaySavedAddresses();showAccountState();
+ checkoutForm.dispatchEvent(new window.Event('input',{bubbles:true}));
+}
 async function fetchSavedAddresses(more=false){
+ const epoch=accountEpoch,account=activeAccount;
  const result=await accountRequest('addresses',null,more&&savedNext?{after:savedNext}:{});
+ if(epoch!==accountEpoch||activeAccount!==account)return;
  savedAddresses=more?[...savedAddresses,...result.addresses]:result.addresses;savedNext=result.next;
  displaySavedAddresses();
 }
-if(byId('loadSavedAccount'))byId('loadSavedAccount').onclick=async()=>{
- if(savedLoading)return;savedLoading=true;byId('loadSavedAccount').disabled=true;
- try{
-  const data=await accountRequest('state');
-  checkoutForm.elements.customerName.value=data.profile?.name||'';
-  checkoutForm.elements.customerPhone.value=data.profile?.phone||'';
-  checkoutForm.dispatchEvent(new window.Event('input',{bubbles:true}));
-  await fetchSavedAddresses();
-  savedMessage(savedAddresses.length?'Dados carregados. Escolha seu endereço ou informe outro.':'Dados carregados. Cadastre endereços em Minha conta.');
- }catch(err){
-  savedAddresses=[];savedNext=null;displaySavedAddresses();byId('savedAddresses').hidden=true;
-  savedMessage(err.status===401?'Entre em Minha conta para carregar seus dados. Seu carrinho será preservado.':'Não foi possível carregar a conta. Você pode continuar sem cadastro.');
- }finally{savedLoading=false;byId('loadSavedAccount').disabled=false;}
+function applyAccountProfile(force=false){
+ if(!activeAccount||(!force&&profileEdited))return;
+ const e=checkoutForm.elements,p=activeAccount.profile||{};
+ if(force||!e.customerName.value)e.customerName.value=p.name||'';
+ if(force||!e.customerPhone.value)e.customerPhone.value=p.phone||'';
+ checkoutForm.dispatchEvent(new window.Event('input',{bubbles:true}));
+}
+async function detectAccount({checkout=false,force=false}={}){
+ if(localLogout)return;
+ if(accountCheck)await accountCheck;
+ if(localLogout)return;
+ const epoch=accountEpoch;
+ const pending=(async()=>{
+  try{
+   const state=await accountRequest('state');
+   if(epoch!==accountEpoch||localLogout)return;
+   if(activeAccount&&activeAccount.email!==state.email)clearAccountFields();
+   const first=!activeAccount;
+   activeAccount=state;showAccountState();
+   if(checkout){
+    applyAccountProfile(force||first&&!profileEdited);
+    await fetchSavedAddresses();
+    if(activeAccount===state)savedMessage(savedAddresses.length?'Conta reconhecida. Escolha onde receber seu pedido.':'Conta reconhecida. Você pode informar ou cadastrar um endereço.');
+   }
+  }catch(err){
+   if(epoch!==accountEpoch||localLogout)return;
+   if(activeAccount)clearAccountFields();
+   if(checkout)savedMessage(err.status===401?'Crie sua conta ou continue sem cadastro.':'Não foi possível confirmar a sessão. Você pode pedir sem cadastro.');
+  }
+ })();
+ accountCheck=pending;
+ try{await pending;}finally{if(accountCheck===pending)accountCheck=null;}
+}
+if(accountReload)accountReload.onclick=()=>detectAccount({checkout:true,force:true});
+if(accountLogout)accountLogout.onclick=async()=>{
+ if(savedLoading||sending)return;
+ savedLoading=true;localLogout=true;accountLogout.disabled=true;clearAccountFields();
+ try{await accountRequest('logout',{});try{window.localStorage.setItem('dp-account-session-change-v1','logout:'+Date.now());}catch{}savedMessage('Você saiu da conta. Seu carrinho foi preservado.');}
+ catch{savedMessage('Não foi possível confirmar a saída no servidor. Abra Minha conta para sair com segurança.');}
+ finally{savedLoading=false;accountLogout.disabled=false;}
 };
 if(byId('moreSavedAddresses'))byId('moreSavedAddresses').onclick=async()=>{
- if(savedLoading)return;savedLoading=true;try{await fetchSavedAddresses(true);}catch{savedMessage('Não foi possível carregar mais endereços.');}finally{savedLoading=false;}
+ if(savedLoading||!activeAccount)return;savedLoading=true;try{await fetchSavedAddresses(true);}catch{savedMessage('Não foi possível carregar mais endereços.');}finally{savedLoading=false;}
 };
 if(savedSelect)savedSelect.onchange=async()=>{
- if(savedLoading)return;const found=savedAddresses.find(x=>x.id===savedSelect.value);if(!found)return;
- savedLoading=true;savedSelect.disabled=true;
+ if(savedLoading||!activeAccount)return;const found=savedAddresses.find(x=>x.id===savedSelect.value);if(!found)return;
+ savedLoading=true;savedSelect.disabled=true;const epoch=accountEpoch;
  try{
   const d=found.data,e=checkoutForm.elements;
   e.fulfillmentType.value='delivery';setDeliveryMode();clearLocation();
   e.deliveryCity.value=d.city;await populateDeliveryNeighborhoods();
-  if(e.deliveryCity.value!==d.city||e.fulfillmentType.value!=='delivery')return;
+  if(epoch!==accountEpoch||e.deliveryCity.value!==d.city||e.fulfillmentType.value!=='delivery')return;
   const known=[...e.deliveryNeighborhood.options].some(x=>x.value===d.neighborhood);
   e.deliveryNeighborhood.value=known?d.neighborhood:'__other__';e.deliveryOtherNeighborhood.value=d.neighborhood==='__other__'?d.otherNeighborhood||'':known?'':d.neighborhood;
   for(const [field,key] of [['deliveryStreet','street'],['deliveryNumber','number'],['deliveryComplement','complement'],['deliveryReference','reference']])e[field].value=d[key]||'';
@@ -576,6 +625,10 @@ if(savedSelect)savedSelect.onchange=async()=>{
   savedMessage('Endereço selecionado. Confira os dados e a taxa antes de enviar.');
  }catch{savedMessage('Não foi possível carregar esse endereço. Preencha manualmente.');}finally{savedLoading=false;savedSelect.disabled=false;}
 };
+checkoutForm.addEventListener('input',e=>{if(e.isTrusted&&['customerName','customerPhone'].includes(e.target.name))profileEdited=true;});
+window.addEventListener('pageshow',e=>{if(e.persisted)void detectAccount({checkout:checkoutStep});});
+window.addEventListener('storage',e=>{if(e.key==='dp-account-session-change-v1'&&document.body.dataset.premiumPreview!=='true'){if(activeAccount)clearAccountFields();localLogout=String(e.newValue||'').startsWith('logout:');if(!localLogout)void detectAccount({checkout:checkoutStep});}});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&activeAccount)void detectAccount({checkout:checkoutStep});});
 
 function getFulfillment() {
     const e = checkoutForm.elements;
@@ -619,6 +672,7 @@ byId('startCheckout').onclick = () => {
     }
     refresh();
     checkoutForm.elements.customerName.focus({preventScroll:true});
+    void detectAccount({checkout:true});
 };
 checkoutForm.addEventListener('input', () => {
     fallback.hidden = true;
@@ -760,6 +814,7 @@ function openWhatsApp(url) {
 
 checkoutForm.onsubmit = async event => {
     event.preventDefault();
+    if(accountCheck||savedLoading){savedMessage('Aguarde a conferência da conta e do endereço.');return;}
     if(premiumPreview){if(!storeOpenForOrders||!cart.length)return;orderStatus.textContent="DEMONSTRAÇÃO: pedido simulado com sucesso. Nenhum dado enviado.";renderPartners(byId("localPartners"));fallback.hidden=true;return;}
     if (sending) return;
     hideCheckoutPartners();
@@ -866,3 +921,5 @@ checkoutForm.onsubmit = async event => {
         refresh();
     }
 };
+
+if(accountNav)void detectAccount();
