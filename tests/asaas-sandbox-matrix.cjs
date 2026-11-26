@@ -38,7 +38,7 @@ Object.assign(process.env,{
 });
 db.configured=()=>true;
 auth.configured=()=>true;
-auth.actor=async()=>({id:'gestor-ficticio',role:'manager'});
+auth.actor=async()=>({id:'gestor-ficticio',role:'admin'});
 db.sandboxRecent=async()=>[];
 db.sandboxEventHistory=async()=>[];
 const record={id:'2b18ec00-44d0-4b37-9c55-71eb444f199b',
@@ -82,7 +82,7 @@ const fakeFetch=async(url,opts)=>{
  assert.equal(hits.length,0,'Histórico não pode chamar o provedor');
  auth.actor=async()=>({id:'atendente-ficticio',role:'attendant'});
  assert.equal((await req(checkout,'GET',{},origin,{view:'history'})).code,403);
- auth.actor=async()=>({id:'gestor-ficticio',role:'manager'});
+ auth.actor=async()=>({id:'gestor-ficticio',role:'admin'});
  db.sandboxRecent=async()=>[];db.sandboxEventHistory=async()=>[];
  assert.match(neonSource,/WHERE s\.created_by=\$1 ORDER BY e\.processed_at DESC LIMIT 30/);
  response=await req(checkout,'POST',{action:'create_sandbox_checkout'},origin);
@@ -143,7 +143,7 @@ const fakeFetch=async(url,opts)=>{
  auth.actor=async()=>({id:'atendente-ficticio',role:'attendant'});
  response=await req(checkout,'POST',{action:'create_sandbox_checkout'},origin);
  assert.equal(response.code,403);
- auth.actor=async()=>({id:'gestor-ficticio',role:'manager'});
+ auth.actor=async()=>({id:'gestor-ficticio',role:'admin'});
  process.env.ASAAS_SANDBOX_ENABLED='false';
  response=await req(checkout,'POST',{action:'create_sandbox_checkout'},origin);
  assert.equal(response.code,503);assert.equal(hits.length,before);
