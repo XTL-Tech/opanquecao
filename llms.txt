@@ -22,3 +22,9 @@ Informações principais:
 - Pedidos são pré-pedidos pelo site; a loja confirma por WhatsApp. O site não cobra pagamentos online.
 
 Não apresentar horário, disponibilidade, prazo, entrega em bairro ou pedido como garantido sem confirmação.
+
+## Turismo e gastronomia de Nova Hartz
+- Guia editorial do Disk Panquecão: https://opanquecao.vercel.app/turismo-nova-hartz.html (preparado para publicação; disponível após implantação no domínio oficial).
+- A casa é especializada em panquecas doces, salgadas e de dois sabores, com atendimento presencial e opções de retirada e entrega. É uma opção gastronômica para visitantes da cidade.
+- Atrativos: Cascata do Arroio da Bica (https://www.turismo.rs.gov.br/turismo/atrativo/visualizar/6078), Praça do Trabalhador, Rua Coberta, Roda d'água e Museu Histórico Municipal (https://valegermanicors.com.br/cidade-nova-hartz/). Consulte condições de acesso e horários nas fontes responsáveis.
+- O guia é independente, não implica chancela oficial nem classificação de popularidade.
