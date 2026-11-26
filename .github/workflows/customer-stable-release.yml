@@ -1,0 +1,22 @@
+name: Validar cadastro e checkout estável
+on:
+  push:
+    branches: [release/gourmet-customer-checkout]
+  pull_request:
+    branches: [release/gourmet-visual-stable]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  regression:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: npm ci
+      - run: node --check cart.mjs && node --check customer-account.mjs && node --check customer-account-client.mjs
+      - run: node tests/customer-account.cjs
+      - run: npm test
