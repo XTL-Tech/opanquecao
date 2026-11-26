@@ -2,7 +2,7 @@ import {accountRequest} from './customer-account-client.mjs';
 import {normalizeFulfillment} from './fulfillment.mjs';
 const $=id=>document.getElementById(id);
 const login=$('accountLogin'),dashboard=$('accountDashboard'),profile=$('profileForm'),address=$('addressForm');
-const demo=document.body.dataset.premiumPreview==='true';
+const demo=false;
 $('accountDemoNotice').hidden=!demo;
 let config,areas,next=null,records=[],editing=null,email='',working=false,widget=null,challenge='';
 const signalSession=kind=>{if(!demo)try{window.localStorage.setItem('dp-account-session-change-v1',kind+':'+Date.now());}catch{}};
