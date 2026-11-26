@@ -20,7 +20,7 @@ const res=()=>({code:0,setHeader(){},status(n){this.code=n;return this},json(b){
  assert.match(tabs.keyFor(fakeCpf),/^[a-f0-9]{64}$/);
  rows=[{id,table_number:2}];
  await tabs.open(actor,{cpf:fakeCpf,table:2,name:'Cliente fictício',phone:'10000000000'});
- assert.equal(params[2],tabs.keyFor(fakeCpf));assert.equal(params[3],'25');assert.ok(!params.includes(fakeCpf));
+ assert.equal(params[0],tabs.keyFor(fakeCpf));assert.equal(params[1],'25');assert.ok(!params.includes(fakeCpf));
  await tabs.find(actor,{cpf:fakeCpf});assert.deepEqual(params,[tabs.keyFor(fakeCpf)]);
  await assert.rejects(tabs.list({role:'kitchen'}),e=>e.status===403);
  await assert.rejects(bi.live(actor),e=>e.status===403);
