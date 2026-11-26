@@ -4,7 +4,7 @@ let ads=[],cursor=0,timer,refreshing=false,lastOK=0,validUntil=0;
 const active=()=>Date.now()<validUntil?ads.filter(a=>a.tv===true&&Date.parse(a.expiresAt)>Date.now()):[];
 function fallback(){
  $('art').hidden=true;$('art').removeAttribute('src');$('copy').hidden=false;
- $('sponsor').textContent='DISK PANQUECÃO';$('headline').textContent='Obrigado pela preferência!';$('description').textContent='Feito com carinho para você.';
+ $('sponsor').textContent='XTL TECH · Parceiro permanente';$('headline').textContent='Tecnologia que ajuda a te atender melhor.';$('description').textContent='XTL — Feito para durar.';
 }
 function play(){
  clearTimeout(timer);
