@@ -11,7 +11,7 @@ function error(message,status){return Object.assign(new Error(message),{status})
 async function demo(action,body){
  if(action==='config')return {enabled:true,demo:true};
  if(action==='otp_request')return {requested:true};
- if(action==='otp_verify'){const x=sample();save(x);return {email:x.email,profile:x.profile};}
+ if(action==='otp_verify'){if(body.otp!=='123456')throw error('Código de demonstração inválido.',401);const x=sample();save(x);return {email:x.email,profile:x.profile};}
  if(action==='logout'){sessionStorage.removeItem(demoKey);return{signedOut:true};}
  const x=read();if(!x)throw error('Entre na sua conta.',401);
  if(action==='state')return{email:x.email,profile:x.profile};
