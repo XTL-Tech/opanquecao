@@ -452,9 +452,9 @@
    if(tab==='ranking'){
     const d=await request('/api/backoffice?action=annual_ranking&year='+encodeURIComponent($('#annualYear').value));
     if(S.actor!==actor||S.tab!==tab)return;
-    root.append(el('p',d.published?'Campanha publicada':'Campanha ainda não liberada · prévia administrativa','hint'));
-    for(const [key,title] of [['pancake','Campeão das panquecas'],['orders','Campeão dos pedidos'],['visits','Campeão de presença']]){
-     root.append(reportRows(title,['Posição','Participante'],d.entries.filter(e=>e.category===key).map(e=>[e.position+'º',e.alias])));
+    root.append(el('p',d.published?'Campanha publicada':'Campanha ainda não liberada · prévia administrativa','hint'));if(d.prize)root.append(el('p',d.prize));
+    for(const [key,title] of [['pancake','Rei das Panquecas'],['orders','Cliente Fiel'],['visits','Cliente da Casa']]){
+     root.append(reportRows(title,['Posição','Nome autorizado ou apelido'],d.entries.filter(e=>e.category===key).map(e=>[e.position+'º',e.alias])));
     }
    }else{
     const d=await request('/api/backoffice?action=fiscal_refunds');
