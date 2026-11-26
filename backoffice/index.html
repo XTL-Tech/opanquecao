@@ -26,6 +26,7 @@
    <button data-tab="bi" data-management hidden type="button">📊 BI ao vivo</button>
    <button data-tab="ranking" data-management hidden type="button">Ranking anual</button>
    <button data-tab="fiscal" data-management hidden type="button">Fiscal e estornos</button>
+   <button data-tab="partners" data-management hidden type="button">Parceiros e publicidade</button>
    <button data-tab="reports" data-management hidden type="button">Relatórios gerenciais</button>
    <button data-tab="integrations" data-superadmin hidden type="button">Integrações XTL</button>
    <button data-tab="cash" type="button"><span aria-hidden="true">▣</span> Caixa diário</button>
@@ -108,6 +109,20 @@
       <p class="hint">Verifique o resultado no Asaas Sandbox. O retorno da página não confirma pagamento; somente o webhook autenticado altera o status da simulação.</p>
     </div>
 </section>
+   <section id="tab-partners" hidden>
+    <div class="form-card"><h2>XTL FOOD Partners</h2><p>Vaga 1 — XTL TECH (permanente). Vagas comerciais disponíveis: 2 e 3.</p><a href="/anuncios/" target="_blank" rel="noopener noreferrer">Abrir tela de anúncios da TV</a><p id="adSummary" class="hint"></p><div id="adContracts"></div></div>
+    <form id="adForm" class="form-card"><h2 id="adFormTitle">Novo contrato</h2><div class="form-grid">
+     <label>Vaga<select name="slot"><option value="2">2</option><option value="3">3</option></select></label>
+     <label>Empresa<input name="advertiser" maxlength="80" required></label><label>Contato comercial<input name="contact" maxlength="160"></label><label>Referência do contrato assinado<input name="contractRef" maxlength="120"></label>
+     <label>Início<input name="startsOn" type="date" required></label><label>Término<input name="endsOn" type="date" required></label><label>Vencimento do pagamento<input name="dueOn" type="date" required></label>
+     <label>Valor contratado (R$)<input name="amount" type="number" min="0" max="100000" step=".01" required value="0"></label><label>Valor recebido (R$)<input name="paid" type="number" min="0" max="100000" step=".01" required value="0"></label>
+     <label>Situação<select name="state"><option value="draft">Rascunho</option><option value="active">Ativo</option><option value="paused">Pausado</option><option value="ended">Encerrado</option></select></label>
+     <label>Título público<input name="headline" maxlength="100" required></label><label>Mensagem pública<input name="description" maxlength="240"></label>
+     <label>Link público HTTPS<input name="destination" type="url" maxlength="500"></label><label>Arte aprovada pela XTL (caminho local)<input name="mediaPath" maxlength="180" placeholder="/img/parceiros/empresa.webp"></label><label>Duração na TV (segundos)<input name="seconds" type="number" min="5" max="60" value="15" required></label>
+     <label><input name="showTV" type="checkbox" checked> Exibir na TV</label><label><input name="showCheckout" type="checkbox"> Exibir após pré-pedido</label>
+     <label>Observações internas<textarea name="notes" maxlength="500"></textarea></label>
+    </div><button id="adSave" type="submit" class="primary">Salvar contrato</button> <button id="adReset" type="button" class="soft">Novo / limpar</button><p id="adStatus" role="status" class="hint"></p></form>
+   </section>
    <section id="tab-ranking" hidden><div class="form-card"><h2>Campeões do Panquecão</h2><label>Ano<select id="annualYear"><option>2027</option><option>2026</option></select></label><p class="hint">Somente posição e apelido. Compras, valores e CPF permanecem privados.</p></div><div id="annualContent"></div></section>
    <section id="tab-fiscal" hidden><div id="fiscalContent"></div></section>
    <section id="tab-comandas" hidden>
