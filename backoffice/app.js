@@ -151,9 +151,10 @@
  }
  function showTab(tab){
   if(S.data?.operational)return;
-  S.tab=tab;for(const name of ['orders','customers','cash','catalog'])$('#tab-'+name).hidden=name!==tab;
+  S.tab=tab;for(const name of ['orders','customers','cash','catalog','after-sales'])$('#tab-'+name).hidden=name!==tab;
   document.querySelectorAll('[data-tab]').forEach(n=>n.classList.toggle('active',n.dataset.tab===tab));
   const meta={orders:['Pedidos','Acompanhe cada pedido, do primeiro contato à entrega.'],
+   'after-sales':['Pós-venda','Acompanhe a satisfação 30 minutos após a entrega.'],
    customers:['Clientes','Cadastros e relacionamento com o cliente.'],
    cash:['Caixa diário','Conferência e fechamento dos pagamentos recebidos.'],
    catalog:['Preços do cardápio','Ajuste de valores, com histórico e autorização.']};
@@ -167,7 +168,7 @@
   $('#staffLabel').textContent=S.actor.email||'Atendente';
   $('#staffRole').textContent=S.actor.role==='manager'?'Gestão':'Atendimento';
   $('#pendingCount').textContent=S.data.orders.filter(x=>['pending_customer','awaiting_acceptance'].includes(x.status)).length||'';
-  renderTab();
+  renderTab();if(S.tab!=='after-sales')void refreshAfterSales();
  }
  function renderOperational(){
   const kitchen=S.actor.role==='kitchen';
@@ -176,7 +177,7 @@
   $('#pageTitle').textContent=kitchen?'Fila da cozinha':'Entregas';
   $('#pageSubtitle').textContent=kitchen?'Pedidos aceitos e em preparo.':'Pedidos preparados e suas entregas em andamento.';
   $('#navigation').hidden=true;
-  for(const name of ['orders','customers','cash','catalog'])$('#tab-'+name).hidden=true;
+  for(const name of ['orders','customers','cash','catalog','after-sales'])$('#tab-'+name).hidden=true;
   const section=$('#tab-operational');section.hidden=false;
   const list=$('#operationalQueue');clear(list);
   const orders=S.data.orders||[];
@@ -219,7 +220,50 @@
    list.append(card);
   }
  }
- function renderTab(){if(S.tab==='orders')renderOrders();if(S.tab==='customers')renderCustomers();if(S.tab==='cash')renderCash();if(S.tab==='catalog')renderCatalog();}
+ let afterSalesBusy=false, previousDue=0;
+ async function refreshAfterSales(){
+  if(afterSalesBusy||S.demo||!S.actor||S.data?.operational||document.hidden)return;
+  const actor=S.actor;
+  afterSalesBusy=true;
+  try{
+   const data=await request('/api/backoffice?action=after_sales');
+   if(S.actor!==actor)return;
+   const tasks=data.tasks||[];
+   const due=tasks.filter(t=>t.state==='pending'&&t.due).length;
+   $('#afterSalesCount').textContent=due||'';
+   if(due>previousDue&&S.tab!=='after-sales')show('Pós-venda disponível: '+due+' pedido(s). Abra a fila.');
+   previousDue=due;
+   if(S.tab!=='after-sales')return;
+   const list=$('#afterSalesQueue');clear(list);
+   if(!tasks.length){list.append(el('p','Nenhuma tarefa de pós-venda.','empty'));return;}
+   for(const t of tasks){
+    const card=el('article',null,'form-card');
+    const state={pending:t.due?'Contato disponível':'Aguardando 30 minutos',claimed:'Em atendimento',contacted:'Aguardando resposta',issue:'Problema relatado'};
+    card.append(el('h3','#'+t.ref_code+' · '+state[t.state]),el('p',t.customer_name||'Cliente'),el('p','Contato previsto: '+new Date(t.due_at).toLocaleString('pt-BR')));
+    if(t.note)card.append(el('p',t.note));
+    const move=async(next,note='')=>{
+     try{await run('after_sale_status',{id:t.request_id,next,note});await refreshAfterSales();show('Pós-venda atualizado.');}catch(e){show(e.message,true);}
+    };
+    if(t.state==='pending'&&t.due)card.append(button('Assumir pós-venda',()=>move('claimed'),'primary'));
+    if(t.state==='claimed'&&t.mine){
+     if(/^\d{10,11}$/.test(t.customer_phone||'')){
+      const link=el('a','💬 Perguntar pelo WhatsApp');
+      link.href='https://wa.me/55'+t.customer_phone+'?text='+encodeURIComponent('Olá! Aqui é o Disk Panquecão. Seu pedido chegou certinho? Deu tudo certo com o atendimento e a comida? 😊');
+      link.target='_blank';link.rel='noopener noreferrer';card.append(link);
+     }
+     card.append(button('Confirmar mensagem enviada',()=>move('contacted'),'primary'),button('Liberar tarefa',()=>move('pending')));
+    }
+    if(t.state==='contacted'&&t.mine){
+     card.append(button('Tudo certo',()=>move('satisfied'),'primary'),button('Sem resposta',()=>move('no_response')));
+     card.append(button('Relatou problema',()=>{const note=prompt('Qual problema o cliente relatou?');if(note?.trim())move('issue',note.trim());},'soft danger'));
+    }
+    if(t.state==='issue'&&t.mine)card.append(button('Resolver e concluir',()=>{const note=prompt('Registre como o problema foi resolvido:');if(note?.trim())move('satisfied',note.trim());},'primary'));
+    list.append(card);
+   }
+  }catch(e){if(S.tab==='after-sales')show(e.message,true);}
+  finally{afterSalesBusy=false;}
+ }
+ function renderTab(){if(S.tab==='orders')renderOrders();if(S.tab==='customers')renderCustomers();if(S.tab==='cash')renderCash();if(S.tab==='catalog')renderCatalog();if(S.tab==='after-sales')refreshAfterSales();}
  async function lookupOrders(more=false){
   if(S.demo||!S.data)return renderOrders();
   try{
@@ -499,6 +543,8 @@
  }
  function loggedOut(){S.actor=null;S.data=null;S.catalogLoadedAt=0;S.catalogPending=null;$('#appShell').hidden=true;$('#loginScreen').hidden=false;}
  async function boot(){
+  setInterval(()=>{if(S.actor&&!S.demo&&!S.data?.operational&&!document.hidden)void refreshAfterSales();},60000);
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden)void refreshAfterSales();});
   for(const b of document.querySelectorAll('[data-close]'))b.addEventListener('click',()=>closeDialog(b.dataset.close));
   $('#navigation').addEventListener('click',e=>{const b=e.target.closest('[data-tab]');if(b)showTab(b.dataset.tab);});
   $('#refresh').addEventListener('click',async()=>{await reload();if(S.tab==='catalog')await ensureCatalog(true);if(S.tab==='cash')await refreshAsaas();});
