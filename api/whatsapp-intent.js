@@ -40,10 +40,11 @@ module.exports = async function handler(req, res) {
         typeof challenge !== 'string' || challenge.length < 1 || challenge.length > 2048) {
         return res.status(400).json({ error: 'Confira nome, WhatsApp e dados do pré-pedido.' });
     }
-    let deliveryDetails;
+    let deliveryDetails, deliveryFeeCents=null;
     try {
         const functions = await import('../fulfillment.mjs');
         deliveryDetails = functions.normalizeFulfillment(fulfillment, deliveryAreas);
+        if(deliveryDetails.type==='delivery'&&fulfillment.neighborhood!=='__other__')deliveryFeeCents=functions.standardDeliveryFee(deliveryDetails.city,deliveryDetails.neighborhood,deliveryAreas);
     } catch (error) {
         return res.status(400).json({ error: error?.message || 'Confira o endereço e a modalidade do pedido.' });
     }
@@ -105,7 +106,7 @@ module.exports = async function handler(req, res) {
         receipt = await orderPdf({
             id, name: clean(name, 80), phone: '+55' + normalizedPhone,
             items: validated, subtotal, money, note: clean(note, 400),
-            fulfillment: { ...deliveryDetails, feeCents: null },
+            fulfillment: { ...deliveryDetails, feeCents: deliveryFeeCents },
             payment: { method: 'pending', label: 'A confirmar', changeForCents: null },
             testMode: preview, awaitingWhatsApp: true
         });
@@ -129,7 +130,7 @@ module.exports = async function handler(req, res) {
             });
             if (!claimed.created) {
                 return claimed.record.telegram_state==='sent'
-                    ? res.status(201).json({id,status:'registered',test:false,replayed:true,tracking:deliveryDetails.type==='delivery'})
+                    ? res.status(201).json({id,status:'registered',test:false,replayed:true,tracking:deliveryDetails.type==='delivery',deliveryFeeCents})
                     : res.status(202).json({id,pending:true,
                         error:'Este pré-pedido já existe, mas o envio ao Telegram requer conferência. Não reenvie automaticamente.'});
             }
@@ -172,7 +173,7 @@ module.exports = async function handler(req, res) {
             }
         }
         console.info(JSON.stringify({ event: 'whatsapp_intent', id, status: 'registered', receipt: true, preview }));
-        return res.status(201).json({ id, status: 'registered', test: preview, tracking: persisted && deliveryDetails.type==='delivery' });
+        return res.status(201).json({ id, status: 'registered', test: preview, tracking: persisted && deliveryDetails.type==='delivery',deliveryFeeCents });
     } catch {
         if(persisted){
             try { await backoffice.patchOrder(requestId,{telegram_state:'eq.pending'},{telegram_state:'uncertain'}); }
