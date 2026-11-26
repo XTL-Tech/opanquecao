@@ -174,6 +174,9 @@ function refresh() {
         rows.append(row);
     }
     const quantity = cart.reduce((sum, line) => sum + line.quantity, 0);
+    const showCart=quantity>0 && storeOpenForOrders;
+    byId('openCart').hidden=!showCart;
+    document.body.classList.toggle('has-cart',showCart);
     byId('openCart').textContent = '🛒 Pedido · ' + quantity + (quantity === 1 ? ' item' : ' itens') +
         (quantity ? ' · ' + money(total) : '');
     byId('cartCount').textContent = quantity ? quantity + (quantity === 1 ? ' item no pedido' : ' itens no pedido') : 'Vamos escolher algo gostoso?';
