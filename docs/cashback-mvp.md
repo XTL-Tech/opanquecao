@@ -2,7 +2,7 @@
 Status: **fundação em homologação, desativada por padrão**. Nenhum crédito financeiro ou desconto está ativo em produção.
 
 ## Regra proposta
-- Fidelidade por customer_id (telefone normalizado no cadastro). O segundo pedido pago e entregue desbloqueia o programa e já gera 10%; demais pedidos elegíveis também geram 10%. Primeiro pedido não gera crédito retroativo.
+- Fidelidade por CPF identificado no cadastro permanente, associado a um único customer_id; telefone é contato, não a identidade da carteira. O segundo pedido pago e entregue desbloqueia o programa e já gera 10%; demais pedidos elegíveis também geram 10%. Primeiro pedido não gera crédito retroativo.
 - Contagem histórica de pedidos pagos e concluídos, inclusive retirada e consumo no local; cancelados e não pagos não contam. Não confundir com a regra de avaliação Google, exclusiva da terceira entrega.
 - Crédito sobre produtos efetivamente pagos, sem frete e sem cashback usado. Inteiros em centavos, arredondamento para baixo. Crédito promocional, não sacável nem transferível.
 - Validade até o fim do mês civil de geração (America/Sao_Paulo); saldo não acumula para o próximo mês. Fidelidade não reinicia a cada mês.
@@ -26,3 +26,6 @@ Migração 006: configuração desativada, créditos imutáveis por pedido, vali
 3. Persistir desconto e total líquido e revisar recibo, checkout, WhatsApp, cálculo de troco, caixa diário, relatórios e estorno. Crédito não é receita nem pagamento em dinheiro.
 4. Testar a migração e concorrência em branch Neon isolada, duas compras concorrentes, virada do mês, pagamentos antes/depois da entrega, cancelamento, reembolso e créditos duplicados. Não habilitar em produção antes de testes e aprovação.
 5. Pós-venda informa saldo e validade somente após crédito efetivamente confirmado no banco. Nenhuma promessa de cashback antes de habilitar.
+
+## Identidade permanente
+Migração 008: CPF normalizado e validado, HMAC no servidor, vínculo único ao cliente. Nova visita localiza o nome cadastrado, abre comanda na mesa atual e vincula todos os lançamentos ao mesmo cliente. CPF não precisa ser informado a cada lançamento. Clientes sem CPF vinculado não recebem créditos. Antes de habilitar: contabilizar uma comanda fechada como uma compra de fidelidade, não cada lançamento; implementar resgates e validação de identidade nas compras remotas. Não associar automaticamente saldos de terceiros por telefone.
