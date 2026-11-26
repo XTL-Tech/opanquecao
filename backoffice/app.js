@@ -120,15 +120,21 @@
   }
   return result;
  }
+ let reloadBusy=false;
  async function reload(){
+  if(reloadBusy)return;
+  reloadBusy=true;
+  const actor=S.actor;
   try{
    if(!S.demo){
     const next=await request('/api/backoffice?action=dashboard');
+    if(S.actor!==actor)return;
     if(S.data?.catalog)next.catalog=S.data.catalog;
     S.data=next;S.moreOrders=next.orders.length>=80;
    }else S.data.cash=tally();
    render();
   }catch(e){show(e.message,true);if(!S.demo&&/login|sessão|Conta sem/i.test(e.message))loggedOut();}
+  finally{reloadBusy=false;}
  }
  async function ensureCatalog(force=false){
   if(!S.data||!S.actor)return;
@@ -166,7 +172,7 @@
   $('#pageTitle').textContent=meta[tab][0];$('#pageSubtitle').textContent=meta[tab][1];
   if(S.data){
    renderTab();if(tab==='catalog')ensureCatalog();
-   if(tab==='integrations')refreshAsaas();
+
   }
  }
  function render(){if(!S.data)return;if(S.data.operational){renderOperational();return;}$('#todayText').textContent='📅 '+S.data.today.split('-').reverse().join('/');
@@ -370,7 +376,7 @@
   clear($('#orderStats'));stat('#orderStats','Aguardando cliente',counts.pending_customer??orders.filter(o=>o.status==='pending_customer').length);
   stat('#orderStats','Aguardando aceite',counts.awaiting_acceptance??orders.filter(o=>o.status==='awaiting_acceptance').length);
   stat('#orderStats','Em atendimento',S.data.queueCounts?
-   (counts.accepted||0)+(counts.completed||0):orders.filter(o=>['accepted','completed'].includes(o.status)).length);
+   (counts.accepted||0)+(counts.preparing||0)+(counts.returned_to_attendant||0)+(counts.completed||0)+(counts.out_for_delivery||0):orders.filter(o=>['accepted','preparing','returned_to_attendant','completed','out_for_delivery'].includes(o.status)).length);
   stat('#orderStats','Entregues e pagos hoje',S.data.queueCounts?
    S.data.cash.orders:orders.filter(o=>o.status==='delivered').length);
   const target=$('#ordersTable');clear(target);
@@ -626,10 +632,16 @@
   $('#reportForm').addEventListener('submit',e=>{e.preventDefault();void refreshReports();});
   $('#reportExport').addEventListener('click',exportReports);
   setInterval(()=>{if(S.actor&&!S.demo&&!S.data?.operational&&!document.hidden)void refreshAfterSales();},60000);
+  // Poll only active operational screens; never reset an open dialog or search.
+  if(!S.demo)setInterval(()=>{
+   if(!S.actor||document.hidden||document.querySelector('dialog[open]'))return;
+   if(S.data?.operational||['kitchen','courier'].includes(S.tab))void reload();
+   else if(S.tab==='orders'&&!$('#orderSearch').value&&!$('#orderStatusFilter').value&&document.activeElement!==$('#orderSearch'))void reload();
+  },30000);
   document.addEventListener('visibilitychange',()=>{if(!document.hidden)void refreshAfterSales();});
   for(const b of document.querySelectorAll('[data-close]'))b.addEventListener('click',()=>closeDialog(b.dataset.close));
   $('#navigation').addEventListener('click',e=>{const b=e.target.closest('[data-tab]');if(b)showTab(b.dataset.tab);});
-  $('#refresh').addEventListener('click',async()=>{await reload();if(S.tab==='catalog')await ensureCatalog(true);if(S.tab==='integrations')await refreshAsaas();});
+  $('#refresh').addEventListener('click',async()=>{await reload();if(S.tab==='catalog')await ensureCatalog(true);});
   $('#orderSearch').addEventListener('input',()=>{
     if(S.demo)return renderOrders();
     clearTimeout(S.orderSearchTimer);
