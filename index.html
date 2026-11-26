@@ -1052,6 +1052,10 @@
     <div id="productDialogContent"></div>
 </dialog>
 
+<section id="localPartners" class="local-partners container" aria-labelledby="localPartnersTitle" hidden>
+    <div class="partners-heading"><h2 id="localPartnersTitle">Parceiros do Panquecão</h2><span>Publicidade</span></div>
+    <div class="partners-list" data-partners-list></div>
+</section>
 <footer>
     <p><a href="/privacidade.html" style="color:inherit;text-decoration:underline">Privacidade e dados pessoais</a> · <button type="button" id="analyticsManage" style="border:0;background:none;color:inherit;text-decoration:underline;cursor:pointer;font:inherit">Preferências de privacidade</button></p>
     <div class="container">
@@ -1665,5 +1669,20 @@
 <script type="module" src="store-hours-client.mjs"></script>
 <!-- Pedido direto no WhatsApp: sem Telegram, gateway ou Turnstile. -->
 <script type="module" src="cart.mjs"></script>
+<script type="module" src="/partners.mjs"></script>
+<style>
+  .local-partners[hidden] { display:none!important; }
+  .local-partners { max-width:960px; margin:28px auto; padding:16px; color:#381d20; }
+  .partners-heading { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px; margin-bottom:10px; }
+  .partners-heading h2 { font-size:1rem; margin:0; }
+  .partners-heading > span { font-size:.72rem; color:#735b55; }
+  .partners-list { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr)); gap:10px; }
+  .partner-card { display:flex; align-items:center; gap:12px; min-width:0; min-height:72px; padding:12px; border:1px solid #e4d4ca; border-radius:12px; background:#fffaf5; text-decoration:none; color:#381d20; }
+  .partner-card:hover,.partner-card:focus-visible { border-color:#741c2d; outline-offset:3px; }
+  .partner-card img { object-fit:contain; flex:none; border-radius:8px; }
+  .partner-card span { min-width:0; overflow-wrap:anywhere; }
+  .partner-card strong,.partner-card small { display:block; }
+  .partner-card small { margin-top:3px; color:#735b55; }
+</style>
 </body>
 </html>
