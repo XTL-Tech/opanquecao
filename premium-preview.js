@@ -3,7 +3,7 @@ const demoClosed=new URLSearchParams(location.search).get('xtl_demo_loja')==='fe
 const openLink=document.getElementById('previewOpen'),closedLink=document.getElementById('previewClosed');
 (demoClosed?closedLink:openLink).setAttribute('aria-current','page');
 const slides=[
- {title:'+ que uma panqueca. É o Panquecão!',description:'Você merece o melhor. E sua família também.',image:'/img/cardapio/c02-p15.webp',alt:'Imagem ilustrativa da especialidade Panquetudo',category:'panquecas-salgadas',cta:'Explorar cardápio'},
+ {title:'MAIS QUE UMA PANQUECA, É O PANQUECÃO',description:'Você merece o melhor. E sua família também.',image:'/img/cardapio/c02-p15.webp',alt:'Imagem ilustrativa da especialidade Panquetudo',category:'panquecas-salgadas',cta:'Explorar cardápio'},
  {title:'A felicidade tem sabor.',description:'Chocolate, frutas e sabores para transformar o fim da refeição.',image:'/img/cardapio/c03-p08.webp',alt:'Imagem ilustrativa de panqueca de chocolate e morango',category:'panquecas-doces',cta:'Conhecer as doces'},
  {title:'O sabor da família.',description:'Compartilhe sabores. Crie memórias. Tudo fica melhor em boa companhia.',image:'/img/cardapio/c06-p03.webp',alt:'Imagem ilustrativa de frango crocante e batatas fritas',category:'frango-frito-crocrante-no-pote',cta:'Ver porções'},
  {title:'Tem momentos que pedem Panquecão.',description:'Depois de um dia em Nova Hartz, descubra seu próximo sabor favorito.',image:'/img/cardapio/c01-p01.webp',alt:'Imagem ilustrativa de açaí Panquecão',category:'acai',cta:'Ver açaí'}
