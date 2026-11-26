@@ -29,12 +29,12 @@ async function refreshStatus() {
   if(refreshing)return;
   refreshing=true;
   try {
-    const response = await fetch('/api/store-status',{cache:'no-store',signal:AbortSignal.timeout(8000)});
+    const response = document.body.dataset.premiumPreview==='true'?{ok:true,json:async()=>({demoAvailable:true})}:await fetch('/api/store-status',{cache:'no-store',signal:AbortSignal.timeout(8000)});
     let data = await response.json();
     const demoMode = new URLSearchParams(window.location.search).get('xtl_demo_loja');
-    if (data.demoAvailable && ['aberta','fechada'].includes(demoMode)) {
+    if (document.body.dataset.premiumPreview==="true" || (data.demoAvailable && ['aberta','fechada'].includes(demoMode))) {
       data = {
-        enabled:true, open:demoMode === 'aberta', reason:'demo_'+demoMode,
+        enabled:true, open:demoMode !== 'fechada', reason:'demo_'+(demoMode||'aberta'),
         date:'demonstracao', canSubscribe:false, simulated:true
       };
     }
