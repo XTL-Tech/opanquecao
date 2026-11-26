@@ -503,11 +503,25 @@
    const input=el('input');input.name='day'+d;input.maxLength=100;input.placeholder='18:00-22:00; 23:00-23:59';input.value=(weekly[d]||[]).map(w=>w.start+'-'+w.end).join('; ');row.append(input,el('small','Deixe vazio para dia fechado. Separe períodos com ponto e vírgula.','hint'));root.append(row);
   }
  }
+ function holidayRow(date='',name='Data especial',windows=null,review=false){
+  const row=el('div',null,'form-card');row.className='form-card holiday-row';
+  const title=el('strong',name+(review?' · confirmar calendário oficial':''));
+  const d=el('input');d.type='date';d.value=date;d.className='holiday-date';
+  const choice=el('select');choice.className='holiday-choice';for(const [value,label] of [['normal','Seguir expediente normal'],['closed','Fechado'],['special','Horário especial']])choice.append(new Option(label,value));
+  const input=el('input');input.className='holiday-windows';input.placeholder='19:00-23:00';input.value=(windows||[]).map(w=>w.start+'-'+w.end).join('; ');choice.value=windows===null?'normal':windows.length?'special':'closed';
+  const sync=()=>{input.hidden=choice.value!=='special';input.required=choice.value==='special';d.required=choice.value!=='normal';};choice.onchange=sync;sync();
+  row.append(title,d,choice,input);$('#holidayRows').append(row);
+ }
+ function drawHolidays(items,exceptions){
+  clear($('#holidayRows'));const seen=new Set();
+  for(const h of items||[]){if(seen.has(h.date))continue;seen.add(h.date);holidayRow(h.date,h.name+' · '+h.scope,Object.hasOwn(exceptions,h.date)?exceptions[h.date]:null,h.review);}
+  for(const [date,windows] of Object.entries(exceptions))if(!seen.has(date))holidayRow(date,'Exceção cadastrada',windows);
+ }
  async function refreshHours(){
   if(hoursBusy||S.demo||S.tab!=='store-hours'||!['admin','manager'].includes(S.actor?.role))return;hoursBusy=true;hoursLoaded=false;$('#hoursSave').disabled=true;const actor=S.actor;
   try{
    const d=await request('/api/backoffice?action=store_operations');if(S.actor!==actor||S.tab!=='store-hours')return;
-   const c=d.config;hoursRevision=c?.revision||0;drawHours(c?.weekly_schedule||{});
+   const c=d.config;hoursRevision=c?.revision||0;drawHours(c?.weekly_schedule||{});drawHolidays(d.holidays,c?.holiday_exceptions||{});
    const f=$('#hoursForm').elements;f.acceptingOrders.checked=c?.accepting_orders===true;f.manualState.value='auto';
    $('#hoursStatus').textContent=(d.integrated?'Controle online ativo. ':'Integração do horário ainda não ativada. ')+(c?'Estado atual da agenda: '+(d.status.open?'Aberta':'Fechada')+' · '+d.status.reason:'Nenhum horário cadastrado.');hoursLoaded=true;$('#hoursSave').disabled=false;
   }catch(e){$('#hoursStatus').textContent=e.message;}finally{hoursBusy=false;}
@@ -792,12 +806,14 @@
  }
  function loggedOut(){exitBiTV();biData=null;biLastOK=0;clear($('#biCards'));clear($('#biCharts'));S.actor=null;S.data=null;S.catalogLoadedAt=0;S.catalogPending=null;$('#appShell').hidden=true;$('#loginScreen').hidden=false;}
  async function boot(){
+  $('#holidayAdd').addEventListener('click',()=>holidayRow());
   $('#hoursForm').addEventListener('submit',async e=>{
    e.preventDefault();if(!hoursLoaded||S.demo||!['admin','manager'].includes(S.actor?.role))return;
    const f=e.currentTarget.elements,weekly={};for(let d=0;d<7;d++)weekly[d]=f['day'+d].value.trim().split(';').map(x=>x.trim()).filter(Boolean).map(x=>{const [start,end]=x.split('-').map(v=>v.trim());return {start,end};});
+   const special={};for(const row of document.querySelectorAll('#holidayRows .holiday-row')){const mode=row.querySelector('.holiday-choice').value;if(mode==='normal')continue;const date=row.querySelector('.holiday-date').value;if(!date||Object.hasOwn(special,date)){$('#hoursStatus').textContent='Informe datas especiais únicas.';return;}special[date]=mode==='closed'?[]:row.querySelector('.holiday-windows').value.split(';').map(x=>x.trim()).filter(Boolean).map(x=>{const [start,end]=x.split('-').map(v=>v.trim());return {start,end};});}
    if(!confirm('Salvar a agenda e alterar a disponibilidade dos pedidos online?'))return;
    const b=$('#hoursSave');b.disabled=true;
-   try{await run('store_operations_save',{revision:hoursRevision,weeklySchedule:weekly,acceptingOrders:f.acceptingOrders.checked,manualState:f.manualState.value,overrideMinutes:Number(f.overrideMinutes.value)});await refreshHours();show('Horários salvos.');}catch(e){$('#hoursStatus').textContent=e.message;b.disabled=false;}
+   try{await run('store_operations_save',{revision:hoursRevision,weeklySchedule:weekly,holidayExceptions:special,acceptingOrders:f.acceptingOrders.checked,manualState:f.manualState.value,overrideMinutes:Number(f.overrideMinutes.value)});await refreshHours();show('Horários salvos.');}catch(e){$('#hoursStatus').textContent=e.message;b.disabled=false;}
   });
   $('#adReset').addEventListener('click',resetAd);
   $('#adForm').addEventListener('submit',async e=>{
