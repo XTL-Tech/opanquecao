@@ -10,6 +10,7 @@ const afterSales=require('../lib/after-sales');
 const reports=require('../lib/management-reports');
 const liveBI=require('../lib/live-bi');
 const comandas=require('../lib/comandas');
+const annual=require('../lib/annual-ranking-fiscal');
 
 function respond(res,status,payload){return res.status(status).json(payload);}
 function requireId(id){if(!c.UUID.test(id))c.fail('Identificador de pedido inválido.');return id;}
@@ -138,6 +139,8 @@ module.exports=async function handler(req,res){
     if(actor.role!=='admin')throw new auth.AuthError('Somente o superadministrador.',403);
     return respond(res,200,await operations.queue(actor,req.query?.view));
    }
+   if(act==='annual_ranking')return respond(res,200,await annual.ranking(actor,req.query));
+   if(act==='fiscal_refunds')return respond(res,200,await annual.queues(actor));
    if(act==='comandas')return respond(res,200,await comandas.list(actor));
    if(act==='live_bi')return respond(res,200,await liveBI.live(actor));
    if(act==='management_reports')return respond(res,200,await reports.report(actor,req.query));
@@ -154,6 +157,10 @@ module.exports=async function handler(req,res){
    if(actor.role!=='admin')throw new auth.AuthError('Somente o superadministrador.',403);
    const body=payload(req);return respond(res,200,{ok:true,...await operations.transition(actor,body,body.view)});
   }
+  if(act==='ranking_enroll')return respond(res,200,await annual.enroll(actor,payload(req)));
+  if(act==='ranking_withdraw')return respond(res,200,await annual.withdraw(actor,payload(req)));
+  if(act==='fiscal_request')return respond(res,200,await annual.fiscalRequest(actor,payload(req)));
+  if(act==='pix_refund_request')return respond(res,200,await annual.refundRequest(actor,payload(req)));
   if(act==='comanda_open')return respond(res,200,{ok:true,...await comandas.open(actor,payload(req))});
   if(act==='comanda_customer')return respond(res,200,await comandas.lookupCustomer(actor,payload(req)));
   if(act==='comanda_find')return respond(res,200,{ok:true,...await comandas.find(actor,payload(req))});
