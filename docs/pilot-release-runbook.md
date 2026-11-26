@@ -24,3 +24,6 @@
 
 ## Rollback
 Se o código antigo precisar voltar após a 012, reverter apenas a role do proprietário para manager por procedimento autorizado e auditado antes de reverter o deploy. Não apagar tabelas ou dados; manter módulos aditivos desligados e reconciliar pedidos/caixa. Depois de existirem novos status em produção, o código antigo deixa de ser rollback operacional completo: priorizar correção para frente ou plano específico de compatibilidade.
+
+## Controle de horário (013)
+Aplicar a migração 013, cadastrar a agenda semanal real com os proprietários, verificar abertura e fechamento no horário America/Sao_Paulo e só então ativar STORE_HOURS_MODE=required e STORE_HOURS_SOURCE=neon. Ausência de agenda ou falha de consulta fecha o recebimento de novos pré-pedidos. Não presumir horários. O modo visual cinza não substitui o bloqueio server-side. Não ativar sem confirmar a agenda real.
