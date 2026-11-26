@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Disk Panquecão | Panquecas, Açaí e Entregas em Nova Hartz</title>
-    <meta name="description" content="Disk Panquecão em Nova Hartz: panquecas, açaí, massas e refeições com fotos. Entrega em Nova Hartz e Araricá, retirada e consumo no local.">
+    <title>Disk Panquecão | Panquecas e Gastronomia em Nova Hartz, RS</title>
+    <meta name="description" content="Conheça o Disk Panquecão, especializado em panquecas doces e salgadas em Nova Hartz, RS. Cardápio, jantar em família, turismo local, retirada e tele-entrega.">
     <meta name="robots" content="index,follow,max-image-preview:large">
     <link rel="canonical" href="https://opanquecao.vercel.app/">
     <link rel="alternate" type="text/plain" title="Informações públicas para agentes de IA" href="/llms.txt">
@@ -13,14 +13,14 @@
     <meta property="og:locale" content="pt_BR">
     <meta property="og:site_name" content="Disk Panquecão">
     <meta property="og:title" content="Disk Panquecão | Cardápio em Nova Hartz">
-    <meta property="og:description" content="Disk Panquecão em Nova Hartz: panquecas, açaí, massas e refeições com fotos. Entrega em Nova Hartz e Araricá, retirada e consumo no local.">
+    <meta property="og:description" content="Conheça o Disk Panquecão, especializado em panquecas doces e salgadas em Nova Hartz, RS. Cardápio, jantar em família, turismo local, retirada e tele-entrega.">
     <meta property="og:url" content="https://opanquecao.vercel.app/">
     <meta property="og:image" content="https://opanquecao.vercel.app/img/logo-disk-panquecao.png">
     <meta property="og:image:type" content="image/png">
     <meta property="og:image:alt" content="Marca oficial Disk Panquecão — cardápio em Nova Hartz">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Disk Panquecão | Panquecas, Açaí e Entregas em Nova Hartz">
-    <meta name="twitter:description" content="Disk Panquecão em Nova Hartz: panquecas, açaí, massas e refeições com fotos. Entrega em Nova Hartz e Araricá, retirada e consumo no local.">
+    <meta name="twitter:description" content="Conheça o Disk Panquecão, especializado em panquecas doces e salgadas em Nova Hartz, RS. Cardápio, jantar em família, turismo local, retirada e tele-entrega.">
     <meta name="twitter:image" content="https://opanquecao.vercel.app/img/logo-disk-panquecao.png">
     <script type="application/ld+json">
 {
@@ -29,7 +29,7 @@
   "@id": "https://opanquecao.vercel.app/#restaurante",
   "name": "Disk Panquecão",
   "alternateName": "O Panquecão",
-  "description": "Disk Panquecão em Nova Hartz: panquecas, açaí, massas e refeições com fotos. Entrega em Nova Hartz e Araricá, retirada e consumo no local.",
+  "description": "Conheça o Disk Panquecão, especializado em panquecas doces e salgadas em Nova Hartz, RS. Cardápio, jantar em família, turismo local, retirada e tele-entrega.",
   "url": "https://opanquecao.vercel.app/",
   "image": "https://opanquecao.vercel.app/img/panqueca-quadrada.webp",
   "logo": "https://opanquecao.vercel.app/img/logo-disk-panquecao.png",
@@ -1005,6 +1005,8 @@ if(location.hostname==='opanquecao.vercel.app'){
  const script=document.createElement('script');script.defer=true;script.src='/_vercel/speed-insights/script.js';document.head.append(script);
 }
 </script>
+<link rel="stylesheet" href="/gourmet.css">
+<script src="/gourmet-slider.js" defer></script>
 </head>
 
 <!-- Meta Pixel: consentimento e eventos de marketing centralizados, sem PII. -->
@@ -1017,16 +1019,19 @@ if(location.hostname==='opanquecao.vercel.app'){
     <div class="analytics-actions"><button type="button" id="analyticsReject">Somente essenciais</button><button type="button" id="analyticsAccept">Aceitar análise</button></div>
 </div>
 
-<header>
-    <div class="container">
-        <h1 class="restaurant-logo"><img src="img/logo-disk-panquecao.webp" width="160" height="175" alt="Disk Panquecão" style="max-width:40vw;height:auto;vertical-align:middle"></h1>
+<header class="gourmet-header">
+    <div class="local-strip"><span>📍 NOVA HARTZ · RS</span><span>Da nossa cozinha para sua família</span></div>
+    <div class="container gourmet-header-inner">
+        <h1 class="restaurant-logo"><a href="/" aria-label="Panquecão — início"><img src="img/logo-disk-panquecao.webp" width="160" height="175" alt="Disk Panquecão"><span class="brand-caption"><strong>O PANQUECÃO</strong><small>MAIS QUE UMA PANQUECA, É O PANQUECÃO</small></span></a></h1>
+        <nav class="site-tabs" aria-label="Navegação principal">
+            <a href="#cardapio">Cardápio</a>
+            <a href="#contato">Contato</a>
+            <a href="#como-chegar">Como chegar</a><a href="/minha-conta.html" id="customerAccountNav">Minha conta</a>
+        </nav>
+        <a class="header-cta" href="#cardapio">Escolher meu sabor <span aria-hidden="true">→</span></a>
     </div>
-    <nav class="site-tabs" aria-label="Navegação principal">
-        <a href="#cardapio">Cardápio</a>
-        <a href="#contato">Contato</a>
-        <a href="#como-chegar">Como chegar</a><a href="/minha-conta.html" id="customerAccountNav">Minha conta</a>
-    </nav>
 </header>
+<section class="premium-hero" aria-labelledby="premiumTitle" aria-roledescription="carrossel"><div class="premium-hero-media"><img src="/img/cardapio/c02-p15.webp" alt="Imagem ilustrativa da especialidade Panquetudo" width="560" height="420" fetchpriority="high"><span>Imagem ilustrativa do cardápio</span></div><div class="premium-hero-copy"><span class="premium-eyebrow">O SABOR QUE NOS UNE · NOVA HARTZ</span><h2 id="premiumTitle">MAIS QUE UMA PANQUECA, É O PANQUECÃO</h2><p id="premiumHeroText">Você merece o melhor. E sua família também.</p><a class="premium-cta" id="premiumCta" href="#cardapio">Explorar cardápio <span aria-hidden="true">↓</span></a><span class="premium-hours">QUARTA A DOMINGO · 19H–23H</span><div class="hero-controls" aria-label="Controles do banner"><button type="button" id="heroPrev" aria-label="Banner anterior">‹</button><div id="heroDots" role="group" aria-label="Escolher banner"></div><button type="button" id="heroNext" aria-label="Próximo banner">›</button><button type="button" id="heroPause" aria-label="Pausar rotação">Pausar</button></div></div></section>
 <div id="storeLightsStatus" class="store-lights-status" hidden><strong>● LUZES APAGADAS</strong><p>Voltamos no próximo horário de atendimento. O cardápio continua disponível para você conhecer.</p></div>
 <p id="storeOpenStatus" role="status" aria-live="polite" hidden></p>
 
@@ -1040,8 +1045,10 @@ if(location.hostname==='opanquecao.vercel.app'){
 
 <main class="main-content" id="cardapio" style="scroll-margin-top: 84px">
     <section class="category-home container" id="categoryHome" aria-labelledby="categoriesTitle">
-        <p class="category-kicker">FEITO PARA A SUA FOME</p>
-        <h2 id="categoriesTitle" tabindex="-1">Escolha uma categoria</h2>
+        <p class="category-kicker">ESCOLHA SEU MOMENTO</p>
+        <h2 id="categoriesTitle" tabindex="-1">Tá com fome de quê?</h2>
+        <p class="premium-intro">Dos nossos clássicos à última colherada doce, tem um sabor para cada momento.</p>
+        <div class="premium-search"><label for="premiumSearch">Qual sabor você está procurando?</label><input type="search" id="premiumSearch" placeholder="Busque por prato ou ingrediente" autocomplete="off"><div id="premiumResults" hidden aria-live="polite"></div></div>
         <div id="categoryCards" class="category-cards" aria-label="Categorias do cardápio"></div>
     </section>
     <div class="category-toolbar container" id="categoryToolbar" hidden>
@@ -1055,33 +1062,47 @@ if(location.hostname==='opanquecao.vercel.app'){
         <p id="menuLoading" role="status">Carregando cardápio…</p>
     </div>
 </main>
+<section class="premium-loyalty"><div><span class="premium-eyebrow">EM BREVE · PROGRAMA DE FIDELIDADE</span><h2>PanqueCoins</h2><p>Peça. Acumule. Saboreie.</p><p class="loyalty-sub">Porque ser de casa tem suas vantagens. Seus próximos pedidos merecem ainda mais sabor.</p><small>O acúmulo começa após a ativação. Recompensas e regras de uso serão divulgadas antes da liberação dos resgates.</small><a class="loyalty-join" href="/minha-conta.html" id="loyaltyAccountLink">Quero fazer parte →</a></div><div class="premium-medal" aria-hidden="true">P</div></section>
 <dialog class="product-dialog" id="productDialog" aria-labelledby="productDialogTitle">
     <form method="dialog"><button autofocus>Voltar ao cardápio</button></form>
     <h2 id="productDialogTitle"></h2>
     <div id="productDialogContent"></div><p class="closed-browse-note">Somente consulta · novos pedidos disponíveis quando a loja reabrir.</p>
 </dialog>
 
-<footer>
-    <p><a href="/privacidade.html" style="color:inherit;text-decoration:underline">Privacidade e dados pessoais</a> · <button type="button" id="analyticsManage" style="border:0;background:none;color:inherit;text-decoration:underline;cursor:pointer;font:inherit">Preferências de privacidade</button></p>
+<section class="local-story" aria-labelledby="localStoryTitle"><div class="local-story-copy"><p class="category-kicker">NOSSAS RAÍZES</p><h2 id="localStoryTitle">Nossa terra.<br>Nossa gente.<br>Nosso sabor.</h2><p>Tem momentos que pedem Panquecão. Seja para quem vive aqui ou para quem está conhecendo Nova Hartz, nossa mesa é um convite para compartilhar bons momentos.</p><a href="/turismo-nova-hartz.html" class="local-link">Conheça Nova Hartz: turismo e gastronomia <span aria-hidden="true">→</span></a></div><div class="local-photo-stack"><figure class="local-photo local-photo-city"><a href="https://commons.wikimedia.org/wiki/File:Nova_Hartz.jpg" target="_blank" rel="noopener noreferrer"><img src="https://upload.wikimedia.org/wikipedia/commons/5/5f/Nova_Hartz.jpg" alt="Vista panorâmica de Nova Hartz com morros ao fundo" loading="lazy" decoding="async" referrerpolicy="no-referrer"></a><figcaption><a href="https://commons.wikimedia.org/wiki/File:Nova_Hartz.jpg" target="_blank" rel="noopener noreferrer">Sandro de Souza Fagundes · Wikimedia Commons</a> · <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener noreferrer">CC BY-SA 4.0</a></figcaption></figure><figure class="local-photo local-photo-waterfall"><a href="https://commons.wikimedia.org/wiki/File:Cascata_de_Arroio_da_Bica.jpg" target="_blank" rel="noopener noreferrer"><img src="https://upload.wikimedia.org/wikipedia/commons/1/1c/Cascata_de_Arroio_da_Bica.jpg" alt="Cascata do Arroio da Bica, em Nova Hartz" loading="lazy" decoding="async" referrerpolicy="no-referrer"></a><figcaption><a href="https://commons.wikimedia.org/wiki/File:Cascata_de_Arroio_da_Bica.jpg" target="_blank" rel="noopener noreferrer">L.grawer · Wikimedia Commons</a> · <a href="https://creativecommons.org/licenses/by-sa/3.0/" target="_blank" rel="noopener noreferrer">CC BY-SA 3.0</a></figcaption></figure></div></section>
+<section class="gourmet-partners" aria-labelledby="gourmetPartnersTitle">
+    <div class="gourmet-partners-heading"><div><p class="category-kicker">JUNTOS, SOMOS MAIS FORTES</p><h2 id="gourmetPartnersTitle">Quem faz parte da nossa história.</h2><p>Valorizamos as empresas que crescem com a nossa comunidade.</p></div><span class="partner-disclosure">Publicidade de parceiros</span></div>
+    <div class="gourmet-partners-grid">
+        <article class="gourmet-partner permanent-partner" data-partner-slot="1"><div class="partner-status"><span>PARCEIRO PERMANENTE</span><span aria-hidden="true">01</span></div><div class="xtl-wordmark" aria-label="XTL TECH">XTL <span>TECH</span></div><h3>Tecnologia que conecta sabores.</h3><p>XTL — Feito para durar.</p></article>
+        <article class="gourmet-partner available-partner" data-partner-slot="2"><div class="partner-status"><span>ESPAÇO COMERCIAL</span><span aria-hidden="true">02</span></div><div class="partner-placeholder" aria-hidden="true">+</div><h3>Sua marca aqui.</h3><p>Espaço disponível para empresas parceiras.</p></article>
+        <article class="gourmet-partner available-partner" data-partner-slot="3"><div class="partner-status"><span>ESPAÇO COMERCIAL</span><span aria-hidden="true">03</span></div><div class="partner-placeholder" aria-hidden="true">+</div><h3>Cresça com a gente.</h3><p>Mais uma oportunidade de parceria local.</p></article>
+    </div>
+    <div class="gourmet-partners-foot"><p>Quer fazer parte dessa história?</p><a href="#contato">Converse com a gente <span aria-hidden="true">→</span></a></div>
+</section>
+<footer class="gourmet-footer">
     <div class="container">
-        <section class="footer-info" id="contato" aria-labelledby="titulo-contato">
-            <h2 id="titulo-contato">Contato</h2>
+        <div class="footer-main">
+            <div class="footer-brand"><img src="img/logo-disk-panquecao.webp" alt="Disk Panquecão" width="84" height="92" loading="lazy"><h2>MAIS QUE UMA PANQUECA, É O PANQUECÃO</h2><p>O sabor da família. O carinho de quem é daqui.</p><p><a href="/minha-conta.html">Seja de casa · Minha conta →</a></p></div>
+            <div class="footer-visit"><h2>Vem pro Panquecão</h2><p>Nova Hartz · Rio Grande do Sul</p><p><a href="/turismo-nova-hartz.html">Conheça nossa cidade ↗</a></p><p>Quarta a domingo<br>19h às 23h</p><p>Tele-entrega · Retirada · Presencial</p></div>
+            <section class="footer-info" id="contato" aria-labelledby="titulo-contato">
+            <h2 id="titulo-contato">Fale com a gente</h2>
             <p>(51) 9 9738-3849</p>
             <div class="info-actions">
                 <a href="tel:+5551997383849">Ligar agora</a>
                 <a href="https://wa.me/5551997383849" target="_blank" rel="noopener noreferrer">Chamar no WhatsApp</a>
             </div>
         </section>
-        <section class="footer-info" id="como-chegar" aria-labelledby="titulo-local">
+            <section class="footer-info" id="como-chegar" aria-labelledby="titulo-local">
             <h2 id="titulo-local">Como chegar</h2>
             <p>Ponto de referência: Praça do Trabalhador · Nova Hartz/RS</p>
             <div class="info-actions">
-                <a href="https://www.google.com/maps/search/?api=1&amp;query=O%20PANQUEC%C3%83O%20DISKPANQUEC%C3%83O%20Nova%20Hartz%20RS" target="_blank" rel="noopener noreferrer">Ver local e avaliações no Google Maps</a>
-                <a href="https://www.google.com/maps/dir/?api=1&amp;destination=O%20PANQUEC%C3%83O%20DISKPANQUEC%C3%83O%20-%20NOVA%20HARTZ%2C%20RS&amp;dir_action=navigate" target="_blank" rel="noopener noreferrer">Traçar rota até o restaurante</a>
+                <a href="https://www.google.com/maps/search/?api=1&amp;query=O%20PANQUEC%C3%83O%20DISKPANQUEC%C3%83O%20Nova%20Hartz%20RS" target="_blank" rel="noopener noreferrer">Ver no Google Maps ↗</a>
+                <a href="https://www.google.com/maps/dir/?api=1&amp;destination=O%20PANQUEC%C3%83O%20DISKPANQUEC%C3%83O%20-%20NOVA%20HARTZ%2C%20RS&amp;dir_action=navigate" target="_blank" rel="noopener noreferrer">Traçar rota ↗</a>
             </div>
         </section>
+        </div>
         <nav class="footer-categories" aria-label="Categorias do cardápio para compartilhar">
-            <h2>Explore por categoria</h2>
+            <h2>Explore o cardápio</h2>
             <div class="footer-category-links">
                 <a href="/categorias/acai.html">Açaí</a>
                 <a href="/categorias/panquecas-salgadas.html">Panquecas salgadas</a>
@@ -1097,12 +1118,8 @@ if(location.hostname==='opanquecao.vercel.app'){
                 <a href="/categorias/cocktails-sem-alcool.html">Coquetéis sem álcool</a>
             </div>
         </nav>
-        <div class="footer-obs">
-            <h3>Informações Importantes</h3>
-            <ul id="observationsList" style="list-style: none; font-size: 0.9rem;"></ul>
-        </div>
-        <p style="text-align:center; opacity:0.3; font-size:0.7rem">&copy; <span id="year"></span> O PANQUECÃO | DISKPANQUECÃO - Todos os direitos reservados.</p>
-        <p class="footer-credit">Feito por <strong>XTL TECH</strong></p>
+        <details class="footer-notes"><summary>Informações importantes do cardápio</summary><ul id="observationsList"></ul></details>
+        <div class="footer-bottom"><p>© <span id="year"></span> O PANQUECÃO</p><p><a href="/privacidade.html">Privacidade e dados pessoais</a> <button type="button" id="analyticsManage">Preferências de privacidade</button></p><p class="footer-credit">Experiência digital por <strong>XTL TECH</strong></p></div>
     </div>
 </footer>
 
@@ -1417,6 +1434,9 @@ if(location.hostname==='opanquecao.vercel.app'){
             quickLink.textContent = category.titulo;
             switcher.append(quickLink);
         }
+        const search=document.getElementById("premiumSearch"), results=document.getElementById("premiumResults");
+        const fold=s=>String(s||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
+        search.addEventListener("input",()=>{const q=fold(search.value).trim();results.replaceChildren();results.hidden=q.length<2;if(results.hidden)return;let n=0;for(const category of data.categorias){for(const item of category.itens){if(n>=15||!fold(item.nome+" "+(item.ingredientes||"")).includes(q))continue;const b=document.createElement("button");b.type="button";b.textContent=item.nome+" · "+category.titulo;b.onclick=()=>{history.pushState(null,"","#"+category.id);showRoute(true);const card=[...document.getElementById(category.id).querySelectorAll(".menu-item")].find(x=>x.dataset.product===item.nome);card?.querySelector(".product-details")?.click();};results.append(b);n++;}}if(!n)results.textContent="Nenhum prato encontrado."});
         let lastCategory;
         const shareButton = document.getElementById('shareCategory');
         shareButton.addEventListener('click', async () => {
