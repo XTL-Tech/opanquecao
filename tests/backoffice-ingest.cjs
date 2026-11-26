@@ -35,7 +35,7 @@ db.patchOrder=async(id,filter,update)=>{
 global.fetch=async(url,opts)=>{
  if(String(url).endsWith('/siteverify'))return{ok:true,json:async()=>({success:true,action:'order_intent',hostname:'opanquecao.vercel.app'})};
  if(String(url).endsWith('/sendMessage')){texts++;return{ok:true,json:async()=>({ok:true,result:{message_id:201}})};}
- if(String(url).endsWith('/sendDocument')){docs++;return{ok:documentOk,json:async()=>({ok:documentOk,result:{message_id:202}})};}
+ if(String(url).endsWith('/sendDocument')){docs++;assert.equal(opts.body.get('caption'),'🔔 NOVO PEDIDO\nAguardando confirmação pelo WhatsApp.');assert.match(JSON.parse(opts.body.get('reply_markup')).inline_keyboard[0][0].url,/^https:\/\/wa\.me\/5551999999999\?text=/);return{ok:documentOk,json:async()=>({ok:documentOk,result:{message_id:202}})};}
  throw Error('Unauthorized network: '+url);
 };
 const payload=id=>({requestId:id,name:'Cliente Exemplo',phone:'(51) 99999-9999',
@@ -49,11 +49,11 @@ const request=async body=>{
  const id=randomUUID();
  let r=await request(payload(id));
  assert.equal(r.code,201);assert.equal(r.body.status,'registered');
- assert.equal(texts,1);assert.equal(docs,1);
+ assert.equal(texts,0);assert.equal(docs,1);
  assert.equal(status.get(id).telegram_state,'sent');
  r=await request(payload(id));
  assert.equal(r.code,201);assert.equal(r.body.replayed,true);
- assert.equal(texts,1,'Replay não envia outra mensagem');
+ assert.equal(texts,0,'Não enviar texto separado');
  assert.equal(docs,1,'Replay não envia outro cupom');
  const next=randomUUID();documentOk=false;
  r=await request(payload(next));
