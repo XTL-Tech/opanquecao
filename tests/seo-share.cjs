@@ -24,7 +24,7 @@ assert.equal(homeDoc.querySelector('meta[property="og:image:alt"]')?.content.inc
 assert.equal(homeDoc.querySelectorAll('.footer-category-links a').length,12);
 assert.equal(homeDoc.querySelector('#shareCategory')?.hidden,true);
 const siteMap=read('sitemap.xml');
-assert.equal((siteMap.match(/<loc>/g)||[]).length,13,'Homepage + 12 categorias');
+assert.equal((siteMap.match(/<loc>/g)||[]).length,14,'Homepage + 12 categorias + guia turístico');
 assert.match(read('robots.txt'),/Disallow: \/api\/whatsapp-intent/);
 assert.match(read('robots.txt'),/Sitemap: https:\/\/opanquecao\.vercel\.app\/sitemap\.xml/);
 assert.equal(profile.delivery.cities.length,2);
@@ -95,5 +95,5 @@ assert.equal(total,82);
     'Deep-link abriu ficha errada');
  assert.match(d.querySelector('#productDialogContent form.order-form .order-primary').textContent,/30,00/,
     'Preço inicial do produto compartilhado não bate com catálogo');
- console.log('PASS SEO/COMPARTILHAMENTO: 12 páginas indexáveis, 82 produtos e links específicos, 13 URLs no sitemap, OG, Twitter, política comercial coerente e deep-link funcional.');
+ console.log('PASS SEO/COMPARTILHAMENTO: 12 páginas indexáveis, 82 produtos e links específicos, 14 URLs no sitemap, OG, Twitter, política comercial coerente e deep-link funcional.');
 })().catch(e=>{console.error(e);process.exitCode=1});
