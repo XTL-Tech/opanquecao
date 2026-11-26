@@ -22,6 +22,8 @@
    <button data-tab="courier" data-superadmin hidden type="button">Motoboy</button>
    <button data-tab="after-sales" type="button">Pós-venda <span id="afterSalesCount" class="count"></span></button>
    <button data-tab="customers" type="button"><span aria-hidden="true">♙</span> Clientes</button>
+   <button data-tab="reports" data-management hidden type="button">Relatórios gerenciais</button>
+   <button data-tab="integrations" data-superadmin hidden type="button">Integrações XTL</button>
    <button data-tab="cash" type="button"><span aria-hidden="true">▣</span> Caixa diário</button>
    <button data-tab="catalog" type="button"><span aria-hidden="true">≡</span> Preços do cardápio</button>
   </nav>
@@ -68,7 +70,10 @@
       <button class="primary" type="submit">Confirmar fechamento diário</button>
       <p class="hint">O fechamento é definitivo no MVP. Divergências e estornos devem ser reconciliados pela gestão.</p>
     </form>
-    <div id="asaasSandboxCard" class="form-card">
+    <div class="section-head"><h3>Histórico de fechamentos</h3></div>
+    <div class="table-wrap"><table><thead><tr><th>Data</th><th>Pedidos</th><th>Vendas</th><th>Dinheiro</th><th>Diferença</th></tr></thead><tbody id="closingsTable"></tbody></table></div>
+   </section>
+   <section id="tab-integrations" hidden>    <div id="asaasSandboxCard" hidden class="form-card">
       <h3>🧪 Asaas — Checkout Sandbox</h3>
       <p class="hint">Teste separado dos pedidos e do caixa reais. Nenhuma cobrança de produção é criada e nenhum produto vai para preparo.</p>
       <p id="asaasSandboxStatus" class="hint">Consulte os testes disponíveis.</p>
@@ -98,8 +103,10 @@
       </details>
       <p class="hint">Verifique o resultado no Asaas Sandbox. O retorno da página não confirma pagamento; somente o webhook autenticado altera o status da simulação.</p>
     </div>
-    <div class="section-head"><h3>Histórico de fechamentos</h3></div>
-    <div class="table-wrap"><table><thead><tr><th>Data</th><th>Pedidos</th><th>Vendas</th><th>Dinheiro</th><th>Diferença</th></tr></thead><tbody id="closingsTable"></tbody></table></div>
+</section>
+   <section id="tab-reports" hidden>
+    <form id="reportForm" class="form-card"><h2>Relatórios do estabelecimento</h2><div class="form-grid"><label>De<input id="reportStart" type="date" required></label><label>Até<input id="reportEnd" type="date" required></label></div><button type="submit" class="primary">Consultar período</button> <button type="button" id="reportExport" class="soft" disabled>Exportar CSV</button><p id="reportStatus" class="hint" role="status" aria-live="polite"></p></form>
+    <div id="reportContent"></div>
    </section>
    <section id="tab-catalog" hidden>
     <div class="section-head"><div><h2>Preços do cardápio</h2><p>Edição controlada de preços, tamanhos e adicionais. Nomes, fotos e receitas permanecem inalterados.</p></div><span class="status-tag">Gestão</span></div>
