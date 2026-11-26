@@ -158,12 +158,13 @@
  function showTab(tab){
   if(S.data?.operational)return;
   if(['kitchen','courier','integrations'].includes(tab)&&S.actor?.role!=='admin')return;
-  if(['reports','bi','ranking','fiscal','partners'].includes(tab)&&!['admin','manager'].includes(S.actor?.role))return;
+  if(['reports','bi','ranking','fiscal','partners','store-hours'].includes(tab)&&!['admin','manager'].includes(S.actor?.role))return;
   if(tab!=='bi')exitBiTV();
   $('#tab-operational').hidden=true;
-  S.tab=tab;for(const name of ['orders','customers','cash','catalog','after-sales','reports','integrations','bi','comandas','ranking','fiscal','partners'])$('#tab-'+name).hidden=name!==tab;
+  S.tab=tab;for(const name of ['orders','customers','cash','catalog','after-sales','reports','integrations','bi','comandas','ranking','fiscal','partners','store-hours'])$('#tab-'+name).hidden=name!==tab;
   document.querySelectorAll('[data-tab]').forEach(n=>n.classList.toggle('active',n.dataset.tab===tab));
   const meta={orders:['Pedidos','Acompanhe cada pedido, do primeiro contato à entrega.'],
+   'store-hours':['Horários da loja','Controle do expediente e pausa de pedidos online.'],
    partners:['Parceiros e publicidade','Contratos, vigências e programação da TV.'],
    ranking:['Ranking anual','Classificação por categoria, sem divulgar valores.'],fiscal:['Fiscal e estornos','Solicitações e conciliação, sem execução externa.'],
    comandas:['Mesas e comandas','Controle do consumo no local.'],
@@ -196,7 +197,7 @@
   $('#pageTitle').textContent=kitchen?'Fila da cozinha':'Entregas';
   $('#pageSubtitle').textContent=kitchen?'Pedidos aceitos e em preparo.':'Pedidos preparados e suas entregas em andamento.';
   $('#navigation').hidden=!isAdmin;
-  for(const name of ['orders','customers','cash','catalog','after-sales','reports','integrations','bi','comandas','ranking','fiscal','partners'])$('#tab-'+name).hidden=true;
+  for(const name of ['orders','customers','cash','catalog','after-sales','reports','integrations','bi','comandas','ranking','fiscal','partners','store-hours'])$('#tab-'+name).hidden=true;
   const section=$('#tab-operational');section.hidden=false;
   const list=$('#operationalQueue');clear(list);
   const orders=data.orders||[];
@@ -493,7 +494,25 @@
    }
   }catch(e){$('#adStatus').textContent=e.message;}finally{adBusy=false;}
  }
- function renderTab(){if(S.tab==='partners')void refreshAds();if(['ranking','fiscal'].includes(S.tab))void refreshAnnual();if(S.tab==='comandas')void refreshComandas();if(S.tab==='bi')void refreshBI();if(S.tab==='reports')void refreshReports();if(S.tab==='integrations')void refreshAsaas();if(['kitchen','courier'].includes(S.tab))void adminOperational(S.tab);if(S.tab==='orders')renderOrders();if(S.tab==='customers')renderCustomers();if(S.tab==='cash')renderCash();if(S.tab==='catalog')renderCatalog();if(S.tab==='after-sales')refreshAfterSales();}
+ let hoursRevision=0,hoursBusy=false,hoursLoaded=false;
+ const dayNames=['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado'];
+ function drawHours(weekly={}){
+  const root=$('#hoursWeek');clear(root);
+  for(let d=0;d<7;d++){
+   const row=el('div',null,'form-card');row.append(el('strong',dayNames[d]));
+   const input=el('input');input.name='day'+d;input.maxLength=100;input.placeholder='18:00-22:00; 23:00-23:59';input.value=(weekly[d]||[]).map(w=>w.start+'-'+w.end).join('; ');row.append(input,el('small','Deixe vazio para dia fechado. Separe períodos com ponto e vírgula.','hint'));root.append(row);
+  }
+ }
+ async function refreshHours(){
+  if(hoursBusy||S.demo||S.tab!=='store-hours'||!['admin','manager'].includes(S.actor?.role))return;hoursBusy=true;hoursLoaded=false;$('#hoursSave').disabled=true;const actor=S.actor;
+  try{
+   const d=await request('/api/backoffice?action=store_operations');if(S.actor!==actor||S.tab!=='store-hours')return;
+   const c=d.config;hoursRevision=c?.revision||0;drawHours(c?.weekly_schedule||{});
+   const f=$('#hoursForm').elements;f.acceptingOrders.checked=c?.accepting_orders===true;f.manualState.value='auto';
+   $('#hoursStatus').textContent=(d.integrated?'Controle online ativo. ':'Integração do horário ainda não ativada. ')+(c?'Estado atual da agenda: '+(d.status.open?'Aberta':'Fechada')+' · '+d.status.reason:'Nenhum horário cadastrado.');hoursLoaded=true;$('#hoursSave').disabled=false;
+  }catch(e){$('#hoursStatus').textContent=e.message;}finally{hoursBusy=false;}
+ }
+ function renderTab(){if(S.tab==='store-hours')void refreshHours();if(S.tab==='partners')void refreshAds();if(['ranking','fiscal'].includes(S.tab))void refreshAnnual();if(S.tab==='comandas')void refreshComandas();if(S.tab==='bi')void refreshBI();if(S.tab==='reports')void refreshReports();if(S.tab==='integrations')void refreshAsaas();if(['kitchen','courier'].includes(S.tab))void adminOperational(S.tab);if(S.tab==='orders')renderOrders();if(S.tab==='customers')renderCustomers();if(S.tab==='cash')renderCash();if(S.tab==='catalog')renderCatalog();if(S.tab==='after-sales')refreshAfterSales();}
  async function lookupOrders(more=false){
   if(S.demo||!S.data)return renderOrders();
   try{
@@ -773,6 +792,13 @@
  }
  function loggedOut(){exitBiTV();biData=null;biLastOK=0;clear($('#biCards'));clear($('#biCharts'));S.actor=null;S.data=null;S.catalogLoadedAt=0;S.catalogPending=null;$('#appShell').hidden=true;$('#loginScreen').hidden=false;}
  async function boot(){
+  $('#hoursForm').addEventListener('submit',async e=>{
+   e.preventDefault();if(!hoursLoaded||S.demo||!['admin','manager'].includes(S.actor?.role))return;
+   const f=e.currentTarget.elements,weekly={};for(let d=0;d<7;d++)weekly[d]=f['day'+d].value.trim().split(';').map(x=>x.trim()).filter(Boolean).map(x=>{const [start,end]=x.split('-').map(v=>v.trim());return {start,end};});
+   if(!confirm('Salvar a agenda e alterar a disponibilidade dos pedidos online?'))return;
+   const b=$('#hoursSave');b.disabled=true;
+   try{await run('store_operations_save',{revision:hoursRevision,weeklySchedule:weekly,acceptingOrders:f.acceptingOrders.checked,manualState:f.manualState.value,overrideMinutes:Number(f.overrideMinutes.value)});await refreshHours();show('Horários salvos.');}catch(e){$('#hoursStatus').textContent=e.message;b.disabled=false;}
+  });
   $('#adReset').addEventListener('click',resetAd);
   $('#adForm').addEventListener('submit',async e=>{
    e.preventDefault();if(S.demo||!['admin','manager'].includes(S.actor?.role))return;
