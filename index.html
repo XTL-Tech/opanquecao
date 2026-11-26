@@ -1011,17 +1011,19 @@
 </div>
 
 <div class="preview-bar"><span>PREVIEW XTL TECH · Nenhum pedido real</span><nav aria-label="Simular funcionamento"><a href="?xtl_demo_loja=aberta" id="previewOpen">Loja aberta</a><a href="?xtl_demo_loja=fechada" id="previewClosed">Loja fechada</a></nav></div>
-<header>
-    <div class="container">
-        <h1 class="restaurant-logo"><img src="img/logo-disk-panquecao.webp" width="160" height="175" alt="Disk Panquecão" style="max-width:40vw;height:auto;vertical-align:middle"></h1>
+<header class="gourmet-header">
+    <div class="local-strip"><span>📍 NOVA HARTZ · RS</span><span>Da nossa cozinha para sua família</span></div>
+    <div class="container gourmet-header-inner">
+        <h1 class="restaurant-logo"><a href="/" aria-label="Panquecão — início"><img src="img/logo-disk-panquecao.webp" width="160" height="175" alt="Disk Panquecão"><span class="brand-caption"><strong>O PANQUECÃO</strong><small>+ que uma panqueca.</small></span></a></h1>
+        <nav class="site-tabs" aria-label="Navegação principal">
+            <a href="#cardapio">Cardápio</a>
+            <a href="#contato">Contato</a>
+            <a href="#como-chegar">Como chegar</a>
+        </nav>
+        <a class="header-cta" href="#cardapio">Escolher meu sabor <span aria-hidden="true">→</span></a>
     </div>
-    <nav class="site-tabs" aria-label="Navegação principal">
-        <a href="#cardapio">Cardápio</a>
-        <a href="#contato">Contato</a>
-        <a href="#como-chegar">Como chegar</a>
-    </nav>
 </header>
-<section class="premium-hero" aria-labelledby="premiumTitle" aria-roledescription="carrossel"><div class="premium-hero-media"><img src="/img/cardapio/c02-p15.webp" alt="Imagem ilustrativa da especialidade Panquetudo" width="560" height="420" fetchpriority="high"><span>Imagem ilustrativa do cardápio</span></div><div class="premium-hero-copy"><span class="premium-eyebrow">NOVA HARTZ · DESDE O PRIMEIRO ATÉ O ÚLTIMO PEDAÇO</span><h2 id="premiumTitle">Sua fome merece<br>uma experiência.</h2><p id="premiumHeroText">Recheios generosos, sabores marcantes e o prazer de estar à mesa.</p><a class="premium-cta" id="premiumCta" href="#cardapio">Explorar cardápio <span aria-hidden="true">↓</span></a><span class="premium-hours">QUARTA A DOMINGO · 19H–23H</span><div class="hero-controls" aria-label="Controles do banner"><button type="button" id="heroPrev" aria-label="Banner anterior">‹</button><div id="heroDots" role="group" aria-label="Escolher banner"></div><button type="button" id="heroNext" aria-label="Próximo banner">›</button><button type="button" id="heroPause" aria-label="Pausar rotação">Pausar</button></div></div></section>
+<section class="premium-hero" aria-labelledby="premiumTitle" aria-roledescription="carrossel"><div class="premium-hero-media"><img src="/img/cardapio/c02-p15.webp" alt="Imagem ilustrativa da especialidade Panquetudo" width="560" height="420" fetchpriority="high"><span>Imagem ilustrativa do cardápio</span></div><div class="premium-hero-copy"><span class="premium-eyebrow">O SABOR QUE NOS UNE · NOVA HARTZ</span><h2 id="premiumTitle">+ que uma panqueca.<br>É o Panquecão!</h2><p id="premiumHeroText">Você merece o melhor. E sua família também.</p><a class="premium-cta" id="premiumCta" href="#cardapio">Explorar cardápio <span aria-hidden="true">↓</span></a><span class="premium-hours">QUARTA A DOMINGO · 19H–23H</span><div class="hero-controls" aria-label="Controles do banner"><button type="button" id="heroPrev" aria-label="Banner anterior">‹</button><div id="heroDots" role="group" aria-label="Escolher banner"></div><button type="button" id="heroNext" aria-label="Próximo banner">›</button><button type="button" id="heroPause" aria-label="Pausar rotação">Pausar</button></div></div></section>
 <div id="storeLightsStatus" class="store-lights-status" hidden><strong>● LUZES APAGADAS</strong><p>Voltamos no próximo horário de atendimento. O cardápio continua disponível para você conhecer.</p></div>
 <p id="storeOpenStatus" role="status" aria-live="polite" hidden></p>
 
@@ -1035,10 +1037,10 @@
 
 <main class="main-content" id="cardapio" style="scroll-margin-top: 84px">
     <section class="category-home container" id="categoryHome" aria-labelledby="categoriesTitle">
-        <p class="category-kicker">DA NOSSA COZINHA PARA SUA MESA</p>
-        <h2 id="categoriesTitle" tabindex="-1">Escolha sua experiência</h2>
-        <p class="premium-intro">Dos clássicos salgados à última colherada doce.</p>
-        <div class="premium-search"><label for="premiumSearch">Encontre seu favorito</label><input type="search" id="premiumSearch" placeholder="Busque por prato ou ingrediente" autocomplete="off"><div id="premiumResults" hidden aria-live="polite"></div></div>
+        <p class="category-kicker">ESCOLHA SEU MOMENTO</p>
+        <h2 id="categoriesTitle" tabindex="-1">Tá com fome de quê?</h2>
+        <p class="premium-intro">Dos nossos clássicos à última colherada doce, tem um sabor para cada momento.</p>
+        <div class="premium-search"><label for="premiumSearch">Qual sabor você está procurando?</label><input type="search" id="premiumSearch" placeholder="Busque por prato ou ingrediente" autocomplete="off"><div id="premiumResults" hidden aria-live="polite"></div></div>
         <div id="categoryCards" class="category-cards" aria-label="Categorias do cardápio"></div>
     </section>
     <div class="category-toolbar container" id="categoryToolbar" hidden>
@@ -1052,34 +1054,38 @@
         <p id="menuLoading" role="status">Carregando cardápio…</p>
     </div>
 </main>
-<section class="premium-loyalty"><div><span class="premium-eyebrow">EM BREVE · PROGRAMA DE FIDELIDADE</span><h2>PanqueCoins</h2><p>Peça. Acumule. Saboreie.</p><small>Benefícios sujeitos à liberação do programa.</small></div><div class="premium-medal" aria-hidden="true">P</div></section>
+<section class="premium-loyalty"><div><span class="premium-eyebrow">EM BREVE · PROGRAMA DE FIDELIDADE</span><h2>PanqueCoins</h2><p>Peça. Acumule. Saboreie.</p><p class="loyalty-sub">Porque ser de casa tem suas vantagens.</p><small>Benefícios sujeitos à liberação do programa.</small></div><div class="premium-medal" aria-hidden="true">P</div></section>
 <dialog class="product-dialog" id="productDialog" aria-labelledby="productDialogTitle">
     <form method="dialog"><button autofocus>Voltar ao cardápio</button></form>
     <h2 id="productDialogTitle"></h2>
     <div id="productDialogContent"></div><p class="closed-browse-note">Somente consulta · novos pedidos disponíveis quando a loja reabrir.</p>
 </dialog>
 
-<footer>
-    <p><a href="/privacidade.html" style="color:inherit;text-decoration:underline">Privacidade e dados pessoais</a> · <button type="button" id="analyticsManage" style="border:0;background:none;color:inherit;text-decoration:underline;cursor:pointer;font:inherit">Preferências de privacidade</button></p>
+<section class="local-story" aria-labelledby="localStoryTitle"><div class="local-story-copy"><p class="category-kicker">NOSSAS RAÍZES</p><h2 id="localStoryTitle">Nossa terra.<br>Nossa gente.<br>Nosso sabor.</h2><p>Tem momentos que pedem Panquecão. Seja para quem vive aqui ou para quem está conhecendo Nova Hartz, nossa mesa é um convite para compartilhar bons momentos.</p><a href="#como-chegar" class="local-link">Vem pro Panquecão <span aria-hidden="true">→</span></a></div><svg class="local-landscape" viewBox="0 0 420 240" role="img" aria-label="Ilustração estilizada de morros e natureza" xmlns="http://www.w3.org/2000/svg"><circle cx="310" cy="75" r="34" fill="#e4bb70"/><path d="M0 180 94 80 182 170 269 68 420 184V240H0Z" fill="#a4b3a2"/><path d="M0 205 116 135 208 198 328 118 420 165V240H0Z" fill="#687d6c"/><path d="M0 225 130 183 233 222 338 176 420 207V240H0Z" fill="#394b3f"/><path d="M24 208v-50m-15 24 15-28 15 28m25 35v-47m-12 17 12-24 12 24" stroke="#e3eadf" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></section>
+<footer class="gourmet-footer">
     <div class="container">
-        <section class="footer-info" id="contato" aria-labelledby="titulo-contato">
-            <h2 id="titulo-contato">Contato</h2>
+        <div class="footer-main">
+            <div class="footer-brand"><img src="img/logo-disk-panquecao.webp" alt="Disk Panquecão" width="84" height="92" loading="lazy"><h2>+ que uma panqueca.<br>É o Panquecão!</h2><p>O sabor da família. O carinho de quem é daqui.</p></div>
+            <div class="footer-visit"><h2>Vem pro Panquecão</h2><p>Nova Hartz · Rio Grande do Sul</p><p>Quarta a domingo<br>19h às 23h</p><p>Tele-entrega · Retirada · Presencial</p></div>
+            <section class="footer-info" id="contato" aria-labelledby="titulo-contato">
+            <h2 id="titulo-contato">Fale com a gente</h2>
             <p>(51) 9 9738-3849</p>
             <div class="info-actions">
                 <a href="tel:+5551997383849">Ligar agora</a>
                 <a href="https://wa.me/5551997383849" target="_blank" rel="noopener noreferrer">Chamar no WhatsApp</a>
             </div>
         </section>
-        <section class="footer-info" id="como-chegar" aria-labelledby="titulo-local">
+            <section class="footer-info" id="como-chegar" aria-labelledby="titulo-local">
             <h2 id="titulo-local">Como chegar</h2>
             <p>Ponto de referência: Praça do Trabalhador · Nova Hartz/RS</p>
             <div class="info-actions">
-                <a href="https://www.google.com/maps/search/?api=1&amp;query=O%20PANQUEC%C3%83O%20DISKPANQUEC%C3%83O%20Nova%20Hartz%20RS" target="_blank" rel="noopener noreferrer">Ver local e avaliações no Google Maps</a>
-                <a href="https://www.google.com/maps/dir/?api=1&amp;destination=O%20PANQUEC%C3%83O%20DISKPANQUEC%C3%83O%20-%20NOVA%20HARTZ%2C%20RS&amp;dir_action=navigate" target="_blank" rel="noopener noreferrer">Traçar rota até o restaurante</a>
+                <a href="https://www.google.com/maps/search/?api=1&amp;query=O%20PANQUEC%C3%83O%20DISKPANQUEC%C3%83O%20Nova%20Hartz%20RS" target="_blank" rel="noopener noreferrer">Ver no Google Maps ↗</a>
+                <a href="https://www.google.com/maps/dir/?api=1&amp;destination=O%20PANQUEC%C3%83O%20DISKPANQUEC%C3%83O%20-%20NOVA%20HARTZ%2C%20RS&amp;dir_action=navigate" target="_blank" rel="noopener noreferrer">Traçar rota ↗</a>
             </div>
         </section>
+        </div>
         <nav class="footer-categories" aria-label="Categorias do cardápio para compartilhar">
-            <h2>Explore por categoria</h2>
+            <h2>Explore o cardápio</h2>
             <div class="footer-category-links">
                 <a href="/categorias/acai.html">Açaí</a>
                 <a href="/categorias/panquecas-salgadas.html">Panquecas salgadas</a>
@@ -1095,12 +1101,8 @@
                 <a href="/categorias/cocktails-sem-alcool.html">Coquetéis sem álcool</a>
             </div>
         </nav>
-        <div class="footer-obs">
-            <h3>Informações Importantes</h3>
-            <ul id="observationsList" style="list-style: none; font-size: 0.9rem;"></ul>
-        </div>
-        <p style="text-align:center; opacity:0.3; font-size:0.7rem">&copy; <span id="year"></span> O PANQUECÃO | DISKPANQUECÃO - Todos os direitos reservados.</p>
-        <p class="footer-credit">Feito por <strong>XTL TECH</strong></p>
+        <details class="footer-notes"><summary>Informações importantes do cardápio</summary><ul id="observationsList"></ul></details>
+        <div class="footer-bottom"><p>© <span id="year"></span> O PANQUECÃO</p><p><a href="/privacidade.html">Privacidade e dados pessoais</a> <button type="button" id="analyticsManage">Preferências de privacidade</button></p><p class="footer-credit">Experiência digital por <strong>XTL TECH</strong></p></div>
     </div>
 </footer>
 
