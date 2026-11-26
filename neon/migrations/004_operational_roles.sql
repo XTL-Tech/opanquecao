@@ -3,7 +3,7 @@ BEGIN;
 ALTER TABLE dp.staff DROP CONSTRAINT staff_role_check;
 ALTER TABLE dp.staff ADD CONSTRAINT staff_role_check CHECK (role IN ('admin','manager','attendant','kitchen','courier') AND (role <> 'admin' OR lower(email)='opedrososamuel@gmail.com'));
 CREATE UNIQUE INDEX IF NOT EXISTS dp_one_superadmin ON dp.staff(role) WHERE role='admin';
-UPDATE dp.staff SET role='admin' WHERE lower(email)='opedrososamuel@gmail.com' AND active=true AND EXISTS (SELECT 1 FROM neon_auth."user" u WHERE u.id::text=dp.staff.user_id AND lower(u.email)='opedrososamuel@gmail.com');
+-- Keep existing manager active during compatibility deployment. Elevation: 012, AFTER new code is verified.
 ALTER TABLE dp.orders DROP CONSTRAINT orders_status_check;
 ALTER TABLE dp.orders ADD CONSTRAINT orders_status_check CHECK (status IN ('pending_customer','awaiting_acceptance','accepted','preparing','returned_to_attendant','completed','out_for_delivery','delivered','cancelled'));
 ALTER TABLE dp.orders ADD COLUMN IF NOT EXISTS return_reason text CHECK (length(return_reason)<=400);
