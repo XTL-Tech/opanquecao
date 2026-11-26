@@ -754,6 +754,7 @@ checkoutForm.onsubmit = async event => {
                 signal: AbortSignal.timeout(50000)
             });
             const data = await response.json();
+            if(response.status===423){const e=new Error('Loja fechada. Volte no próximo expediente.');e.storeClosed=true;throw e;}
             if (!response.ok || data.status !== 'registered' || data.pending) {
                 throw new Error(data.error || 'O registro no bot não pôde ser confirmado.');
             }
@@ -789,6 +790,12 @@ checkoutForm.onsubmit = async event => {
         openWhatsApp(whatsappOrderUrl(message));
     } catch (error) {
         hideCheckoutPartners();
+        if(error?.storeClosed||!storeOpenForOrders){
+            orderStatus.textContent='Loja fechada. O cardápio está disponível apenas para consulta.';
+            fallback.hidden=true;
+            if(error?.storeClosed){storeOpenForOrders=false;document.documentElement.classList.add('store-lights-off');const lights=byId('storeLightsStatus');if(lights)lights.hidden=false;}
+            return;
+        }
         orderStatus.textContent = (error?.message || 'Não foi possível registrar no bot.') +
             ' Você ainda pode contatar a loja; esse caminho não gera alerta no bot.';
         fallback.href = directUrl;
