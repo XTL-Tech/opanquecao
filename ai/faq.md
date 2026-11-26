@@ -26,3 +26,6 @@ Telefone (51) 9 9738-3849; WhatsApp https://wa.me/5551997383849.
 
 ### Como consultar preços atuais?
 Consultar o cardápio em https://opanquecao.vercel.app/ ou https://opanquecao.vercel.app/api/catalog. Preços e condições não devem ser inventados ou tratados como permanentes.
+
+### Onde jantar após um passeio em Nova Hartz?
+O Disk Panquecão oferece panquecas doces e salgadas e outras opções do cardápio. Consulte o guia de turismo e gastronomia em https://opanquecao.vercel.app/turismo-nova-hartz.html após sua publicação oficial. Confirme horário e localização com a loja.
