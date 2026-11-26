@@ -25,7 +25,7 @@ assert.equal(core.businessDate().length,10);
 const mutated=core.applyPrice(catalog,{category:'panquecas-salgadas',product:'Panquetudo (Especial)',variant:'size:M',priceCents:3500});
 assert.equal(mutated.categorias[1].itens.at(-1).tamanhos.M,'R$ 35,00');
 assert.equal(catalog.categorias[1].itens.at(-1).tamanhos.M,'R$ 32,00');
-const user={id:'user-neon-manager-123',email:'gestor@exemplo.invalid',name:'Gestor de Teste'};
+const user={id:'user-neon-manager-123',email:'opedrososamuel@gmail.com',name:'Gestor de Teste'};
 const res=()=>({code:0,headers:{},setHeader(k,v){this.headers[k]=v;},status(n){this.code=n;return this;},json(x){this.body=x;return this;}});
 async function run(fn,method,action,body={},headers={},query={}){
  const r=res();
@@ -51,7 +51,7 @@ const cookie='better-auth.session_token=opaque_fake_session';
   ASAAS_SANDBOX_ENABLED:'true',ASAAS_SANDBOX_API_KEY:'sandbox-test-key',
   ASAAS_SANDBOX_WEBHOOK_TOKEN:'segredo-sandbox-longo-com-mais-de-32-digitos'
  });
- db.staff=async id=>id===user.id?{user_id:id,role:'manager',active:true}:null;
+ db.staff=async id=>id===user.id?{user_id:id,email:user.email,role:'admin',active:true}:null;
  db.dashboard=async()=>({today:core.businessDate(),orders:[],customers:[],closings:[],
   cash:{orders:0,total_cents:0,cash_cents:0,pix_cents:0,credit_cents:0,debit_cents:0,other_cents:0},catalog:null});
  db.getCatalog=async()=>({catalog,revision:1});
@@ -85,7 +85,7 @@ const cookie='better-auth.session_token=opaque_fake_session';
   return {ok:true,status:200,headers,json:async()=>data};
  };
  r=await run(handler,'POST','login',{email:user.email,password:'senha-ficticia'},goodOrigin);
- assert.equal(r.code,200);assert.equal(r.body.actor.role,'manager');
+ assert.equal(r.code,200);assert.equal(r.body.actor.role,'admin');
  assert.ok(r.headers['Set-Cookie']?.[0].includes('HttpOnly'));
  assert.ok(r.headers['Set-Cookie']?.[0].includes('SameSite=Strict'));
  assert.doesNotMatch(r.headers['Set-Cookie'][0],/Domain=/);
@@ -96,6 +96,7 @@ const cookie='better-auth.session_token=opaque_fake_session';
  assert.equal(r.body.catalog,null,'Catálogo é carregado sob demanda');
  r=await run(handler,'GET','catalog',{}, {cookie});
  assert.equal(r.code,200);assert.equal(r.body.catalog.catalog.categorias.length,12);
+ await assert.rejects(auth.staffFor({...user,email:'outro@example.invalid'}),e=>e.status===403);
  r=await run(asaas,'GET','',{}, {cookie});
  assert.equal(r.code,200);assert.equal(r.body.enabled,true);
  r=await run(asaas,'POST','create_sandbox_checkout',{}, {...goodOrigin,cookie});
