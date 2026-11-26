@@ -26,7 +26,7 @@ module.exports=async function handler(req,res){
  try{
   if(!db.configured()||!auth.configured())return safe(res,503,{error:'Ative primeiro o Neon e o login do atendente.'});
   const actor=await auth.actor(req);
-  if(actor.role!=='manager')return safe(res,403,{error:'Teste de pagamentos disponível somente para gestão.'});
+  if(actor.role!=='admin')return safe(res,403,{error:'Teste de pagamentos disponível somente para superadministrador.'});
   if(req.method==='GET'){
    if(req.query?.view==='history'){
     const [checkouts,events]=await Promise.all([db.sandboxRecent(actor.id),db.sandboxEventHistory(actor.id)]);
