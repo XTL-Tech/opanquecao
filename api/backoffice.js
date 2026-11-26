@@ -5,6 +5,7 @@ const c=require('../lib/backoffice-core');
 const db=require('../lib/backoffice-neon');
 const auth=require('../lib/backoffice-neon-auth');
 const areas=require('../delivery-areas.json');
+const operations=require('../lib/operational-orders');
 
 function respond(res,status,payload){return res.status(status).json(payload);}
 function requireId(id){if(!c.UUID.test(id))c.fail('Identificador de pedido inválido.');return id;}
@@ -43,6 +44,8 @@ async function action(req,actor,body){
  if(a==='order_status'){
   const id=requireId(body.id),order=await db.getOrder(id);
   if(!order)throw new db.StoreError('Pedido não encontrado.',404);
+  if(order.fulfillment?.type==='delivery'&&body.next==='delivered'&&order.status!=='out_for_delivery')c.fail('Registre a saída com o motoboy antes de entregar.');
+  if(body.next==='out_for_delivery')c.fail('A saída deve ser registrada pela conta do motoboy.');
   if(!c.statusAllowed(order.status,body.next))c.fail('Transição de pedido inválida. Atualize a tela.');
   if(body.next==='accepted'&&order.fulfillment?.type==='delivery'&&order.delivery_fee_cents===null)
    c.fail('Confirme o valor da entrega antes de aceitar o pedido.');
@@ -70,7 +73,7 @@ async function action(req,actor,body){
  if(a==='order_paid'){
   const id=requireId(body.id),order=await db.getOrder(id);
   if(!order)throw new db.StoreError('Pedido não encontrado.',404);
-  if(!['accepted','completed','delivered'].includes(order.status)||order.payment_status!=='pending')
+  if(!['accepted','preparing','completed','out_for_delivery','delivered'].includes(order.status)||order.payment_status!=='pending')
    c.fail('Pagamento só pode ser confirmado em pedido aceito e ainda não pago.');
   if(!c.METHODS.includes(body.method))c.fail('Selecione a forma de pagamento recebida.');
   if(c.orderTotal(order)===null)c.fail('Defina a taxa de entrega antes de registrar o pagamento.');
@@ -119,6 +122,12 @@ module.exports=async function handler(req,res){
   if(method==='POST'&&act==='login_otp')
    return respond(res,200,{actor:await auth.loginOtp(req,res,payload(req))});
   const actor=await auth.actor(req);
+  if(operations.restricted(actor.role)){
+   if(method==='GET'&&act==='session')return respond(res,200,{actor});
+   if(method==='GET'&&act==='dashboard')return respond(res,200,await operations.queue(actor));
+   if(method==='POST'&&act==='order_status')return respond(res,200,{ok:true,...await operations.transition(actor,payload(req))});
+   throw new auth.AuthError('Acesso não autorizado para este perfil.',403);
+  }
   if(method==='GET'){
    if(act==='dashboard')return respond(res,200,{actor,...await db.dashboard()});
    if(act==='catalog')return respond(res,200,{catalog:await db.getCatalog()});
