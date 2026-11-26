@@ -497,7 +497,7 @@ function updateOtherNeighborhood() {
     otherNeighborhood.disabled = !show || checkoutForm.elements.fulfillmentType.value !== 'delivery';
     otherNeighborhood.required = show && !otherNeighborhood.disabled;
     const fee=standardDeliveryFee(checkoutForm.elements.deliveryCity.value,neighborhoodSelect.value,deliveryAreasData);
-    const out=byId('deliveryStandardFee');if(out){const subtotal=cart.reduce((n,l)=>n+l.cents*l.quantity,0);out.textContent=fee===null?'Taxa para esta localidade: a confirmar pela loja.':'Taxa padrão: '+money(fee)+' · Total estimado: '+money(subtotal+fee);}
+    const out=byId('deliveryStandardFee');if(out){const subtotal=cart.reduce((n,l)=>n+l.cents*l.quantity,0);out.textContent=fee===null?'Taxa para esta localidade: a confirmar pela loja.':'Taxa para o bairro: '+money(fee)+' · Total estimado: '+money(subtotal+fee);}
 }
 checkoutForm.elements.deliveryNeighborhood.addEventListener('change', updateOtherNeighborhood);
 checkoutForm.elements.deliveryCity.addEventListener('change', async () => {
