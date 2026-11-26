@@ -1024,7 +1024,7 @@ if(location.hostname==='opanquecao.vercel.app'){
     <nav class="site-tabs" aria-label="Navegação principal">
         <a href="#cardapio">Cardápio</a>
         <a href="#contato">Contato</a>
-        <a href="#como-chegar">Como chegar</a>
+        <a href="#como-chegar">Como chegar</a><a href="/minha-conta.html">Minha conta</a>
     </nav>
 </header>
 <div id="storeLightsStatus" class="store-lights-status" hidden><strong>● LUZES APAGADAS</strong><p>Voltamos no próximo horário de atendimento. O cardápio continua disponível para você conhecer.</p></div>
@@ -1576,7 +1576,12 @@ if(location.hostname==='opanquecao.vercel.app'){
     <button type="button" id="startCheckout" class="checkout-next-action" hidden>Continuar para o WhatsApp <span aria-hidden="true">→</span></button>
     <form id="checkout" class="order-form" hidden>
         <p class="checkout-assurance"><strong>Quase pronto!</strong> Escolha como receber e informe os dados necessários. A loja confirmará o pedido pelo WhatsApp.</p>
-        <div class="customer-fields">
+        <section class="checkout-account" aria-label="Minha conta">
+    <div><strong>Já é de casa?</strong><p>Reutilize seus dados e endereços ou continue sem cadastro.</p></div>
+    <div class="checkout-account-actions"><button type="button" id="loadSavedAccount">Usar minha conta</button><a href="/minha-conta.html">Gerenciar conta ↗</a></div>
+    <p id="savedAccountStatus" role="status" aria-live="polite"></p>
+    <div id="savedAddresses" hidden><label>Endereço cadastrado<select id="savedAddressSelect"><option value="">Escolha um endereço</option></select></label><button type="button" id="moreSavedAddresses" hidden>Carregar mais</button></div>
+ </section><div class="customer-fields">
             <label for="customerName">Seu nome
                 <input id="customerName" name="customerName" type="text" autocomplete="name" maxlength="80" placeholder="Como podemos chamar você?" required>
             </label>
@@ -1720,5 +1725,5 @@ a.whatsapp-float{position:fixed;left:auto;right:max(16px,env(safe-area-inset-rig
 body.has-cart a.whatsapp-float{bottom:calc(84px + env(safe-area-inset-bottom,0px))}
 a.whatsapp-float:focus-visible{outline:3px solid #145c37;outline-offset:3px}
 </style>
-</body>
+<style>.checkout-account{border:1px solid #e5dbd7;background:#fff;border-radius:12px;padding:14px;color:#282426}.checkout-account p{font-size:13px;line-height:1.5;color:#665c60;margin:4px 0}.checkout-account-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px}.checkout-account button,.checkout-account a{min-height:44px;display:inline-flex;align-items:center;border-radius:9px;font-weight:700;font-size:13px}.checkout-account a{color:#852638}.checkout-account [hidden]{display:none!important}#savedAddresses{margin-top:12px}.gourmet-header .site-tabs a[href="/minha-conta.html"]{color:#852638!important}@media(max-width:700px){.gourmet-header .site-tabs a{padding-inline:3px;white-space:normal;font-size:11px}}</style></body>
 </html>
