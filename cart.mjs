@@ -189,6 +189,9 @@ document.addEventListener('store-operation-status', event => {
     const {enabled,open} = event.detail || {};
     storeOpenForOrders = !enabled || (open === true && event.detail.simulated !== true);
     if (!storeOpenForOrders) {
+        if(byId("cartDialog")?.open)byId("cartDialog").close();
+        if(byId("whatsappOrderLink"))byId("whatsappOrderLink").hidden=true;
+        hideCheckoutPartners();
         const status = byId('orderStatus');
         if (status) status.textContent = event.detail.simulated ? 'Modo de demonstração: o envio de pedidos está desativado.' : 'Loja fechada ou temporariamente indisponível. Você pode consultar o cardápio, mas não enviar novos pré-pedidos.';
     }
@@ -199,7 +202,7 @@ document.addEventListener('store-operation-status', event => {
  // adicionar com um toque. A foto e "Detalhes" continuam abrindo a ficha completa.
 byId('menuContent').addEventListener('click', event => {
     const quick = event.target.closest('.quick-add');
-    if (!quick || !catalog) return;
+    if (!quick || !catalog || !storeOpenForOrders) return;
     const card = quick.closest('.menu-item');
     const category = card.closest('.category-section').id;
     const product = card.dataset.product;
@@ -360,6 +363,7 @@ byId('menuContent').addEventListener('click', event => {
     updateExtras();
     form.onsubmit = event => {
         event.preventDefault();
+        if(!storeOpenForOrders){formStatus.textContent="Loja fechada. Somente consulta.";return;}
         const selected = options.find(option => option.label === form.elements.option.value);
         if (!selected || cart.length >= 25) {
             form.querySelector('[role=status]').textContent = 'O carrinho atingiu o limite de itens.';
@@ -530,6 +534,7 @@ function getFulfillment() {
 }
 
 function openCart() {
+    if(!storeOpenForOrders)return;
     checkoutStep = false;
     refresh();
     if (!cartDialog.open) cartDialog.showModal();
