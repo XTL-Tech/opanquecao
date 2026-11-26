@@ -155,6 +155,7 @@ module.exports=async function handler(req,res){
    const body=payload(req);return respond(res,200,{ok:true,...await operations.transition(actor,body,body.view)});
   }
   if(act==='comanda_open')return respond(res,200,{ok:true,...await comandas.open(actor,payload(req))});
+  if(act==='comanda_find')return respond(res,200,{ok:true,...await comandas.find(actor,payload(req))});
   if(act==='comanda_close')return respond(res,200,{ok:true,...await comandas.close(actor,payload(req))});
   if(act==='after_sale_status')return respond(res,200,{ok:true,...await afterSales.change(actor,payload(req))});
   const result=await action(req,actor,payload(req));
