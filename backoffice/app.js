@@ -722,6 +722,11 @@
  }
  function loggedOut(){exitBiTV();biData=null;biLastOK=0;clear($('#biCards'));clear($('#biCharts'));S.actor=null;S.data=null;S.catalogLoadedAt=0;S.catalogPending=null;$('#appShell').hidden=true;$('#loginScreen').hidden=false;}
  async function boot(){
+  $('#comandaFind').addEventListener('click',async()=>{
+   const input=$('#comandaForm').elements.cpf;
+   if(!input.value.trim())return show('Informe o CPF da comanda.',true);
+   try{const d=await run('comanda_find',{cpf:input.value});await addComandaOrder(d.tab);}catch(e){show(e.message,true);}finally{input.value='';}
+  });
   $('#comandaForm').addEventListener('submit',async e=>{
    e.preventDefault();const f=e.currentTarget;$('#comandaOpen').disabled=true;
    try{await run('comanda_open',{cpf:f.elements.cpf.value,table:f.elements.table.value,name:f.elements.name.value,phone:f.elements.phone.value});f.reset();await refreshComandas();show('Comanda aberta.');}catch(err){show(err.message,true);}finally{f.elements.cpf.value='';$('#comandaOpen').disabled=false;}
