@@ -27,6 +27,8 @@ async function sample(mode,demoAvailable=true){
   assert.equal(closed.w.storeOperationStatus.simulated,true);
   assert.equal(closed.w.storeOperationStatus.open,false);
   assert.equal(closed.d.getElementById('storeClosedDialog').open,true);
+  assert.equal(closed.d.documentElement.classList.contains('store-lights-off'),true);
+  assert.equal(closed.d.getElementById('storeLightsStatus').hidden,false);
   assert.match(closed.d.getElementById('storeOpenStatus').textContent,/DEMONSTRAÇÃO.*fechada/);
   assert.match(closed.d.getElementById('storeAlertNote').textContent,/ainda não estão habilitados/);
   closed.d.getElementById('dismissStoreClosed').click();
@@ -35,10 +37,13 @@ async function sample(mode,demoAvailable=true){
   assert.equal(opened.w.storeOperationStatus.open,true);
   assert.equal(opened.w.storeOperationStatus.simulated,true);
   assert.equal(opened.d.getElementById('storeClosedDialog').open,false);
+  assert.equal(opened.d.documentElement.classList.contains('store-lights-off'),false);
+  assert.equal(opened.d.getElementById('storeLightsStatus').hidden,true);
   assert.match(opened.d.getElementById('storeOpenStatus').textContent,/DEMONSTRAÇÃO.*aberta/);
   const prod=await sample('fechada',false);
   assert.equal(prod.w.storeOperationStatus.enabled,false);
   assert.equal(prod.d.getElementById('storeOpenStatus').hidden,true);
   assert.equal(prod.d.getElementById('storeClosedDialog').open,false);
+  assert.equal(prod.d.documentElement.classList.contains('store-lights-off'),false);
   console.log('PASS: Preview demo closed/open UI, no false notifications, production demo disabled');
 })().catch(error=>{console.error(error);process.exitCode=1});
