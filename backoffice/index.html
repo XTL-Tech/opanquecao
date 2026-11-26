@@ -26,6 +26,7 @@
    <button data-tab="bi" data-management hidden type="button">📊 BI ao vivo</button>
    <button data-tab="ranking" data-management hidden type="button">Ranking anual</button>
    <button data-tab="fiscal" data-management hidden type="button">Fiscal e estornos</button>
+   <button data-tab="store-hours" data-management hidden type="button">Horários da loja</button>
    <button data-tab="partners" data-management hidden type="button">Parceiros e publicidade</button>
    <button data-tab="reports" data-management hidden type="button">Relatórios gerenciais</button>
    <button data-tab="integrations" data-superadmin hidden type="button">Integrações XTL</button>
@@ -109,6 +110,12 @@
       <p class="hint">Verifique o resultado no Asaas Sandbox. O retorno da página não confirma pagamento; somente o webhook autenticado altera o status da simulação.</p>
     </div>
 </section>
+   <section id="tab-store-hours" hidden>
+    <form id="hoursForm" class="form-card"><h2>Expediente semanal</h2><p class="hint">Horário oficial de Brasília. Fora do expediente, a loja entra no modo luzes apagadas. Não use horários fictícios.</p>
+    <div id="hoursWeek"></div><label><input name="acceptingOrders" type="checkbox"> Aceitar pedidos online dentro do horário (desmarque para pausa de emergência)</label>
+    <div class="form-grid"><label>Exceção temporária<select name="manualState"><option value="auto">Seguir agenda</option><option value="closed">Fechar temporariamente</option><option value="open">Abrir temporariamente</option></select></label><label>Duração da exceção (minutos)<input name="overrideMinutes" type="number" min="5" max="1440" value="60"></label></div>
+    <p class="hint">Ao salvar no modo automático, uma exceção anterior será encerrada.</p><button id="hoursSave" type="submit" class="primary" disabled>Salvar horário</button><p id="hoursStatus" role="status"></p></form>
+   </section>
    <section id="tab-partners" hidden>
     <div class="form-card"><h2>XTL FOOD Partners</h2><p>Vaga 1 — XTL TECH (permanente). Vagas comerciais disponíveis: 2 e 3.</p><a href="/anuncios/" target="_blank" rel="noopener noreferrer">Abrir tela de anúncios da TV</a><p id="adSummary" class="hint"></p><div id="adContracts"></div></div>
     <form id="adForm" class="form-card"><h2 id="adFormTitle">Novo contrato</h2><div class="form-grid">
