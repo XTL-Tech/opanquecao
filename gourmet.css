@@ -158,3 +158,6 @@ html.store-lights-off .gourmet-partners{filter:grayscale(1)}
 @media(max-width:700px){.gourmet-header .restaurant-logo{width:100%;min-width:0}.gourmet-header .restaurant-logo a{gap:12px;justify-content:center}.gourmet-header .brand-caption strong{font-size:18px}.gourmet-header .brand-caption small{font-size:14px;max-width:235px;line-height:1.4}}
 @media(max-width:340px){.gourmet-header .brand-caption small{font-size:13px}.gourmet-header .brand-caption strong{font-size:17px}}
 html.store-lights-off .gourmet-header .brand-caption small{color:#262626}
+
+/* Commercial partnership CTA */
+.gourmet-partner .partner-whatsapp{display:flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:10px 12px;margin-top:14px;border-radius:9px;background:#146c43;color:#fff;text-decoration:none;font-size:13px;font-weight:700;line-height:1.45;text-align:center;white-space:normal;overflow-wrap:break-word}.gourmet-partner .partner-whatsapp:hover{background:#105538}.gourmet-partner .partner-whatsapp:focus-visible{outline:3px solid #146c43;outline-offset:3px}
