@@ -29,5 +29,10 @@ async function req(action,method='GET',body={}){const r=res();await api({method,
  rows=[];assert.equal((await req('order_status','POST',{id,next:'delivered'})).code,409);assert.match(sql,/courier_id=\$2/);
  rows=[{status:'out_for_delivery'}];r=res();await tracking({method:'POST',body:{id}},r);assert.equal(r.code,200);assert.deepEqual(r.body,{status:'out_for_delivery'});assert.match(sql,/24 hours/);
  r=res();await tracking({method:'POST',body:{id:'11111111'}},r);assert.equal(r.code,400);
+ actor={id:'manager',role:'manager'};assert.equal((await req('operational_queue')).code,403);
+ assert.equal((await req('operational_status','POST',{id,next:'completed',view:'kitchen'})).code,403);
+ actor={id:'owner',role:'admin'};rows=[{request_id:id,status:'completed'}];
+ assert.equal((await req('operational_status','POST',{id,next:'completed',view:'kitchen'})).code,200);
+ assert.match(sql,/role='admin'/);
  console.log('PASS operational roles: least privilege, scoped queues, conditional transitions and private status.');
 })().catch(e=>{console.error(e);process.exitCode=1;});
