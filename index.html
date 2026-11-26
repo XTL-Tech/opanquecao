@@ -1564,7 +1564,7 @@
     <footer class="cart-footer">
     <div id="cartSummary">
         <div class="cart-total-row"><span>Subtotal dos itens</span><strong id="cartTotal"></strong></div>
-        <p class="cart-disclaimer">O subtotal não inclui frete. <strong>Para entregas, a taxa e o valor final serão informados pela loja ao confirmar o pedido.</strong> Nenhum pedido é preparado sem confirmação.</p>
+        <p class="cart-disclaimer">O subtotal não inclui frete. <strong>Taxa padrão de entrega: R$ 10,00 nas localidades cadastradas. A loja confirma o valor final.</strong> Nenhum pedido é preparado sem confirmação.</p>
     </div>
     <button type="button" id="startCheckout" class="checkout-next-action" hidden>Continuar para o WhatsApp <span aria-hidden="true">→</span></button>
     <form id="checkout" class="order-form" hidden>
@@ -1584,7 +1584,7 @@
             <label><input type="radio" name="fulfillmentType" value="table"> <span>🍽️ Comer no local</span></label>
         </fieldset>
         <div id="deliveryFields" class="fulfillment-fields">
-            <p class="delivery-fee-note"><strong>Taxa de entrega a confirmar:</strong> a loja informará o frete e o total final no WhatsApp após conferir seu endereço.</p>
+            <p class="delivery-fee-note"><strong>Tele-entrega padrão: R$ 10,00.</strong> Para bairros cadastrados de Nova Hartz e Araricá. Outras localidades serão confirmadas pela loja.<br><span id="deliveryStandardFee" role="status">Selecione sua cidade e bairro.</span></p>
             <div class="address-grid">
                 <label for="deliveryCity">Cidade
                     <select id="deliveryCity" name="deliveryCity" required>
