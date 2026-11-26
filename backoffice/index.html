@@ -24,6 +24,8 @@
    <button data-tab="after-sales" type="button">Pós-venda <span id="afterSalesCount" class="count"></span></button>
    <button data-tab="customers" type="button"><span aria-hidden="true">♙</span> Clientes</button>
    <button data-tab="bi" data-management hidden type="button">📊 BI ao vivo</button>
+   <button data-tab="ranking" data-management hidden type="button">Ranking anual</button>
+   <button data-tab="fiscal" data-management hidden type="button">Fiscal e estornos</button>
    <button data-tab="reports" data-management hidden type="button">Relatórios gerenciais</button>
    <button data-tab="integrations" data-superadmin hidden type="button">Integrações XTL</button>
    <button data-tab="cash" type="button"><span aria-hidden="true">▣</span> Caixa diário</button>
@@ -106,6 +108,8 @@
       <p class="hint">Verifique o resultado no Asaas Sandbox. O retorno da página não confirma pagamento; somente o webhook autenticado altera o status da simulação.</p>
     </div>
 </section>
+   <section id="tab-ranking" hidden><div class="form-card"><h2>Campeões do Panquecão</h2><label>Ano<select id="annualYear"><option>2027</option><option>2026</option></select></label><p class="hint">Somente posição e apelido. Compras, valores e CPF permanecem privados.</p></div><div id="annualContent"></div></section>
+   <section id="tab-fiscal" hidden><div id="fiscalContent"></div></section>
    <section id="tab-comandas" hidden>
     <form id="comandaForm" class="form-card"><h2>Abrir comanda</h2><p class="hint">CPF identifica o cadastro permanente, a comanda e o programa PanqueCoins. Não é exibido na cozinha ou na TV.</p><div class="form-grid"><label>CPF<input name="cpf" inputmode="numeric" maxlength="14" autocomplete="off" required></label><label>Mesa<input name="table" type="number" min="1" max="999" required></label></div><button id="comandaFind" type="button" class="soft">Consultar cliente por CPF</button><p id="comandaIdentity" class="hint" aria-live="polite">Consulte o CPF para identificar o cliente.</p><div id="comandaRegister" hidden><div class="form-grid"><label>Nome<input name="name" maxlength="80"></label><label>Telefone<input name="phone" inputmode="tel"></label></div><label><input type="checkbox" name="confirmExisting"> Confirmei que, se o telefone já estiver cadastrado, pertence a este cliente e o nome corresponde.</label></div><button id="comandaOpen" type="submit" class="primary" disabled>Abrir comanda e lançar pedido</button><p id="comandaStatus" class="hint" role="status"></p></form><div id="comandaList"></div>
    </section>
