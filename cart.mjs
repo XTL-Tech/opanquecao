@@ -1,6 +1,7 @@
 import { money, orderOptions, priceOrder, extraOptions, extraSummary, flavorChoices, orderProductName } from './order-catalog.mjs';
 import { buildSimpleWhatsAppMessage, whatsappOrderUrl } from './whatsapp-order.mjs';
 import { normalizeFulfillment } from './fulfillment.mjs';
+import { renderPartners } from './partners.mjs';
 
 const byId = id => document.getElementById(id);
 const cart = [];
@@ -86,6 +87,7 @@ if (window.menuCatalog) initializeCatalog(window.menuCatalog);
 function refresh() {
     try { window.localStorage.setItem(storageKey, JSON.stringify({version: 1, updatedAt: Date.now(), lines: cart})); } catch {}
     if (!cart.length) checkoutStep = false;
+    if (!checkoutStep) hideCheckoutPartners();
     byId('checkout').hidden = !cart.length || !checkoutStep;
     byId('startCheckout').hidden = !cart.length || checkoutStep;
     byId('cartDialog').classList.toggle('checkout-mode', checkoutStep);
@@ -142,6 +144,7 @@ function refresh() {
             button.onclick = () => {
                 line.quantity += delta;
                 byId('whatsappOrderLink').hidden = true;
+                hideCheckoutPartners();
                 refresh();
                 const updated = rows.children[index]?.querySelectorAll('.cart-stepper button');
                 const preferred = updated?.[delta < 0 ? 0 : 1];
@@ -409,6 +412,7 @@ checkoutForm.querySelectorAll('input[name="fulfillmentType"]').forEach(radio => 
     radio.addEventListener('change', () => {
         setDeliveryMode();
         fallback.hidden = true;
+        hideCheckoutPartners();
         orderStatus.textContent = '';
     });
 });
@@ -423,6 +427,7 @@ byId('removeDeliveryLocation').addEventListener('click', () => {
     clearLocation();
     orderStatus.textContent = '';
     fallback.hidden = true;
+        hideCheckoutPartners();
 });
 byId('captureDeliveryLocation').addEventListener('click', () => {
     if (checkoutForm.elements.fulfillmentType.value !== 'delivery') return;
@@ -454,6 +459,7 @@ byId('captureDeliveryLocation').addEventListener('click', () => {
         byId('removeDeliveryLocation').hidden = false;
         orderStatus.textContent = '';
         fallback.hidden = true;
+        hideCheckoutPartners();
     }, error => {
         byId('captureDeliveryLocation').disabled = false;
         byId('deliveryLocationStatus').textContent = error.code === 1
@@ -549,6 +555,7 @@ byId('startCheckout').onclick = () => {
 };
 checkoutForm.addEventListener('input', () => {
     fallback.hidden = true;
+        hideCheckoutPartners();
     orderStatus.textContent = '';
 });
 
@@ -674,6 +681,10 @@ async function getChallenge() {
         }
     });
 }
+function hideCheckoutPartners() {
+    const slot = byId('localPartners');
+    if (slot) slot.hidden = true;
+}
 function openWhatsApp(url) {
     fallback.href = url;
     fallback.hidden = false;
@@ -683,6 +694,7 @@ function openWhatsApp(url) {
 checkoutForm.onsubmit = async event => {
     event.preventDefault();
     if (sending) return;
+    hideCheckoutPartners();
     if (!storeOpenForOrders) {
         orderStatus.textContent = 'A loja está fechada. Tente novamente no próximo expediente.';
         return;
@@ -707,6 +719,7 @@ checkoutForm.onsubmit = async event => {
     });
     const directUrl = whatsappOrderUrl(directMessage);
     fallback.hidden = true;
+        hideCheckoutPartners();
     sending = true;
     refresh();
     orderStatus.textContent = 'Registrando o pré-pedido e enviando o cupom térmico ao bot…';
@@ -762,8 +775,11 @@ checkoutForm.onsubmit = async event => {
         });
         orderStatus.textContent = 'Pré-registro #' + registration.id +
             ' e cupom térmico enviados ao bot. Abrindo WhatsApp: confira e toque em Enviar.';
+        // Advertising is optional: never block or delay the WhatsApp handoff.
+        try { renderPartners(byId('localPartners')); } catch { hideCheckoutPartners(); }
         openWhatsApp(whatsappOrderUrl(message));
     } catch (error) {
+        hideCheckoutPartners();
         orderStatus.textContent = (error?.message || 'Não foi possível registrar no bot.') +
             ' Você ainda pode contatar a loja; esse caminho não gera alerta no bot.';
         fallback.href = directUrl;
