@@ -550,7 +550,7 @@ if(byId('loadSavedAccount'))byId('loadSavedAccount').onclick=async()=>{
   const data=await accountRequest('state');
   checkoutForm.elements.customerName.value=data.profile?.name||'';
   checkoutForm.elements.customerPhone.value=data.profile?.phone||'';
-  checkoutForm.dispatchEvent(new Event('input',{bubbles:true}));
+  checkoutForm.dispatchEvent(new window.Event('input',{bubbles:true}));
   await fetchSavedAddresses();
   savedMessage(savedAddresses.length?'Dados carregados. Escolha seu endereço ou informe outro.':'Dados carregados. Cadastre endereços em Minha conta.');
  }catch(err){
@@ -572,7 +572,7 @@ if(savedSelect)savedSelect.onchange=async()=>{
   const known=[...e.deliveryNeighborhood.options].some(x=>x.value===d.neighborhood);
   e.deliveryNeighborhood.value=known?d.neighborhood:'__other__';e.deliveryOtherNeighborhood.value=d.neighborhood==='__other__'?d.otherNeighborhood||'':known?'':d.neighborhood;
   for(const [field,key] of [['deliveryStreet','street'],['deliveryNumber','number'],['deliveryComplement','complement'],['deliveryReference','reference']])e[field].value=d[key]||'';
-  updateOtherNeighborhood();checkoutForm.dispatchEvent(new Event('input',{bubbles:true}));
+  updateOtherNeighborhood();checkoutForm.dispatchEvent(new window.Event('input',{bubbles:true}));
   savedMessage('Endereço selecionado. Confira os dados e a taxa antes de enviar.');
  }catch{savedMessage('Não foi possível carregar esse endereço. Preencha manualmente.');}finally{savedLoading=false;savedSelect.disabled=false;}
 };
