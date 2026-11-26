@@ -158,12 +158,13 @@
  function showTab(tab){
   if(S.data?.operational)return;
   if(['kitchen','courier','integrations'].includes(tab)&&S.actor?.role!=='admin')return;
-  if(['reports','bi','ranking','fiscal'].includes(tab)&&!['admin','manager'].includes(S.actor?.role))return;
+  if(['reports','bi','ranking','fiscal','partners'].includes(tab)&&!['admin','manager'].includes(S.actor?.role))return;
   if(tab!=='bi')exitBiTV();
   $('#tab-operational').hidden=true;
-  S.tab=tab;for(const name of ['orders','customers','cash','catalog','after-sales','reports','integrations','bi','comandas','ranking','fiscal'])$('#tab-'+name).hidden=name!==tab;
+  S.tab=tab;for(const name of ['orders','customers','cash','catalog','after-sales','reports','integrations','bi','comandas','ranking','fiscal','partners'])$('#tab-'+name).hidden=name!==tab;
   document.querySelectorAll('[data-tab]').forEach(n=>n.classList.toggle('active',n.dataset.tab===tab));
   const meta={orders:['Pedidos','Acompanhe cada pedido, do primeiro contato à entrega.'],
+   partners:['Parceiros e publicidade','Contratos, vigências e programação da TV.'],
    ranking:['Ranking anual','Classificação por categoria, sem divulgar valores.'],fiscal:['Fiscal e estornos','Solicitações e conciliação, sem execução externa.'],
    comandas:['Mesas e comandas','Controle do consumo no local.'],
    bi:['BI ao vivo','Visão executiva com atualização automática e modo TV.'],
@@ -195,7 +196,7 @@
   $('#pageTitle').textContent=kitchen?'Fila da cozinha':'Entregas';
   $('#pageSubtitle').textContent=kitchen?'Pedidos aceitos e em preparo.':'Pedidos preparados e suas entregas em andamento.';
   $('#navigation').hidden=!isAdmin;
-  for(const name of ['orders','customers','cash','catalog','after-sales','reports','integrations','bi','comandas','ranking','fiscal'])$('#tab-'+name).hidden=true;
+  for(const name of ['orders','customers','cash','catalog','after-sales','reports','integrations','bi','comandas','ranking','fiscal','partners'])$('#tab-'+name).hidden=true;
   const section=$('#tab-operational');section.hidden=false;
   const list=$('#operationalQueue');clear(list);
   const orders=data.orders||[];
@@ -466,7 +467,33 @@
   }catch(e){if(S.actor===actor&&S.tab===tab)root.append(el('p',e.message,'hint'));}
   finally{annualBusy=false;}
  }
- function renderTab(){if(['ranking','fiscal'].includes(S.tab))void refreshAnnual();if(S.tab==='comandas')void refreshComandas();if(S.tab==='bi')void refreshBI();if(S.tab==='reports')void refreshReports();if(S.tab==='integrations')void refreshAsaas();if(['kitchen','courier'].includes(S.tab))void adminOperational(S.tab);if(S.tab==='orders')renderOrders();if(S.tab==='customers')renderCustomers();if(S.tab==='cash')renderCash();if(S.tab==='catalog')renderCatalog();if(S.tab==='after-sales')refreshAfterSales();}
+ let adBusy=false,adEdit=null;
+ function resetAd(){adEdit=null;$('#adForm').reset();$('#adFormTitle').textContent='Novo contrato';}
+ function editAd(x){
+  resetAd();adEdit={id:x.id,revision:x.revision};const f=$('#adForm').elements;
+  const values={slot:x.slot,advertiser:x.advertiser,contact:x.contact,contractRef:x.contract_ref,startsOn:String(x.starts_on).slice(0,10),endsOn:String(x.ends_on).slice(0,10),dueOn:String(x.due_on).slice(0,10),amount:Number(x.amount_cents)/100,paid:Number(x.paid_cents)/100,state:x.state,headline:x.headline,description:x.description,destination:x.destination,mediaPath:x.media_path,seconds:x.seconds,notes:x.notes};
+  for(const [k,v] of Object.entries(values))f[k].value=v??'';
+  f.showTV.checked=x.show_tv;f.showCheckout.checked=x.show_checkout;$('#adFormTitle').textContent='Editar contrato — '+x.advertiser;$('#adForm').scrollIntoView?.({block:'start'});
+ }
+ async function refreshAds(){
+  if(adBusy||S.demo||S.tab!=='partners'||!['admin','manager'].includes(S.actor?.role))return;adBusy=true;const actor=S.actor;
+  try{
+   const d=await request('/api/backoffice?action=ad_contracts');if(S.actor!==actor||S.tab!=='partners')return;
+   const today=S.data.today,root=$('#adContracts');clear(root);
+   const live=d.contracts.filter(x=>x.state==='active'&&String(x.starts_on).slice(0,10)<=today&&String(x.ends_on).slice(0,10)>=today);
+   $('#adSummary').textContent='Vagas comerciais ocupadas: '+live.length+'/2 · valores de publicidade separados do caixa do restaurante.';
+   for(const slot of [2,3]){
+    const x=live.find(v=>v.slot===slot);root.append(el('p','Vaga '+slot+' — '+(x?x.advertiser:'Disponível')));
+   }
+   for(const x of d.contracts){
+    const card=el('article',null,'form-card');const end=String(x.ends_on).slice(0,10),due=String(x.due_on).slice(0,10);
+    const pending=Number(x.amount_cents)-Number(x.paid_cents);const days=Math.round((Date.parse(end)-Date.parse(today))/86400000);
+    card.append(el('h3','Vaga '+x.slot+' · '+x.advertiser),el('p',x.state+' · '+String(x.starts_on).slice(0,10)+' a '+end),el('p','Contrato: '+money(x.amount_cents)+' · Recebido: '+money(x.paid_cents)+' · Pendente: '+money(pending)),el('p',days<0?'Vigência encerrada':days<=7?'Vence em '+days+' dia(s)':'Vigência: '+days+' dias restantes','hint'),el('p',pending>0&&due<today?'Pagamento em atraso':'Vencimento: '+due,'hint'));
+    card.append(button('Editar contrato',()=>editAd(x)));root.append(card);
+   }
+  }catch(e){$('#adStatus').textContent=e.message;}finally{adBusy=false;}
+ }
+ function renderTab(){if(S.tab==='partners')void refreshAds();if(['ranking','fiscal'].includes(S.tab))void refreshAnnual();if(S.tab==='comandas')void refreshComandas();if(S.tab==='bi')void refreshBI();if(S.tab==='reports')void refreshReports();if(S.tab==='integrations')void refreshAsaas();if(['kitchen','courier'].includes(S.tab))void adminOperational(S.tab);if(S.tab==='orders')renderOrders();if(S.tab==='customers')renderCustomers();if(S.tab==='cash')renderCash();if(S.tab==='catalog')renderCatalog();if(S.tab==='after-sales')refreshAfterSales();}
  async function lookupOrders(more=false){
   if(S.demo||!S.data)return renderOrders();
   try{
@@ -746,6 +773,14 @@
  }
  function loggedOut(){exitBiTV();biData=null;biLastOK=0;clear($('#biCards'));clear($('#biCharts'));S.actor=null;S.data=null;S.catalogLoadedAt=0;S.catalogPending=null;$('#appShell').hidden=true;$('#loginScreen').hidden=false;}
  async function boot(){
+  $('#adReset').addEventListener('click',resetAd);
+  $('#adForm').addEventListener('submit',async e=>{
+   e.preventDefault();if(S.demo||!['admin','manager'].includes(S.actor?.role))return;
+   const f=e.currentTarget.elements,btn=$('#adSave');btn.disabled=true;
+   const b=Object.fromEntries(['slot','advertiser','contact','contractRef','startsOn','endsOn','dueOn','state','headline','description','destination','mediaPath','seconds','notes'].map(k=>[k,f[k].value]));
+   Object.assign(b,{amountCents:Math.round(Number(f.amount.value)*100),paidCents:Math.round(Number(f.paid.value)*100),showTV:f.showTV.checked,showCheckout:f.showCheckout.checked,...(adEdit||{})});
+   try{if(b.state==='active'&&!confirm('Ativar este contrato e publicar a publicidade durante a vigência?'))return;await run('ad_contract_save',b);resetAd();await refreshAds();$('#adStatus').textContent='Contrato salvo.';}catch(e){$('#adStatus').textContent=e.message;}finally{btn.disabled=false;}
+  });
   $('#annualYear').addEventListener('change',refreshAnnual);
   if(!S.demo)setInterval(()=>{if(S.tab==='ranking'&&!document.hidden)void refreshAnnual();},300000);
   const cf=$('#comandaForm');
