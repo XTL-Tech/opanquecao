@@ -32,13 +32,14 @@
   <div id="demoRibbon" class="demo-ribbon" hidden>DEMONSTRAÇÃO — DADOS FICTÍCIOS · ALTERAÇÕES NÃO SÃO SALVAS NA LOJA</div>
   <div id="notice" role="status" aria-live="polite" hidden></div>
   <main>
+   <section id="tab-operational" hidden><div id="operationalQueue"></div></section>
    <section id="tab-orders">
     <div class="stats" id="orderStats"></div>
     <div class="toolbar"><input id="orderSearch" type="search" placeholder="Buscar código, cliente ou telefone" aria-label="Buscar pedidos">
       <select id="orderStatusFilter" aria-label="Filtrar status">
        <option value="">Todos os status</option><option value="pending_customer">Aguardando cliente</option>
        <option value="awaiting_acceptance">Aguardando aceite</option><option value="accepted">Aceitos</option>
-       <option value="completed">Concluídos</option><option value="delivered">Entregues</option><option value="cancelled">Cancelados</option>
+       <option value="preparing">Em preparo</option><option value="returned_to_attendant">Devolvidos</option><option value="completed">Preparados</option><option value="out_for_delivery">Em entrega</option><option value="delivered">Entregues</option><option value="cancelled">Cancelados</option>
       </select>
       <button class="primary" id="newOrder" type="button">+ Pedido manual</button>
     </div>
