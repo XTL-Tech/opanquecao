@@ -22,6 +22,7 @@
    <button data-tab="courier" data-superadmin hidden type="button">Motoboy</button>
    <button data-tab="after-sales" type="button">Pós-venda <span id="afterSalesCount" class="count"></span></button>
    <button data-tab="customers" type="button"><span aria-hidden="true">♙</span> Clientes</button>
+   <button data-tab="bi" data-management hidden type="button">📊 BI ao vivo</button>
    <button data-tab="reports" data-management hidden type="button">Relatórios gerenciais</button>
    <button data-tab="integrations" data-superadmin hidden type="button">Integrações XTL</button>
    <button data-tab="cash" type="button"><span aria-hidden="true">▣</span> Caixa diário</button>
@@ -104,6 +105,14 @@
       <p class="hint">Verifique o resultado no Asaas Sandbox. O retorno da página não confirma pagamento; somente o webhook autenticado altera o status da simulação.</p>
     </div>
 </section>
+   <section id="tab-bi" hidden>
+    <div id="biScreen" class="bi-screen">
+     <header class="bi-head"><div><span class="bi-brand">XTL FOOD · DISK PANQUECÃO</span><h2>Central de indicadores</h2><p id="biDate">—</p></div><div class="bi-actions"><span id="biStatus" class="bi-status" role="status">Aguardando dados</span><button id="biPrivacy" type="button" class="soft" aria-pressed="false">Ocultar valores</button><button id="biFullscreen" type="button" class="primary">Modo TV</button></div></header>
+     <div id="biCards" class="bi-cards"></div>
+     <div class="bi-grid" id="biCharts"></div>
+     <footer class="bi-foot"><span>Receita: pedidos pagos e concluídos · atualização a cada 30 s</span><span>XTL — Feito para durar</span></footer>
+    </div>
+   </section>
    <section id="tab-reports" hidden>
     <form id="reportForm" class="form-card"><h2>Relatórios do estabelecimento</h2><div class="form-grid"><label>De<input id="reportStart" type="date" required></label><label>Até<input id="reportEnd" type="date" required></label></div><button type="submit" class="primary">Consultar período</button> <button type="button" id="reportExport" class="soft" disabled>Exportar CSV</button><p id="reportStatus" class="hint" role="status" aria-live="polite"></p></form>
     <div id="reportContent"></div>
