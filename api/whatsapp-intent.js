@@ -126,11 +126,11 @@ module.exports = async function handler(req, res) {
             const customer=await backoffice.upsertCustomer({name:clean(name,80),phone:normalizedPhone});
             const claimed=await backoffice.createOrder({
                 requestId,customer,items:validated,fulfillment:deliveryDetails,
-                note:clean(note,400),origin:'site',status:'pending_customer',telegramState:'pending'
+                note:clean(note,400),origin:'site',status:'pending_customer',telegramState:'pending',deliveryFeeCents
             });
             if (!claimed.created) {
                 return claimed.record.telegram_state==='sent'
-                    ? res.status(201).json({id,status:'registered',test:false,replayed:true,tracking:deliveryDetails.type==='delivery',deliveryFeeCents})
+                    ? res.status(201).json({id,status:'registered',test:false,replayed:true,tracking:deliveryDetails.type==='delivery',deliveryFeeCents:claimed.record.delivery_fee_cents??null})
                     : res.status(202).json({id,pending:true,
                         error:'Este pré-pedido já existe, mas o envio ao Telegram requer conferência. Não reenvie automaticamente.'});
             }
