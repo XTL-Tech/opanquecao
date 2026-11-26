@@ -37,7 +37,9 @@ async function action(req,actor,body){
  if(a==='manual_order'){
   const tab=body.comandaId?await comandas.context(actor,body.comandaId):null;
   const customer=tab?{id:tab.customer_id,name:tab.name,phone:tab.phone}:await db.upsertCustomer({name:c.name(body.name),phone:c.phone(body.phone)});
-  const fulfillment=(await import('../fulfillment.mjs')).normalizeFulfillment(tab?{type:'table',table:String(tab.table_number)}:body.fulfillment,areas);
+  const {normalizeFulfillment,standardDeliveryFee}=await import('../fulfillment.mjs');
+  const fulfillment=normalizeFulfillment(tab?{type:'table',table:String(tab.table_number)}:body.fulfillment,areas);
+  const deliveryFeeCents=fulfillment.type==='delivery'&&body.fulfillment?.neighborhood!=='__other__'?standardDeliveryFee(fulfillment.city,fulfillment.neighborhood,areas):null;
   const catalog=(await db.getCatalog()).catalog;
   if(!catalog)throw new db.StoreError('Catálogo indisponível.');
   const {priceOrder}=await import('../order-catalog.mjs');
@@ -45,7 +47,7 @@ async function action(req,actor,body){
   const result=await db.createOrder({
    requestId:randomUUID(),customer,items,fulfillment,
    note:c.note(body.note,400),origin:'manual',status:'awaiting_acceptance',
-   telegramState:'not_applicable',comandaId:tab?.id
+   telegramState:'not_applicable',comandaId:tab?.id,deliveryFeeCents
   });
   return {order:result.record};
  }
