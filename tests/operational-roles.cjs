@@ -1,0 +1,33 @@
+'use strict';
+const assert=require('node:assert/strict');
+const db=require('../lib/backoffice-neon');
+const auth=require('../lib/backoffice-neon-auth');
+const ops=require('../lib/operational-orders');
+const api=require('../api/backoffice');
+const tracking=require('../api/delivery-status');
+const id='11111111-1111-4111-8111-111111111111';
+let actor={id:'staff',role:'kitchen'},sql,params,rows=[];
+db.configured=()=>true;auth.configured=()=>true;auth.actor=async()=>actor;auth.originGuard=()=>{};
+db.run=async(s,p)=>{sql=s;params=p;return rows;};
+const res=()=>({code:0,setHeader(){},status(n){this.code=n;return this},json(b){this.body=b;return this}});
+async function req(action,method='GET',body={}){const r=res();await api({method,query:{action},body:{action,...body}},r);return r;}
+(async()=>{
+ rows=[{request_id:id,status:'accepted',items:[{product:'Teste',quantity:2,cents:999}],customer_phone:'51999999999',note:'Sem cebola'}];
+ let r=await req('dashboard');assert.equal(r.code,200);assert.equal(r.body.operational,true);
+ assert.equal(r.body.orders[0].items[0].cents,undefined);assert.equal(r.body.orders[0].customer_phone,undefined);assert.doesNotMatch(sql,/JOIN dp.customers/);
+ for(const action of ['catalog','customers','events','orders'])assert.equal((await req(action)).code,403);
+ for(const action of ['catalog_price','order_paid','cash_close','customer_save','manual_order'])assert.equal((await req(action,'POST')).code,403);
+ assert.equal((await req('order_status','POST',{id,next:'delivered'})).code,403);
+ assert.equal((await req('order_status','POST',{id,next:'returned_to_attendant',reason:''})).code,400);
+ rows=[{request_id:id,status:'returned_to_attendant'}];
+ assert.equal((await req('order_status','POST',{id,next:'returned_to_attendant',reason:'Ingrediente indisponível'})).code,200);
+ assert.equal(params[3],'Ingrediente indisponível');assert.match(sql,/role='kitchen'/);
+ actor={id:'driver',role:'courier'};rows=[{request_id:id,status:'completed',fulfillment:{street:'Rua teste',type:'delivery'},customer_phone:'51999999999',items:[{cents:999}]}];
+ r=await req('dashboard');assert.equal(r.body.orders[0].items,undefined);assert.equal(r.body.orders[0].customer_phone,'51999999999');assert.match(sql,/courier_id=\$1/);
+ assert.equal((await req('order_status','POST',{id,next:'completed'})).code,403);
+ rows=[{request_id:id,status:'out_for_delivery'}];assert.equal((await req('order_status','POST',{id,next:'out_for_delivery'})).code,200);assert.match(sql,/courier_id IS NULL/);assert.match(sql,/role='courier'/);
+ rows=[];assert.equal((await req('order_status','POST',{id,next:'delivered'})).code,409);assert.match(sql,/courier_id=\$2/);
+ rows=[{status:'out_for_delivery'}];r=res();await tracking({method:'POST',body:{id}},r);assert.equal(r.code,200);assert.deepEqual(r.body,{status:'out_for_delivery'});assert.match(sql,/24 hours/);
+ r=res();await tracking({method:'POST',body:{id:'11111111'}},r);assert.equal(r.code,400);
+ console.log('PASS operational roles: least privilege, scoped queues, conditional transitions and private status.');
+})().catch(e=>{console.error(e);process.exitCode=1;});
