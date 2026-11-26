@@ -45,4 +45,4 @@ export function renderPartners(root, entries = partners) {
     }
     root.hidden = list.childElementCount === 0;
 }
-if (typeof document !== 'undefined') renderPartners(document.getElementById('localPartners'));
+// The checkout explicitly renders this slot only after a successful non-test pre-registration.
