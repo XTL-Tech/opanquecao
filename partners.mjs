@@ -4,7 +4,7 @@ export function approvedPartners(entries) {
     const result = [];
     for (const entry of entries) {
         if (result.length >= 3) break;
-        if (!entry || entry.active !== true || typeof entry.name !== 'string' || typeof entry.description !== 'string' || typeof entry.url !== 'string') continue;
+        if (!entry || (entry.expiresAt && Date.parse(entry.expiresAt)<=Date.now()) || (entry.validUntil && entry.validUntil<=Date.now()) || entry.active !== true || typeof entry.name !== 'string' || typeof entry.description !== 'string' || typeof entry.url !== 'string') continue;
         const name = entry.name.trim(), description = entry.description.trim();
         if (!name || name.length > 60 || !description || description.length > 100 || entry.url.length > 500) continue;
         let url = null;
@@ -47,5 +47,5 @@ export function renderPartners(root, entries = partners) {
 // The checkout explicitly renders this slot only after a successful non-test pre-registration.
 
 export async function loadCheckoutPartners(){
- try{const r=await fetch('/api/backoffice?action=ad_playlist',{credentials:'omit',signal:AbortSignal.timeout(5000)});if(!r.ok)return partners;const d=await r.json();if(!Array.isArray(d.ads)||Date.now()-Date.parse(d.generatedAt)>180000)return partners;return [...partners,...d.ads.filter(x=>[2,3].includes(x.slot)&&x.checkout===true&&Date.parse(x.expiresAt)>Date.now()).slice(0,2).map(x=>({name:x.name,description:x.description||x.headline,url:x.url||'',logo:x.media,active:true,allowNoLink:true}))];}catch{return partners;}
+ try{const r=await fetch('/api/backoffice?action=ad_playlist',{credentials:'omit',signal:AbortSignal.timeout(5000)});if(!r.ok)return partners;const d=await r.json();if(!Array.isArray(d.ads)||Date.now()-Date.parse(d.generatedAt)>180000)return partners;return [...partners,...d.ads.filter(x=>[2,3].includes(x.slot)&&x.checkout===true&&Date.parse(x.expiresAt)>Date.now()).slice(0,2).map(x=>({name:x.name,description:x.description||x.headline,url:x.url||'',logo:x.media,active:true,allowNoLink:true,expiresAt:x.expiresAt,validUntil:Date.parse(d.generatedAt)+180000}))];}catch{return partners;}
 }
