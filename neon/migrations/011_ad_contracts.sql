@@ -1,6 +1,7 @@
 BEGIN;
 CREATE TABLE IF NOT EXISTS dp.ad_contracts (
  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+ slot integer NOT NULL CHECK(slot IN (2,3)),
  advertiser text NOT NULL CHECK(length(advertiser) BETWEEN 2 AND 80),
  contact text NOT NULL DEFAULT '' CHECK(length(contact)<=160),
  contract_ref text NOT NULL DEFAULT '' CHECK(length(contract_ref)<=120),
@@ -22,7 +23,8 @@ CREATE TABLE IF NOT EXISTS dp.ad_contracts (
  revision integer NOT NULL DEFAULT 1,
  created_at timestamptz NOT NULL DEFAULT now(),
  updated_at timestamptz NOT NULL DEFAULT now(),
- CHECK(state<>'active' OR length(trim(contract_ref))>0)
+ CHECK(state<>'active' OR length(trim(contract_ref))>0),
+ EXCLUDE USING gist (int4range(slot,slot,'[]') WITH &&, daterange(starts_on,ends_on,'[]') WITH &&) WHERE (state='active')
 );
 CREATE INDEX IF NOT EXISTS dp_ad_contracts_schedule ON dp.ad_contracts(state,starts_on,ends_on);
 CREATE TABLE IF NOT EXISTS dp.ad_contract_events (
