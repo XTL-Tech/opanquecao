@@ -11,6 +11,7 @@ const reports=require('../lib/management-reports');
 const liveBI=require('../lib/live-bi');
 const comandas=require('../lib/comandas');
 const annual=require('../lib/annual-ranking-fiscal');
+const ads=require('../lib/ad-contracts');
 
 function respond(res,status,payload){return res.status(status).json(payload);}
 function requireId(id){if(!c.UUID.test(id))c.fail('Identificador de pedido inválido.');return id;}
@@ -112,6 +113,10 @@ module.exports=async function handler(req,res){
  try{
   const method=req.method||'GET';
   const act=method==='GET'?String(req.query?.action||'status'):req.body?.action;
+  if(method==='GET'&&act==='ad_playlist'){
+   if(!db.configured())return respond(res,503,{error:'Programação indisponível.'});
+   return respond(res,200,await ads.playlist());
+  }
   if(method==='GET'&&act==='status')return respond(res,200,{enabled:db.configured()&&auth.configured(),provider:'neon'});
   if(!['GET','POST'].includes(method))return respond(res,405,{error:'Método inválido.'});
   if(method==='POST')auth.originGuard(req);
@@ -139,6 +144,7 @@ module.exports=async function handler(req,res){
     if(actor.role!=='admin')throw new auth.AuthError('Somente o superadministrador.',403);
     return respond(res,200,await operations.queue(actor,req.query?.view));
    }
+   if(act==='ad_contracts')return respond(res,200,await ads.list(actor));
    if(act==='annual_ranking')return respond(res,200,await annual.ranking(actor,req.query));
    if(act==='fiscal_refunds')return respond(res,200,await annual.queues(actor));
    if(act==='comandas')return respond(res,200,await comandas.list(actor));
@@ -157,6 +163,7 @@ module.exports=async function handler(req,res){
    if(actor.role!=='admin')throw new auth.AuthError('Somente o superadministrador.',403);
    const body=payload(req);return respond(res,200,{ok:true,...await operations.transition(actor,body,body.view)});
   }
+  if(act==='ad_contract_save')return respond(res,200,{ok:true,...await ads.save(actor,payload(req))});
   if(act==='ranking_enroll')return respond(res,200,await annual.enroll(actor,payload(req)));
   if(act==='ranking_withdraw')return respond(res,200,await annual.withdraw(actor,payload(req)));
   if(act==='fiscal_request')return respond(res,200,await annual.fiscalRequest(actor,payload(req)));
