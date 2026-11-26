@@ -1,7 +1,10 @@
 import { money, orderOptions, priceOrder, extraOptions, extraSummary, flavorChoices, orderProductName } from './order-catalog.mjs';
 import { buildSimpleWhatsAppMessage, whatsappOrderUrl } from './whatsapp-order.mjs';
 import { normalizeFulfillment } from './fulfillment.mjs';
-import { renderPartners } from './partners.mjs';
+import { renderPartners, loadCheckoutPartners } from './partners.mjs';
+let checkoutPartners;
+let partnersGeneration=0;
+function preparePartners(){const gen=++partnersGeneration;checkoutPartners=undefined;void loadCheckoutPartners().then(data=>{if(gen===partnersGeneration)checkoutPartners=data;});}
 
 const byId = id => document.getElementById(id);
 const cart = [];
@@ -547,6 +550,7 @@ byId('cartBack').onclick = () => {
 byId('startCheckout').onclick = () => {
     if (!cart.length || !storeOpenForOrders) return;
     checkoutStep = true;
+    preparePartners();
     if (!checkoutEventSent) {
         checkoutEventSent = trackMeta('InitiateCheckout', productEventData(cart));
     }
@@ -776,7 +780,7 @@ checkoutForm.onsubmit = async event => {
         orderStatus.textContent = 'Pré-registro #' + registration.id +
             ' e cupom térmico enviados ao bot. Abrindo WhatsApp: confira e toque em Enviar.';
         // Advertising is optional: never block or delay the WhatsApp handoff.
-        try { renderPartners(byId('localPartners')); } catch { hideCheckoutPartners(); }
+        try { renderPartners(byId('localPartners'),checkoutPartners); } catch { hideCheckoutPartners(); }
         openWhatsApp(whatsappOrderUrl(message));
     } catch (error) {
         hideCheckoutPartners();
