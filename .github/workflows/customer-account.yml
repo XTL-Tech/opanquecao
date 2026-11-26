@@ -1,0 +1,21 @@
+name: Validar cadastro de clientes
+on:
+  push:
+    branches: [feat/customer-account]
+  pull_request:
+    branches: [feat/cozinha-motoboy]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  account:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: npm ci
+      - run: node tests/customer-account.cjs
+      - run: node --check customer-account.mjs && node --check customer-account-client.mjs && node --check cart.mjs
