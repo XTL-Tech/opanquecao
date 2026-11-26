@@ -4,12 +4,18 @@ const fs=require('node:fs');
 const path=require('node:path');
 const areas=JSON.parse(fs.readFileSync(path.resolve('delivery-areas.json'),'utf8'));
 (async()=>{
-    const {normalizeFulfillment,describeFulfillment}=await import(path.resolve('fulfillment.mjs'));
+    const {normalizeFulfillment,describeFulfillment,standardDeliveryFee}=await import(path.resolve('fulfillment.mjs'));
     const base={
         type:'delivery',city:'Nova Hartz',neighborhood:'Centro',
         street:'Rua das Flores',number:'123',complement:'Casa 2',
         reference:'Portão azul',latitude:-29.585,longitude:-50.938
     };
+    for(const [city,entries] of Object.entries(areas.cities))for(const entry of entries)assert.equal(standardDeliveryFee(city,entry.name,areas),entry.feeCents??1000);
+    for(const name of ["Campo da Brazina","Ferrabraz","Jardim","Bela Vista"])assert.equal(standardDeliveryFee('Araricá',name,areas),1500);
+    for(const name of ["Alto Ferrabraz","Porto Palmeira","Linha Ferrabraz"])assert.equal(standardDeliveryFee('Araricá',name,areas),2000);
+    assert.equal(standardDeliveryFee('Araricá','Centro',areas),1000);
+    assert.equal(standardDeliveryFee('Nova Hartz','__other__',areas),null);
+    assert.equal(standardDeliveryFee('Nova Hartz','Inventado',areas),null);
     const delivery=normalizeFulfillment(base,areas);
     assert.equal(delivery.type,'delivery');
     assert.equal(delivery.city,'Nova Hartz');

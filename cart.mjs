@@ -1,6 +1,11 @@
 import { money, orderOptions, priceOrder, extraOptions, extraSummary, flavorChoices, orderProductName } from './order-catalog.mjs';
 import { buildSimpleWhatsAppMessage, whatsappOrderUrl } from './whatsapp-order.mjs';
-import { normalizeFulfillment } from './fulfillment.mjs';
+import { normalizeFulfillment, standardDeliveryFee } from './fulfillment.mjs';
+import { renderPartners, loadCheckoutPartners } from './partners.mjs';
+import { accountRequest } from './customer-account-client.mjs';
+let checkoutPartners;
+let partnersGeneration=0;
+function preparePartners(){const gen=++partnersGeneration;checkoutPartners=undefined;void loadCheckoutPartners().then(data=>{if(gen===partnersGeneration)checkoutPartners=data;});}
 
 const byId = id => document.getElementById(id);
 const cart = [];
@@ -86,6 +91,7 @@ if (window.menuCatalog) initializeCatalog(window.menuCatalog);
 function refresh() {
     try { window.localStorage.setItem(storageKey, JSON.stringify({version: 1, updatedAt: Date.now(), lines: cart})); } catch {}
     if (!cart.length) checkoutStep = false;
+    if (!checkoutStep) hideCheckoutPartners();
     byId('checkout').hidden = !cart.length || !checkoutStep;
     byId('startCheckout').hidden = !cart.length || checkoutStep;
     byId('cartDialog').classList.toggle('checkout-mode', checkoutStep);
@@ -142,6 +148,7 @@ function refresh() {
             button.onclick = () => {
                 line.quantity += delta;
                 byId('whatsappOrderLink').hidden = true;
+                hideCheckoutPartners();
                 refresh();
                 const updated = rows.children[index]?.querySelectorAll('.cart-stepper button');
                 const preferred = updated?.[delta < 0 ? 0 : 1];
@@ -168,6 +175,9 @@ function refresh() {
         rows.append(row);
     }
     const quantity = cart.reduce((sum, line) => sum + line.quantity, 0);
+    const showCart=quantity>0 && storeOpenForOrders;
+    byId('openCart').hidden=!showCart;
+    document.body.classList.toggle('has-cart',showCart);
     byId('openCart').textContent = '🛒 Pedido · ' + quantity + (quantity === 1 ? ' item' : ' itens') +
         (quantity ? ' · ' + money(total) : '');
     byId('cartCount').textContent = quantity ? quantity + (quantity === 1 ? ' item no pedido' : ' itens no pedido') : 'Vamos escolher algo gostoso?';
@@ -183,6 +193,9 @@ document.addEventListener('store-operation-status', event => {
     const {enabled,open} = event.detail || {};
     storeOpenForOrders = !enabled || (open === true && event.detail.simulated !== true);
     if (!storeOpenForOrders) {
+        if(byId("cartDialog")?.open)byId("cartDialog").close();
+        if(byId("whatsappOrderLink"))byId("whatsappOrderLink").hidden=true;
+        hideCheckoutPartners();
         const status = byId('orderStatus');
         if (status) status.textContent = event.detail.simulated ? 'Modo de demonstração: o envio de pedidos está desativado.' : 'Loja fechada ou temporariamente indisponível. Você pode consultar o cardápio, mas não enviar novos pré-pedidos.';
     }
@@ -193,7 +206,7 @@ document.addEventListener('store-operation-status', event => {
  // adicionar com um toque. A foto e "Detalhes" continuam abrindo a ficha completa.
 byId('menuContent').addEventListener('click', event => {
     const quick = event.target.closest('.quick-add');
-    if (!quick || !catalog) return;
+    if (!quick || !catalog || !storeOpenForOrders) return;
     const card = quick.closest('.menu-item');
     const category = card.closest('.category-section').id;
     const product = card.dataset.product;
@@ -354,6 +367,7 @@ byId('menuContent').addEventListener('click', event => {
     updateExtras();
     form.onsubmit = event => {
         event.preventDefault();
+        if(!storeOpenForOrders){formStatus.textContent="Loja fechada. Somente consulta.";return;}
         const selected = options.find(option => option.label === form.elements.option.value);
         if (!selected || cart.length >= 25) {
             form.querySelector('[role=status]').textContent = 'O carrinho atingiu o limite de itens.';
@@ -409,6 +423,7 @@ checkoutForm.querySelectorAll('input[name="fulfillmentType"]').forEach(radio => 
     radio.addEventListener('change', () => {
         setDeliveryMode();
         fallback.hidden = true;
+        hideCheckoutPartners();
         orderStatus.textContent = '';
     });
 });
@@ -423,6 +438,7 @@ byId('removeDeliveryLocation').addEventListener('click', () => {
     clearLocation();
     orderStatus.textContent = '';
     fallback.hidden = true;
+        hideCheckoutPartners();
 });
 byId('captureDeliveryLocation').addEventListener('click', () => {
     if (checkoutForm.elements.fulfillmentType.value !== 'delivery') return;
@@ -454,6 +470,7 @@ byId('captureDeliveryLocation').addEventListener('click', () => {
         byId('removeDeliveryLocation').hidden = false;
         orderStatus.textContent = '';
         fallback.hidden = true;
+        hideCheckoutPartners();
     }, error => {
         byId('captureDeliveryLocation').disabled = false;
         byId('deliveryLocationStatus').textContent = error.code === 1
@@ -483,9 +500,11 @@ function updateOtherNeighborhood() {
     byId('deliveryOtherWrap').hidden = !show;
     otherNeighborhood.disabled = !show || checkoutForm.elements.fulfillmentType.value !== 'delivery';
     otherNeighborhood.required = show && !otherNeighborhood.disabled;
+    const fee=standardDeliveryFee(checkoutForm.elements.deliveryCity.value,neighborhoodSelect.value,deliveryAreasData);
+    const out=byId('deliveryStandardFee');if(out){const subtotal=cart.reduce((n,l)=>n+l.cents*l.quantity,0);out.textContent=fee===null?'Taxa para esta localidade: a confirmar pela loja.':'Taxa para o bairro: '+money(fee)+' · Total estimado: '+money(subtotal+fee);}
 }
 checkoutForm.elements.deliveryNeighborhood.addEventListener('change', updateOtherNeighborhood);
-checkoutForm.elements.deliveryCity.addEventListener('change', async () => {
+async function populateDeliveryNeighborhoods() {
     const city = checkoutForm.elements.deliveryCity.value;
     neighborhoodSelect.replaceChildren(new Option('Carregando bairros…', ''));
     neighborhoodSelect.value = '';
@@ -503,8 +522,112 @@ checkoutForm.elements.deliveryCity.addEventListener('change', async () => {
     }
     neighborhoodSelect.add(new Option('Outro bairro / localidade', '__other__'));
     neighborhoodSelect.disabled = checkoutForm.elements.fulfillmentType.value !== 'delivery';
-});
+    updateOtherNeighborhood();
+}
+checkoutForm.elements.deliveryCity.addEventListener('change', populateDeliveryNeighborhoods);
 setDeliveryMode();
+
+
+let savedAddresses=[],savedNext=null,savedLoading=false,activeAccount=null,accountEpoch=0,accountCheck=null,profileEdited=false,localLogout=false;
+const savedStatus=byId('savedAccountStatus'),savedSelect=byId('savedAddressSelect');
+const accountNav=byId('customerAccountNav'),accountJoin=byId('accountJoinLink'),accountLogout=byId('checkoutAccountLogout'),accountReload=byId('loadSavedAccount');
+function savedMessage(msg){if(savedStatus)savedStatus.textContent=msg;}
+function showAccountState(){
+ const connected=!!activeAccount;
+ if(accountNav)accountNav.textContent=connected?'Minha conta · conectada':'Minha conta';
+ if(accountJoin)accountJoin.textContent=connected?'Gerenciar minha conta ↗':'Entrar ou criar conta →';
+ if(accountLogout)accountLogout.hidden=!connected;
+ if(accountReload)accountReload.hidden=!connected;
+ if(byId('savedAccountHeading'))byId('savedAccountHeading').textContent=connected?'Você já é de casa!':'Seja de casa!';
+ if(byId('savedAccountPitch'))byId('savedAccountPitch').textContent=connected?'Sua conta está conectada. Escolha onde receber. PanqueCoins em breve.':'Crie sua conta, salve seus endereços e prepare-se para acumular PanqueCoins quando o programa for liberado. Você também pode pedir sem cadastro.';
+ const loyalty=byId('loyaltyAccountLink');if(loyalty)loyalty.textContent=connected?'Minha conta →':'Quero fazer parte →';
+}
+function displaySavedAddresses(){
+ if(!savedSelect)return;
+ const current=savedSelect.value;
+ savedSelect.replaceChildren(new Option('Escolha um endereço',''));
+ for(const a of savedAddresses)savedSelect.add(new Option(a.label+' · '+a.data.city,a.id));
+ if(savedAddresses.some(a=>a.id===current))savedSelect.value=current;
+ byId('savedAddresses').hidden=!activeAccount||!savedAddresses.length;
+ byId('moreSavedAddresses').hidden=!savedNext;
+}
+function clearAccountFields(){
+ accountEpoch++;activeAccount=null;profileEdited=false;savedAddresses=[];savedNext=null;
+ for(const field of ['customerName','customerPhone','deliveryCity','deliveryNeighborhood','deliveryOtherNeighborhood','deliveryStreet','deliveryNumber','deliveryComplement','deliveryReference'])checkoutForm.elements[field].value='';
+ neighborhoodSelect.replaceChildren(new Option('Selecione primeiro a cidade',''));neighborhoodSelect.disabled=true;
+ clearLocation();updateOtherNeighborhood();displaySavedAddresses();showAccountState();
+ checkoutForm.dispatchEvent(new window.Event('input',{bubbles:true}));
+}
+async function fetchSavedAddresses(more=false){
+ const epoch=accountEpoch,account=activeAccount;
+ const result=await accountRequest('addresses',null,more&&savedNext?{after:savedNext}:{});
+ if(epoch!==accountEpoch||activeAccount!==account)return;
+ savedAddresses=more?[...savedAddresses,...result.addresses]:result.addresses;savedNext=result.next;
+ displaySavedAddresses();
+}
+function applyAccountProfile(force=false){
+ if(!activeAccount||(!force&&profileEdited))return;
+ const e=checkoutForm.elements,p=activeAccount.profile||{};
+ if(force||!e.customerName.value)e.customerName.value=p.name||'';
+ if(force||!e.customerPhone.value)e.customerPhone.value=p.phone||'';
+ checkoutForm.dispatchEvent(new window.Event('input',{bubbles:true}));
+}
+async function detectAccount({checkout=false,force=false}={}){
+ if(localLogout)return;
+ if(accountCheck)await accountCheck;
+ if(localLogout)return;
+ const epoch=accountEpoch;
+ const pending=(async()=>{
+  try{
+   const state=await accountRequest('state');
+   if(epoch!==accountEpoch||localLogout)return;
+   if(activeAccount&&activeAccount.email!==state.email)clearAccountFields();
+   const first=!activeAccount;
+   activeAccount=state;showAccountState();
+   if(checkout){
+    applyAccountProfile(force||first&&!profileEdited);
+    await fetchSavedAddresses();
+    if(activeAccount===state)savedMessage(savedAddresses.length?'Conta reconhecida. Escolha onde receber seu pedido.':'Conta reconhecida. Você pode informar ou cadastrar um endereço.');
+   }
+  }catch(err){
+   if(epoch!==accountEpoch||localLogout)return;
+   if(activeAccount)clearAccountFields();
+   if(checkout)savedMessage(err.status===401?'Crie sua conta ou continue sem cadastro.':'Não foi possível confirmar a sessão. Você pode pedir sem cadastro.');
+  }
+ })();
+ accountCheck=pending;
+ try{await pending;}finally{if(accountCheck===pending)accountCheck=null;}
+}
+if(accountReload)accountReload.onclick=()=>detectAccount({checkout:true,force:true});
+if(accountLogout)accountLogout.onclick=async()=>{
+ if(savedLoading||sending)return;
+ savedLoading=true;localLogout=true;accountLogout.disabled=true;clearAccountFields();
+ try{await accountRequest('logout',{});try{window.localStorage.setItem('dp-account-session-change-v1','logout:'+Date.now());}catch{}savedMessage('Você saiu da conta. Seu carrinho foi preservado.');}
+ catch{savedMessage('Não foi possível confirmar a saída no servidor. Abra Minha conta para sair com segurança.');}
+ finally{savedLoading=false;accountLogout.disabled=false;}
+};
+if(byId('moreSavedAddresses'))byId('moreSavedAddresses').onclick=async()=>{
+ if(savedLoading||!activeAccount)return;savedLoading=true;try{await fetchSavedAddresses(true);}catch{savedMessage('Não foi possível carregar mais endereços.');}finally{savedLoading=false;}
+};
+if(savedSelect)savedSelect.onchange=async()=>{
+ if(savedLoading||!activeAccount)return;const found=savedAddresses.find(x=>x.id===savedSelect.value);if(!found)return;
+ savedLoading=true;savedSelect.disabled=true;const epoch=accountEpoch;
+ try{
+  const d=found.data,e=checkoutForm.elements;
+  e.fulfillmentType.value='delivery';setDeliveryMode();clearLocation();
+  e.deliveryCity.value=d.city;await populateDeliveryNeighborhoods();
+  if(epoch!==accountEpoch||e.deliveryCity.value!==d.city||e.fulfillmentType.value!=='delivery')return;
+  const known=[...e.deliveryNeighborhood.options].some(x=>x.value===d.neighborhood);
+  e.deliveryNeighborhood.value=known?d.neighborhood:'__other__';e.deliveryOtherNeighborhood.value=d.neighborhood==='__other__'?d.otherNeighborhood||'':known?'':d.neighborhood;
+  for(const [field,key] of [['deliveryStreet','street'],['deliveryNumber','number'],['deliveryComplement','complement'],['deliveryReference','reference']])e[field].value=d[key]||'';
+  updateOtherNeighborhood();checkoutForm.dispatchEvent(new window.Event('input',{bubbles:true}));
+  savedMessage('Endereço selecionado. Confira os dados e a taxa antes de enviar.');
+ }catch{savedMessage('Não foi possível carregar esse endereço. Preencha manualmente.');}finally{savedLoading=false;savedSelect.disabled=false;}
+};
+checkoutForm.addEventListener('input',e=>{if(e.isTrusted&&['customerName','customerPhone'].includes(e.target.name))profileEdited=true;});
+window.addEventListener('pageshow',e=>{if(e.persisted)void detectAccount({checkout:checkoutStep});});
+window.addEventListener('storage',e=>{if(e.key==='dp-account-session-change-v1'&&document.body.dataset.premiumPreview!=='true'){if(activeAccount)clearAccountFields();localLogout=String(e.newValue||'').startsWith('logout:');if(!localLogout)void detectAccount({checkout:checkoutStep});}});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&activeAccount)void detectAccount({checkout:checkoutStep});});
 
 function getFulfillment() {
     const e = checkoutForm.elements;
@@ -521,6 +644,7 @@ function getFulfillment() {
 }
 
 function openCart() {
+    if(!storeOpenForOrders)return;
     checkoutStep = false;
     refresh();
     if (!cartDialog.open) cartDialog.showModal();
@@ -541,16 +665,63 @@ byId('cartBack').onclick = () => {
 byId('startCheckout').onclick = () => {
     if (!cart.length || !storeOpenForOrders) return;
     checkoutStep = true;
+    preparePartners();
     if (!checkoutEventSent) {
         checkoutEventSent = trackMeta('InitiateCheckout', productEventData(cart));
     }
     refresh();
     checkoutForm.elements.customerName.focus({preventScroll:true});
+    void detectAccount({checkout:true});
 };
 checkoutForm.addEventListener('input', () => {
     fallback.hidden = true;
+        hideCheckoutPartners();
     orderStatus.textContent = '';
 });
+
+
+ // Acompanhamento apenas enquanto o navegador mantém o site aberto.
+ // Não solicita permissão de notificações nem armazena dados pessoais.
+const deliveryTrackingKey='dp-delivery-tracking-v1';
+let deliveryTimer=null;
+function readDeliveryTracking(){
+ try{
+  const v=JSON.parse(window.localStorage.getItem(deliveryTrackingKey)||'null');
+  return v&&typeof v.id==='string'&&Date.now()-v.at<86400000?v:null;
+ }catch{return null;}
+}
+function rememberDelivery(id){
+ try{window.localStorage.setItem(deliveryTrackingKey,JSON.stringify({id,at:Date.now(),notified:false}));}catch{return;}
+ startDeliveryTracking();
+}
+async function checkDelivery(){
+ const v=readDeliveryTracking();
+ if(!v||v.notified){if(deliveryTimer!==null)clearInterval(deliveryTimer);deliveryTimer=null;return;}
+ if(document.hidden)return;
+ try{
+  const r=await fetch('/api/delivery-status',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:v.id}),cache:'no-store'});
+  if(!r.ok)return;
+  const d=await r.json();
+  if(d.status==='out_for_delivery'){
+   // Recheck in case a new order replaced the tracked order.
+   if(readDeliveryTracking()?.id!==v.id)return;
+   window.localStorage.setItem(deliveryTrackingKey,JSON.stringify({...v,notified:true}));
+   window.alert('🛵 Seu pedido do Disk Panquecão saiu para entrega!');
+   clearInterval(deliveryTimer);deliveryTimer=null;
+  }else if(['delivered','cancelled'].includes(d.status)){
+   if(readDeliveryTracking()?.id===v.id)window.localStorage.removeItem(deliveryTrackingKey);
+   clearInterval(deliveryTimer);deliveryTimer=null;
+  }
+ }catch{/* Tracking must never interrupt ordering. */}
+}
+function startDeliveryTracking(){
+ const v=readDeliveryTracking();
+ if(!v||v.notified||deliveryTimer!==null)return;
+ deliveryTimer=setInterval(checkDelivery,30000);
+ if(!document.hidden)void checkDelivery();
+}
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)void checkDelivery();});
+startDeliveryTracking();
 
 function requestId() {
     const bytes = new Uint8Array(16);
@@ -630,6 +801,10 @@ async function getChallenge() {
         }
     });
 }
+function hideCheckoutPartners() {
+    const slot = byId('localPartners');
+    if (slot) slot.hidden = true;
+}
 function openWhatsApp(url) {
     fallback.href = url;
     fallback.hidden = false;
@@ -638,7 +813,9 @@ function openWhatsApp(url) {
 
 checkoutForm.onsubmit = async event => {
     event.preventDefault();
+    if(accountCheck||savedLoading){savedMessage('Aguarde a conferência da conta e do endereço.');return;}
     if (sending) return;
+    hideCheckoutPartners();
     if (!storeOpenForOrders) {
         orderStatus.textContent = 'A loja está fechada. Tente novamente no próximo expediente.';
         return;
@@ -658,11 +835,13 @@ checkoutForm.onsubmit = async event => {
         orderStatus.textContent = error?.message || 'Confira o pedido e seu contato.';
         return;
     }
+    const deliveryFeeCents=fulfillment.type==='delivery'&&checkoutForm.elements.deliveryNeighborhood.value!=='__other__'?standardDeliveryFee(fulfillment.city,fulfillment.neighborhood,deliveryAreasData):null;
     const directMessage = buildSimpleWhatsAppMessage({
-        lines, note, name: customer.name, fulfillment
+        lines, note, name: customer.name, fulfillment,deliveryFeeCents
     });
     const directUrl = whatsappOrderUrl(directMessage);
     fallback.hidden = true;
+        hideCheckoutPartners();
     sending = true;
     refresh();
     orderStatus.textContent = 'Registrando o pré-pedido e enviando o cupom térmico ao bot…';
@@ -672,11 +851,12 @@ checkoutForm.onsubmit = async event => {
             registration = lastRegistration;
         } else {
             const challenge = await getChallenge();
+            const trackingId = requestId();
             const response = await fetch('/api/whatsapp-intent', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    requestId: requestId(), name: customer.name, phone: customer.phone,
+                    requestId: trackingId, name: customer.name, phone: customer.phone,
                     lines, note,
                     fulfillment: fulfillment.type === 'delivery'
                         ? {...fulfillment, latitude: fulfillment.location?.latitude,
@@ -687,10 +867,12 @@ checkoutForm.onsubmit = async event => {
                 signal: AbortSignal.timeout(50000)
             });
             const data = await response.json();
+            if(response.status===423){const e=new Error('Loja fechada. Volte no próximo expediente.');e.storeClosed=true;throw e;}
             if (!response.ok || data.status !== 'registered' || data.pending) {
                 throw new Error(data.error || 'O registro no bot não pôde ser confirmado.');
             }
-            registration = {id: data.id, test: data.test, signature};
+            registration = {id: data.id, test: data.test, signature,deliveryFeeCents:Number.isSafeInteger(data.deliveryFeeCents)?data.deliveryFeeCents:null};
+            if(data.tracking===true && !data.test && fulfillment.type==='delivery') rememberDelivery(trackingId);
             lastRegistration = registration;
         }
         if (registration.test) {
@@ -712,12 +894,21 @@ checkoutForm.onsubmit = async event => {
             if (counted) trackedPreOrders.add(registration.id);
         }
         const message = buildSimpleWhatsAppMessage({
-            lines, note, name: customer.name, fulfillment, orderRef: registration.id
+            lines, note, name: customer.name, fulfillment, orderRef: registration.id,deliveryFeeCents:registration.deliveryFeeCents??null
         });
         orderStatus.textContent = 'Pré-registro #' + registration.id +
             ' e cupom térmico enviados ao bot. Abrindo WhatsApp: confira e toque em Enviar.';
+        // Advertising is optional: never block or delay the WhatsApp handoff.
+        try { renderPartners(byId('localPartners'),checkoutPartners); } catch { hideCheckoutPartners(); }
         openWhatsApp(whatsappOrderUrl(message));
     } catch (error) {
+        hideCheckoutPartners();
+        if(error?.storeClosed||!storeOpenForOrders){
+            orderStatus.textContent='Loja fechada. O cardápio está disponível apenas para consulta.';
+            fallback.hidden=true;
+            if(error?.storeClosed){storeOpenForOrders=false;document.documentElement.classList.add('store-lights-off');const lights=byId('storeLightsStatus');if(lights)lights.hidden=false;}
+            return;
+        }
         orderStatus.textContent = (error?.message || 'Não foi possível registrar no bot.') +
             ' Você ainda pode contatar a loja; esse caminho não gera alerta no bot.';
         fallback.href = directUrl;
@@ -728,3 +919,5 @@ checkoutForm.onsubmit = async event => {
         refresh();
     }
 };
+
+if(accountNav)void detectAccount();

@@ -168,16 +168,13 @@ module.exports = async function handler(req, res) {
         const pdf = await orderPdf({ id, name: name.trim(), phone, items, subtotal, money, fulfillment: delivery, payment: validatedPayment, testMode });
         const form = new FormData();
         form.set('chat_id', TELEGRAM_CHAT_ID);
-        const feeDescription = method === 'delivery'
-            ? (delivery.feeCents === null ? 'Taxa: a confirmar' :
-                'Taxa: ' + money(delivery.feeCents) + ' · Total: ' + money(subtotal + delivery.feeCents))
-            : '';
-        const changeDescription = validatedPayment.changeForCents !== null
-            ? ' · Troco para: ' + money(validatedPayment.changeForCents) : '';
-        form.set('caption', `${testMode ? 'TESTE - NAO PREPARAR!\n' : ''}Pré-pedido #${id} · ${name.trim()} · ${{delivery:'Entrega',pickup:'Retirada',table:'Mesa'}[method]}
-Produtos: ${money(subtotal)}${feeDescription ? ' · ' + feeDescription : ''}
-Pagamento previsto: ${validatedPayment.label}${changeDescription}
-Aguardando confirmação da loja. PAGAMENTO PENDENTE.`);
+        form.set('caption', (testMode ? 'TESTE - NAO PREPARAR!\n' : '') +
+            '🔔 NOVO PEDIDO\nAguardando confirmação pelo WhatsApp.');
+        const whatsAppLink = 'https://wa.me/55' + phone + '?text=' +
+            encodeURIComponent('Olá! Aqui é o Disk Panquecão. Podemos confirmar os detalhes do seu pedido #' + id + '?');
+        form.set('reply_markup', JSON.stringify({
+            inline_keyboard: [[{ text: '💬 Confirmar pedido com cliente', url: whatsAppLink }]]
+        }));
         form.set('document', new Blob([pdf], { type: 'application/pdf' }), `${testMode ? 'TESTE-nao-preparar-' : 'pre-pedido-'}${id}.pdf`);
         stage = 'telegram';
         const sent = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendDocument`, {

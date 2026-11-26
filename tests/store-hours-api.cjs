@@ -43,6 +43,12 @@ function res() {return {code:null,headers:{},setHeader(k,v){this.headers[k]=v},s
   const production=res();
   await handler({method:'GET'},production);
   assert.equal(production.body.demoAvailable,false,'Modo demonstração jamais disponível em produção');
+  process.env.STORE_HOURS_SOURCE='neon';
+  const db=require('../lib/backoffice-neon');
+  db.run=async sql=>{assert.match(sql,/dp.store_operations/);return [{...row,manual_state:'closed'}];};
+  assert.equal((await loadStoreStatus()).open,false);
+  db.run=async()=>[];await assert.rejects(()=>loadStoreStatus(),StoreStatusUnavailable);
+  delete process.env.STORE_HOURS_SOURCE;
   const wrongMethod=res();
   await handler({method:'POST'},wrongMethod);
   assert.equal(wrongMethod.code,405);

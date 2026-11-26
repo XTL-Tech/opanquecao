@@ -1,5 +1,11 @@
 // Regras compartilhadas pelo checkout e pelo servidor.
-// Não há cálculo de frete: a loja confirma o valor após receber o pré-pedido.
+// Taxa padrão para bairros cadastrados; localidades não cadastradas precisam de revisão.
+export function standardDeliveryFee(city, neighborhood, areas){
+ const row=areas?.cities?.[city]?.find(x=>x.name===neighborhood);
+ if(!row)return null;
+ const cents=row.feeCents??areas.defaultFeeCents?.[city];
+ return Number.isSafeInteger(cents)&&cents>=0&&cents<=10000?cents:null;
+}
 const tidy = (value, max) => typeof value === 'string'
     ? value.replace(/[\u0000-\u001f\u007f]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, max + 1)
     : '';

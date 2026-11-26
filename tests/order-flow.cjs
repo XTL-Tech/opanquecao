@@ -3,7 +3,7 @@ const {JSDOM}=require('jsdom');
 const html=fs.readFileSync('index.html','utf8');
 const catalog=JSON.parse(fs.readFileSync('cardapio.json','utf8'));
 const deliveryAreas=JSON.parse(fs.readFileSync('delivery-areas.json','utf8'));
-assert.equal(deliveryAreas.defaultFeeCents['Nova Hartz'],700);
+assert.equal(deliveryAreas.defaultFeeCents['Nova Hartz'],1000);
 assert.equal(deliveryAreas.defaultFeeCents['Araricá'],1000);
 const dom=new JSDOM(html,{url:'https://opanquecao.vercel.app/',runScripts:'outside-only'});
 const w=dom.window,d=w.document;
@@ -32,16 +32,19 @@ global.fetch=async (url,init)=>{
   const caption=init.body.get('caption');
   const pdf=await PDFDocument.load(await init.body.get('document').arrayBuffer());
   assert.ok(Math.abs(pdf.getPage(0).getWidth()-58*72/25.4)<0.1);
-  if(caption.includes('CUPOM TÉRMICO')){
+  if(init.body.get('document').name.includes('cupom-termico')){
     intentDocuments++;lastThermalCaption=caption;
     assert.match(caption,/TESTE — NÃO PREPARAR/);
-    assert.match(caption,/Frete e total final: A CONFIRMAR PELA LOJA/);
+    assert.equal(caption,'🧪 TESTE — NÃO PREPARAR!\n🔔 NOVO PEDIDO\nAguardando confirmação pelo WhatsApp.');
     assert.match(init.body.get('document').name,/TESTE-NAO-PREPARAR-[A-F0-9]{8}-cupom-termico.pdf/);
-    assert.equal(init.body.get('reply_to_message_id'),'4321');
+    assert.equal(init.body.get('reply_to_message_id'),null);
+    lastBotMessage={reply_markup:JSON.parse(init.body.get('reply_markup'))};
+    assert.match(lastBotMessage.reply_markup.inline_keyboard[0][0].url,/^https:\/\/wa\.me\/55/);
     return {ok:true,json:async()=>({ok:true,result:{message_id:4322}})};
   }
   calls++;lastTelegramCaption=caption;
-  assert.match(caption,/TESTE - NAO PREPARAR/);
+  assert.equal(caption,'TESTE - NAO PREPARAR!\n🔔 NOVO PEDIDO\nAguardando confirmação pelo WhatsApp.');
+  assert.match(JSON.parse(init.body.get('reply_markup')).inline_keyboard[0][0].url,/^https:\/\/wa\.me\/55/);
   assert.match(init.body.get('document').name,/TESTE-nao-preparar/);
   return {ok:deliver,json:async()=>({ok:deliver})};
  }
@@ -80,7 +83,7 @@ assert.equal(metaCalls().filter(args=>args[1]==='PageView').length,1);
 await import(path.resolve('cart.mjs'));
 w.renderMenu(catalog);
 d.dispatchEvent(new w.CustomEvent('menu-ready',{detail:catalog}));
-assert.match(d.querySelector('a.whatsapp-float').textContent,/Chamar no WhatsApp/);
+assert.match(d.querySelector('a.whatsapp-float').getAttribute('aria-label'),/Fazer pedido direto pelo WhatsApp/);
 assert.equal(d.querySelectorAll('.category-card').length, catalog.categorias.length);
 assert.equal(d.querySelectorAll('.category-section:not([hidden])').length,0,'A home mostra categorias, não a lista inteira de produtos');
 assert.equal(d.querySelectorAll('.category-section:not([hidden]) .menu-item').length,0);
@@ -226,13 +229,8 @@ assert.doesNotMatch(JSON.stringify(metaCalls()),/Cliente fictício|99999-9999|Ru
     'Eventos Meta não devem enviar nome, telefone, endereço nem GPS');
 assert.equal(calls,0,'A API PDF legada não deve ser chamada');
 assert.equal(intentDocuments,1,'Pré-registro deve anexar cupom térmico em PDF');
-assert.equal(intentCalls,1,'Pré-registro deve chegar ao bot: '+d.querySelector('#orderStatus').textContent);
-assert.match(lastBotMessage.text,/Cliente fictício/);
-assert.match(lastBotMessage.text,/Embalagens separadas/);
-assert.match(lastBotMessage.text,/Rua das Flores, 123/);
-assert.match(lastBotMessage.text,/Bairro\/localidade: Centro/);
-assert.match(lastBotMessage.text,/maps\?q=-29\.585,-50\.938/);
-assert.match(lastBotMessage.text,/Taxa de entrega: A CONFIRMAR PELA LOJA/);
+assert.equal(intentCalls,0,'Não enviar texto separado');
+assert.doesNotMatch(lastThermalCaption,/Cliente fictício|Rua das Flores|R\$/);
 assert.match(lastBotMessage.reply_markup.inline_keyboard[0][0].url,/51999999999/);
 let directUrl=d.querySelector('#whatsappOrderLink').href;
 assert.match(directUrl,/^https:\/\/wa\.me\/5551997383849\?text=/);
@@ -248,7 +246,7 @@ assert.match(directMessage,/Cliente fictício/);
 assert.match(directMessage,/Referência: #[0-9A-F]{8}/);
 assert.doesNotMatch(directMessage,/Forma: Pix|WhatsApp: 51|Taxa: R\$/);
 await submit();
-assert.equal(intentCalls,1,'Não duplicar pré-registro na mesma sessão sem alterações');
+assert.equal(intentCalls,0,'Não enviar mensagem de texto separada');
 assert.equal(intentDocuments,1,'Não duplicar cupom térmico na mesma sessão sem alterações');
 assert.equal(metaCalls().filter(args=>args[1]==='Lead').length,1,
     'Não duplicar conversão Meta ao reabrir o mesmo pré-registro');
@@ -367,16 +365,15 @@ centerArea.feeCents=450;
 try {
  response=resFor();await handler({...request,body:{...request.body,fulfillment:{...deliveryBase,feeCents:0}}},response);
  assert.equal(response.code,200);assert.equal(calls,2);
- assert.match(lastTelegramCaption,/Taxa:.*4,50/);
- assert.match(lastTelegramCaption,/Total:/);
+ assert.doesNotMatch(lastTelegramCaption,/Taxa:|Total:|4,50/);
 } finally { centerArea.feeCents=null; }
 response=resFor();await handler({...request,body:{...request.body,fulfillment:{...deliveryBase,neighborhood:'__other__',otherNeighborhood:'Estrada particular'}}},response);
 assert.equal(response.code,200);assert.equal(calls,3);
-assert.match(lastTelegramCaption,/Taxa: a confirmar/);
+assert.doesNotMatch(lastTelegramCaption,/Taxa:/);
 const araricaBase={...deliveryBase,city:'Araricá',neighborhood:'Centro',street:'Rua Central'};
 response=resFor();await handler({...request,headers:{'x-checkout-trace':'test1234'},body:{...request.body,fulfillment:araricaBase}},response);
 assert.equal(response.code,200);assert.equal(calls,4);
-assert.match(lastTelegramCaption,/Taxa:.*10,00/);
+assert.doesNotMatch(lastTelegramCaption,/Taxa:|10,00/);
 assert.equal(response.data.trace,'test1234');
 assert.ok(checkoutLogs.some(x=>x.trace==='test1234'&&x.step==='received'));
 assert.ok(checkoutLogs.some(x=>x.trace==='test1234'&&x.step==='sent'));

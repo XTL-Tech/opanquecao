@@ -155,7 +155,7 @@
     "Araricá": [
       {
         "name": "Alto Ferrabraz",
-        "feeCents": null
+        "feeCents": 2000
       },
       {
         "name": "Azaleia",
@@ -163,11 +163,11 @@
       },
       {
         "name": "Bela Vista",
-        "feeCents": null
+        "feeCents": 1500
       },
       {
         "name": "Campo da Brazina",
-        "feeCents": null
+        "feeCents": 1500
       },
       {
         "name": "Centro",
@@ -191,7 +191,7 @@
       },
       {
         "name": "Ferrabraz",
-        "feeCents": null
+        "feeCents": 1500
       },
       {
         "name": "Floresta",
@@ -215,11 +215,15 @@
       },
       {
         "name": "Jardim",
-        "feeCents": null
+        "feeCents": 1500
+      },
+      {
+        "name": "Linha Ferrabraz",
+        "feeCents": 2000
       },
       {
         "name": "Porto Palmeira",
-        "feeCents": null
+        "feeCents": 2000
       },
       {
         "name": "São José",
@@ -236,7 +240,7 @@
     ]
   },
   "defaultFeeCents": {
-    "Nova Hartz": 700,
+    "Nova Hartz": 1000,
     "Araricá": 1000
   }
 }

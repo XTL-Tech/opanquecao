@@ -1,0 +1,40 @@
+'use strict';
+const assert=require('node:assert/strict');
+const db=require('../lib/backoffice-neon');
+const auth=require('../lib/customer-auth');
+const store=require('../lib/customer-accounts');
+const api=require('../api/customer-account');
+const a='test-owner-a',b='test-owner-b',addr='12345678-1234-4234-8234-123456789abc';
+(async()=>{
+ // Check identity/cookie separation and fail-closed default before network calls.
+ assert.throws(()=>auth.identity({user:{id:a,email:'a@example.test',emailVerified:false}}),/Confirme/);
+ assert.deepEqual(auth.identity({user:{id:a,email:'A@example.test',emailVerified:true}}),{subject:a,email:'a@example.test'});
+ const original='__Secure-better-auth.session_token';
+ const c=auth.responseCookies({headers:{getSetCookie:()=>[original+'=test; Domain=upstream.example; Path=/wrong; Max-Age=99999999','unexpected=secret']}});
+ assert.equal(c.length,1);assert.match(c[0],/^__Host-dpc_/);assert.match(c[0],/Secure; HttpOnly; SameSite=Strict; Max-Age=604800/);assert.doesNotMatch(c[0],/Domain=|wrong/);
+ const pair=c[0].split(';')[0];
+ assert.equal(auth.upstreamCookies({headers:{cookie:original+'=staff; '+pair}}),original+'=test');
+ assert.equal(auth.upstreamCookies({headers:{cookie:original+'=staff'}}),'');
+ assert.throws(()=>auth.originGuard({headers:{host:'example.test',origin:'https://attacker.test'}},{origin:'https://example.test'}),/Origem/);
+ assert.doesNotThrow(()=>auth.originGuard({headers:{host:'example.test',origin:'https://example.test'}},{origin:'https://example.test'}));
+ delete process.env.CUSTOMER_ACCOUNTS_ENABLED;
+ assert.throws(()=>auth.config(),/ainda não habilitado/);
+ const response={headers:{},setHeader(k,v){this.headers[k]=v},status(n){this.code=n;return this},json(v){this.body=v;return this}};
+ await api({method:'GET',headers:{host:'example.test'},query:{action:'state'}},response);
+ assert.equal(response.code,503);assert.match(response.headers['Cache-Control'],/no-store/);
+ const valid={label:'Casa',address:{city:'Nova Hartz',neighborhood:'Centro',street:'Rua de Teste',number:'123',latitude:-29,longitude:-50}};
+ const normalized=await store.validateAddress(valid);assert.equal(normalized.data.city,'Nova Hartz');assert.ok(!('location' in normalized.data));assert.ok(!('latitude' in normalized.data));
+ await assert.rejects(()=>store.validateAddress({...valid,address:{...valid.address,city:'Inválida'}}));
+ const other=await store.validateAddress({...valid,address:{...valid.address,neighborhood:'__other__',otherNeighborhood:'Localidade fictícia'}});
+ assert.equal(other.data.neighborhood,'__other__');assert.equal(other.data.otherNeighborhood,'Localidade fictícia');
+ // Mock SQL transport only. Inspect owner parameters and stale revisions.
+ const queries=[];db.run=async(sql,params)=>{queries.push({sql,params});if(sql.startsWith('SELECT name,phone'))return [{name:'Teste',phone:'51999999999'}];return []};
+ await store.list(a);
+ assert.equal(queries.at(-1).params[0],a);
+ assert.match(queries.at(-1).sql,/owner_subject=\$1/);
+ await assert.rejects(()=>store.saveAddress(a,{...valid,id:addr,revision:1}),/não encontrado ou alterado/);
+ assert.equal(queries.at(-1).params[0],a);assert.match(queries.at(-1).sql,/WHERE owner_subject=\$1 AND id=\$2 AND revision=\$5/);
+ await assert.rejects(()=>store.removeAddress(b,{id:addr,revision:2}),/não encontrado ou alterado/);
+ assert.deepEqual(queries.at(-1).params,[b,addr,2]);assert.match(queries.at(-1).sql,/WHERE owner_subject=\$1 AND id=\$2 AND revision=\$3/);
+ console.log('PASS: disabled default, verified email, isolated cookies, CSRF, owner scope, address validation and stale revision.');
+})().catch(e=>{console.error(e);process.exitCode=1});

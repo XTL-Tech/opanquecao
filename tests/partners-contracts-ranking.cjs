@@ -1,0 +1,36 @@
+'use strict';
+const assert=require('node:assert/strict');
+const db=require('../lib/backoffice-neon');
+const auth=require('../lib/backoffice-neon-auth');
+const ads=require('../lib/ad-contracts');
+const annual=require('../lib/annual-ranking-fiscal');
+const api=require('../api/backoffice');
+const actor={id:'owner',role:'manager'};
+const id='11111111-1111-4111-8111-111111111111';
+let query,params,rows=[];
+db.run=async(s,p)=>{query=s;params=p;return rows;};
+db.configured=()=>true;auth.configured=()=>true;
+const res=()=>({code:0,setHeader(){},status(n){this.code=n;return this},json(b){this.body=b;return this}});
+const base={slot:2,advertiser:'Parceiro fictício',contact:'Contato interno',contractRef:'Contrato aprovado',notes:'Privado',startsOn:'2027-01-01',endsOn:'2027-01-31',dueOn:'2027-01-10',amountCents:10000,paidCents:0,state:'active',headline:'Publicidade teste',description:'Texto aprovado',destination:'https://example.invalid',mediaPath:'/img/parceiros/teste.webp',seconds:15,showTV:true,showCheckout:true};
+(async()=>{
+ await assert.rejects(ads.save(actor,{...base,slot:1}),e=>e.isValidation);
+ await assert.rejects(ads.save(actor,{...base,advertiser:'XTL TECH'}),e=>e.isValidation);
+ await assert.rejects(ads.save(actor,{...base,contractRef:''}),e=>e.isValidation);
+ await assert.rejects(ads.save(actor,{...base,paidCents:10001}),e=>e.isValidation);
+ await assert.rejects(ads.save(actor,{...base,destination:'javascript:alert(1)'}),e=>e.isValidation);
+ await assert.rejects(ads.save(actor,{...base,mediaPath:'https://example.invalid/pixel.png'}),e=>e.isValidation);
+ await assert.rejects(ads.list({role:'attendant'}),e=>e.status===403);
+ rows=[{id,revision:1}];await ads.save(actor,base);assert.equal(params[18],2);assert.match(query,/INSERT INTO dp.ad_contracts/);
+ rows=[];await assert.rejects(ads.save(actor,{...base,id,revision:1}),e=>e.status===409);assert.match(query,/WHERE id=\$20 AND revision=\$21/);
+ rows=[{slot:2,name:'Parceiro fictício',headline:'Teste',description:'Exemplo',url:'https://example.invalid',media:'',seconds:15,show_tv:true,show_checkout:true,expires_at:'2027-02-01T03:00:00Z',contact:'SEGREDO',amount_cents:10000,notes:'SEGREDO'}];
+ const p=await ads.playlist();assert.equal(p.ads[0].name,'XTL TECH');assert.equal(p.ads[0].slot,1);assert.equal(p.ads[1].slot,2);assert.doesNotMatch(JSON.stringify(p),/SEGREDO|amount_cents|contact/);assert.match(query,/ORDER BY slot LIMIT 2/);
+ auth.actor=async()=>{throw Error('Public playlist must not invoke authentication');};const publicRes=res();await api({method:'GET',query:{action:'ad_playlist'}},publicRes);assert.equal(publicRes.code,200);
+ for(const role of ['attendant','kitchen','courier']){auth.actor=async()=>({role});const r=res();await api({method:'GET',query:{action:'ad_contracts'}},r);assert.equal(r.code,403);}
+ process.env.COMANDA_CPF_HMAC_KEY='ab'.repeat(32);
+ const enrollment={cpf:'52998224725',year:2027,version:annual.VERSION,consent:true,publicName:'Cliente Teste'};
+ rows=[{public_alias:'Panque TESTE',public_name:null}];await annual.enroll(actor,enrollment);assert.equal(params[5],null);
+ rows=[{public_alias:'Panque TESTE',public_name:'Cliente Teste'}];await annual.enroll(actor,{...enrollment,nameConsent:true});assert.equal(params[5],'Cliente Teste');assert.ok(!params.includes(enrollment.cpf));
+ await assert.rejects(annual.enroll(actor,{...enrollment,consent:false}),e=>e.isValidation);
+ await annual.withdraw(actor,enrollment);assert.match(query,/public_name=NULL,name_consent_at=NULL/);
+ console.log('PASS partners contracts and ranking: protected management, permanent XTL slot, public projection, optional name consent and revocation.');
+})().catch(e=>{console.error(e);process.exitCode=1;});

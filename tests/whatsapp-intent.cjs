@@ -29,19 +29,17 @@ global.fetch=async(url,init)=>{
     }
     if(url.endsWith('/sendMessage')){
         alerts++;
-        sent=JSON.parse(init.body);
-        assert.equal(sent.chat_id,'fake-chat');
-        assert.equal(sent.reply_markup.inline_keyboard[0][0].text,'💬 Chamar cliente no WhatsApp');
-        assert.match(sent.reply_markup.inline_keyboard[0][0].url,/^https:\/\/wa\.me\/5551999999999\?text=/);
-        return {ok:available,json:async()=>({ok:available,result:{message_id:100}})};
+        throw new Error('Não enviar texto separado');
     }
     if(url.endsWith('/sendDocument')){
         documents++;
         assert.equal(init.method,'POST');
         assert.equal(init.headers,undefined,'Multipart FormData determina Content-Type com boundary');
         assert.equal(init.body.get('chat_id'),'fake-chat');
-        assert.equal(init.body.get('reply_to_message_id'),'100',
-            'Cupom deve ser resposta ao pré-registro no mesmo chat');
+        assert.equal(init.body.get('reply_to_message_id'),null);
+        const button=JSON.parse(init.body.get('reply_markup')).inline_keyboard[0][0];
+        assert.equal(button.text,'💬 Confirmar pedido com cliente');
+        assert.match(button.url,/^https:\/\/wa\.me\/5551999999999\?text=/);
         const file=init.body.get('document');
         assert.equal(file.type,'application/pdf');
         assert.match(file.name,/^TESTE-NAO-PREPARAR-[A-F0-9]{8}-cupom-termico\.pdf$/);
@@ -52,9 +50,7 @@ global.fetch=async(url,init)=>{
         assert.ok(Math.abs(pdf.getPage(0).getWidth()-58*72/25.4)<0.15,
             'Largura padrão deve ser 58 mm');
         receipt={caption:init.body.get('caption'),bytes,pdf};
-        assert.match(receipt.caption,/CUPOM TÉRMICO/);
-        assert.match(receipt.caption,/AGUARDANDO CONFIRMAÇÃO/);
-        assert.match(receipt.caption,/NÃO PREPARAR/);
+        assert.equal(receipt.caption,'🧪 TESTE — NÃO PREPARAR!\n🔔 NOVO PEDIDO\nAguardando confirmação pelo WhatsApp.');
         return {ok:documentAvailable,json:async()=>({ok:documentAvailable,result:{message_id:101}})};
     }
     throw new Error('Unexpected URL '+url);
@@ -85,34 +81,18 @@ const run=async(payload=base,method='POST',host='opanquecao.vercel.app')=>{
     hostname='opanquecao.vercel.app';
     result=await run({...base,requestId:randomUUID()});
     assert.equal(result.code,201);assert.equal(result.data.status,'registered');
-    assert.equal(result.data.test,true);assert.equal(alerts,1);assert.equal(documents,1);
-    assert.match(sent.text,/TESTE — NÃO PREPARAR/);
-    assert.match(sent.text,/NÃO É PEDIDO CONFIRMADO/);
-    assert.match(sent.text,/Cliente de teste/);
-    assert.match(sent.text,/Coca-Cola Lata/);
-    assert.match(sent.text,/R\$\s*20,00/); // Valor recalculado pelo catálogo, nunca usa cents:1
-    assert.doesNotMatch(sent.text,/R\$\s*0,02/);
-    assert.match(sent.text,/Retirada no estabelecimento/);
+    assert.equal(result.data.test,true);assert.equal(alerts,0);assert.equal(documents,1);
+    assert.doesNotMatch(receipt.caption,/Cliente de teste|Coca-Cola|R\$/);
     if (process.env.CI) {
         fs.mkdirSync('artifacts/thermal',{recursive:true});
         fs.writeFileSync('artifacts/thermal/cupom-58mm-ficticio.pdf',receipt.bytes);
     }
-    assert.match(receipt.caption,/R\$\s*20,00/,'Cupom deve usar preços validados do servidor');
-    assert.doesNotMatch(receipt.caption,/R\$\s*0,02/);
     const delivery = {type:'delivery',city:'Nova Hartz',neighborhood:'Centro',
         street:'Rua das Flores',number:'123',complement:'Casa 2',reference:'Portão azul',
         latitude:-29.585,longitude:-50.938};
     result=await run({...base,fulfillment:delivery,requestId:randomUUID()});
     assert.equal(result.code,201);
-    assert.match(sent.text,/Modalidade: Entrega/);
-    assert.match(sent.text,/Bairro\/localidade: Centro/);
-    assert.match(sent.text,/Endereço: Rua das Flores, 123/);
-    assert.match(sent.text,/Complemento: Casa 2/);
-    assert.match(sent.text,/Referência: Portão azul/);
-    assert.match(sent.text,/maps\?q=-29\.585,-50\.938/);
-    assert.match(sent.text,/Taxa de entrega: A CONFIRMAR PELA LOJA/);
-    assert.match(receipt.caption,/Frete e total final: A CONFIRMAR PELA LOJA/);
-    assert.doesNotMatch(sent.text,/Taxa: R\$|Total estimado/);
+    assert.doesNotMatch(receipt.caption,/Rua das Flores|Centro|Portão azul|R\$/);
     const beforeInvalid=alerts;
     result=await run({...base,fulfillment:{...delivery,number:''},requestId:randomUUID()});
     assert.equal(result.code,400);assert.equal(alerts,beforeInvalid);
@@ -122,30 +102,21 @@ const run=async(payload=base,method='POST',host='opanquecao.vercel.app')=>{
     assert.equal(result.code,400);assert.equal(alerts,beforeInvalid);
     result=await run({...base,fulfillment:{type:'table',table:'Mesa 03'},requestId:randomUUID()});
     assert.equal(result.code,201);
-    assert.match(sent.text,/Consumo no local/);
-    assert.match(sent.text,/Mesa\/comanda: Mesa 03/);
-    assert.doesNotMatch(sent.text,/CPF|Localização GPS/);
+    assert.doesNotMatch(receipt.caption,/Mesa 03|CPF|Localização GPS/);
     result=await run({...base,fulfillment:{type:'table',table:''},requestId:randomUUID()});
     assert.equal(result.code,400);
-    // Se o alerta chegar mas o PDF falhar, não marcar como registrado
+    // Se o envio do PDF falhar, não marcar como registrado
     // nem tentar reenviar automaticamente (evita mensagens duplicadas).
     documentAvailable=false;
     const beforePdfFailure=alerts,docsBeforePdfFailure=documents;
     result=await run({...base,requestId:randomUUID()});
     assert.equal(result.code,202);assert.equal(result.data.pending,true);
     assert.match(result.data.error,/não foi possível confirmar o cupom/i);
-    assert.equal(alerts,beforePdfFailure+1);
+    assert.equal(alerts,beforePdfFailure);
     assert.equal(documents,docsBeforePdfFailure+1);
     documentAvailable=true;
-    available=false;
-    const beforeMessageFailure=documents;
-    result=await run({...base,requestId:randomUUID()});
-    assert.equal(result.code,202);assert.equal(result.data.pending,true);
-    assert.match(result.data.error,/pode ter chegado/);
-    assert.equal(documents,beforeMessageFailure,'Não enviar cupom se a mensagem principal não foi confirmada');
-    available=true;
     delete process.env.TURNSTILE_SECRET_KEY;
     result=await run({...base,requestId:randomUUID()});
     assert.equal(result.code,503);
-    console.log('PASS: pré-registro e cupom térmico PDF 58mm vinculados no Telegram, sem preço inventado, sem preparo antecipado, proteção Turnstile e falha incerta.');
+    console.log('PASS: alerta único com PDF térmico 58mm e botão WhatsApp, sem dados na legenda, proteção Turnstile e falha incerta.');
 })().catch(e=>{console.error(e);process.exitCode=1});

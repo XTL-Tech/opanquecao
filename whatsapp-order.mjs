@@ -129,7 +129,7 @@ export function buildWhatsAppMessage({ lines, name, phone, fulfillment, payment,
  * Produção: itens, contato e modalidade de atendimento. Para entregas, o endereço
  * e o ponto GPS opcional seguem juntos. O frete será confirmado pela loja.
  */
-export function buildSimpleWhatsAppMessage({ lines, note = '', name = '', orderRef = '', fulfillment = null }) {
+export function buildSimpleWhatsAppMessage({ lines, note = '', name = '', orderRef = '', fulfillment = null, deliveryFeeCents = null }) {
     if (!Array.isArray(lines) || !lines.length || lines.length > 25) {
         throw new Error('Adicione pelo menos um produto ao pedido.');
     }
@@ -176,7 +176,10 @@ export function buildSimpleWhatsAppMessage({ lines, note = '', name = '', orderR
     if (generalNote) parts.push('', 'Obs. geral: ' + generalNote);
     parts.push('', '*Subtotal (sem entrega): ' + money(subtotal) + '*');
     if (fulfillment?.type === 'delivery') {
-        parts.push('*Total com taxa: a confirmar pela loja no WhatsApp.*',
+        const known=Number.isSafeInteger(deliveryFeeCents)&&deliveryFeeCents>=0&&deliveryFeeCents<=10000;
+        if(known)parts.push('Taxa padrão estimada: '+money(deliveryFeeCents),'*Total estimado com entrega: '+money(subtotal+deliveryFeeCents)+'*');
+        else parts.push('*Total com taxa: a confirmar pela loja no WhatsApp.*');
+        parts.push(
             'Peço confirmação da taxa, disponibilidade, prazo e valor final antes do preparo.');
     } else if (fulfillment) {
         parts.push('Forma de pagamento e valor final a combinar. Aguardo confirmação da loja.');

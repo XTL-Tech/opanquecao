@@ -17,7 +17,7 @@ for(const name of ['deliveryCity','deliveryNeighborhood','deliveryStreet','deliv
   'deliveryLocationPreview','tableIdentifier']){
   assert.ok(html.includes('id="'+name+'"'),'Campo ausente: '+name);
 }
-assert.match(html, /Taxa de entrega a confirmar/);
+assert.match(html, /Tele-entrega a partir de R\$ 10,00/);
 assert.match(html, /não pedimos CPF/);
 assert.match(html, /id="sendOrder" disabled>Registrar e abrir WhatsApp/);
 assert.match(html, /id="whatsappOrderLink"/);

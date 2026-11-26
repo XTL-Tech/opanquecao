@@ -17,8 +17,19 @@
   <div class="brand"><img src="/img/logo-disk-panquecao.webp" alt="Disk Panquecão"><div><strong>DISK PANQUECÃO</strong><span>Central de atendimento</span></div></div>
   <div class="side-caption">OPERAÇÃO</div>
   <nav id="navigation" class="nav">
+   <button data-tab="comandas" type="button">Mesas e comandas</button>
    <button data-tab="orders" class="active" type="button"><span aria-hidden="true">▤</span> Pedidos <span id="pendingCount" class="count"></span></button>
+   <button data-tab="kitchen" data-superadmin hidden type="button">Cozinha</button>
+   <button data-tab="courier" data-superadmin hidden type="button">Motoboy</button>
+   <button data-tab="after-sales" type="button">Pós-venda <span id="afterSalesCount" class="count"></span></button>
    <button data-tab="customers" type="button"><span aria-hidden="true">♙</span> Clientes</button>
+   <button data-tab="bi" data-management hidden type="button">📊 BI ao vivo</button>
+   <button data-tab="ranking" data-management hidden type="button">Ranking anual</button>
+   <button data-tab="fiscal" data-management hidden type="button">Fiscal e estornos</button>
+   <button data-tab="store-hours" data-management hidden type="button">Horários da loja</button>
+   <button data-tab="partners" data-management hidden type="button">Parceiros e publicidade</button>
+   <button data-tab="reports" data-management hidden type="button">Relatórios gerenciais</button>
+   <button data-tab="integrations" data-superadmin hidden type="button">Integrações XTL</button>
    <button data-tab="cash" type="button"><span aria-hidden="true">▣</span> Caixa diário</button>
    <button data-tab="catalog" type="button"><span aria-hidden="true">≡</span> Preços do cardápio</button>
   </nav>
@@ -32,13 +43,14 @@
   <div id="demoRibbon" class="demo-ribbon" hidden>DEMONSTRAÇÃO — DADOS FICTÍCIOS · ALTERAÇÕES NÃO SÃO SALVAS NA LOJA</div>
   <div id="notice" role="status" aria-live="polite" hidden></div>
   <main>
+   <section id="tab-operational" hidden><div id="operationalQueue"></div></section>
    <section id="tab-orders">
     <div class="stats" id="orderStats"></div>
     <div class="toolbar"><input id="orderSearch" type="search" placeholder="Buscar código, cliente ou telefone" aria-label="Buscar pedidos">
       <select id="orderStatusFilter" aria-label="Filtrar status">
        <option value="">Todos os status</option><option value="pending_customer">Aguardando cliente</option>
        <option value="awaiting_acceptance">Aguardando aceite</option><option value="accepted">Aceitos</option>
-       <option value="completed">Concluídos</option><option value="delivered">Entregues</option><option value="cancelled">Cancelados</option>
+       <option value="preparing">Em preparo</option><option value="returned_to_attendant">Devolvidos</option><option value="completed">Preparados</option><option value="out_for_delivery">Em entrega</option><option value="delivered">Entregues</option><option value="cancelled">Cancelados</option>
       </select>
       <button class="primary" id="newOrder" type="button">+ Pedido manual</button>
     </div>
@@ -47,6 +59,7 @@
     <button id="moreOrders" class="soft" type="button">Carregar pedidos anteriores</button>
     <small class="hint">Pré-pedido não é pedido confirmado. Só aceite após contato com o cliente. Pagamento é registrado manualmente quando recebido.</small>
    </section>
+   <section id="tab-after-sales" hidden><h2>Fila de pós-venda</h2><p class="hint">Contate o cliente 30 minutos após a entrega. Confirme o envio manualmente e registre o retorno.</p><div id="afterSalesQueue"></div></section>
    <section id="tab-customers" hidden>
     <div class="section-head"><div><h2>Cadastro de clientes</h2><p>Consulta e atualização de contatos. Dados pessoais acessíveis somente à equipe autorizada.</p></div><button class="primary" id="newCustomer" type="button">+ Novo cliente</button></div>
     <div class="toolbar"><input id="clientSearch" type="search" placeholder="Buscar nome ou telefone" aria-label="Buscar clientes"></div>
@@ -63,7 +76,10 @@
       <button class="primary" type="submit">Confirmar fechamento diário</button>
       <p class="hint">O fechamento é definitivo no MVP. Divergências e estornos devem ser reconciliados pela gestão.</p>
     </form>
-    <div id="asaasSandboxCard" class="form-card">
+    <div class="section-head"><h3>Histórico de fechamentos</h3></div>
+    <div class="table-wrap"><table><thead><tr><th>Data</th><th>Pedidos</th><th>Vendas</th><th>Dinheiro</th><th>Diferença</th></tr></thead><tbody id="closingsTable"></tbody></table></div>
+   </section>
+   <section id="tab-integrations" hidden>    <div id="asaasSandboxCard" hidden class="form-card">
       <h3>🧪 Asaas — Checkout Sandbox</h3>
       <p class="hint">Teste separado dos pedidos e do caixa reais. Nenhuma cobrança de produção é criada e nenhum produto vai para preparo.</p>
       <p id="asaasSandboxStatus" class="hint">Consulte os testes disponíveis.</p>
@@ -93,8 +109,43 @@
       </details>
       <p class="hint">Verifique o resultado no Asaas Sandbox. O retorno da página não confirma pagamento; somente o webhook autenticado altera o status da simulação.</p>
     </div>
-    <div class="section-head"><h3>Histórico de fechamentos</h3></div>
-    <div class="table-wrap"><table><thead><tr><th>Data</th><th>Pedidos</th><th>Vendas</th><th>Dinheiro</th><th>Diferença</th></tr></thead><tbody id="closingsTable"></tbody></table></div>
+</section>
+   <section id="tab-store-hours" hidden>
+    <form id="hoursForm" class="form-card"><h2>Expediente semanal</h2><p class="hint">Horário oficial de Brasília. Fora do expediente, a loja entra no modo luzes apagadas. Não use horários fictícios.</p>
+    <div id="hoursWeek"></div><h2>Feriados e datas especiais</h2><p class="hint">Datas sugeridas não alteram o expediente sozinhas. Configure uma exceção apenas quando necessário. Datas municipais futuras devem ser conferidas com a Prefeitura.</p><div id="holidayRows"></div><button id="holidayAdd" type="button" class="soft">Adicionar data especial</button><label><input name="acceptingOrders" type="checkbox"> Aceitar pedidos online dentro do horário (desmarque para pausa de emergência)</label>
+    <div class="form-grid"><label>Exceção temporária<select name="manualState"><option value="auto">Seguir agenda</option><option value="closed">Fechar temporariamente</option><option value="open">Abrir temporariamente</option></select></label><label>Duração da exceção (minutos)<input name="overrideMinutes" type="number" min="5" max="1440" value="60"></label></div>
+    <p class="hint">Ao salvar no modo automático, uma exceção anterior será encerrada.</p><button id="hoursSave" type="submit" class="primary" disabled>Salvar horário</button><p id="hoursStatus" role="status"></p></form>
+   </section>
+   <section id="tab-partners" hidden>
+    <div class="form-card"><h2>XTL FOOD Partners</h2><p>Vaga 1 — XTL TECH (permanente). Vagas comerciais disponíveis: 2 e 3.</p><a href="/anuncios/" target="_blank" rel="noopener noreferrer">Abrir tela de anúncios da TV</a><p id="adSummary" class="hint"></p><div id="adContracts"></div></div>
+    <form id="adForm" class="form-card"><h2 id="adFormTitle">Novo contrato</h2><div class="form-grid">
+     <label>Vaga<select name="slot"><option value="2">2</option><option value="3">3</option></select></label>
+     <label>Empresa<input name="advertiser" maxlength="80" required></label><label>Contato comercial<input name="contact" maxlength="160"></label><label>Referência do contrato assinado<input name="contractRef" maxlength="120"></label>
+     <label>Início<input name="startsOn" type="date" required></label><label>Término<input name="endsOn" type="date" required></label><label>Vencimento do pagamento<input name="dueOn" type="date" required></label>
+     <label>Valor contratado (R$)<input name="amount" type="number" min="0" max="100000" step=".01" required value="0"></label><label>Valor recebido (R$)<input name="paid" type="number" min="0" max="100000" step=".01" required value="0"></label>
+     <label>Situação<select name="state"><option value="draft">Rascunho</option><option value="active">Ativo</option><option value="paused">Pausado</option><option value="ended">Encerrado</option></select></label>
+     <label>Título público<input name="headline" maxlength="100" required></label><label>Mensagem pública<input name="description" maxlength="240"></label>
+     <label>Link público HTTPS<input name="destination" type="url" maxlength="500"></label><label>Arte aprovada pela XTL (caminho local)<input name="mediaPath" maxlength="180" placeholder="/img/parceiros/empresa.webp"></label><label>Duração na TV (segundos)<input name="seconds" type="number" min="5" max="60" value="15" required></label>
+     <label><input name="showTV" type="checkbox" checked> Exibir na TV</label><label><input name="showCheckout" type="checkbox"> Exibir após pré-pedido</label>
+     <label>Observações internas<textarea name="notes" maxlength="500"></textarea></label>
+    </div><button id="adSave" type="submit" class="primary">Salvar contrato</button> <button id="adReset" type="button" class="soft">Novo / limpar</button><p id="adStatus" role="status" class="hint"></p></form>
+   </section>
+   <section id="tab-ranking" hidden><div class="form-card"><h2>Campeões do Panquecão</h2><label>Ano<select id="annualYear"><option>2027</option><option>2026</option></select></label><p class="hint">Somente posição e apelido. Compras, valores e CPF permanecem privados.</p></div><div id="annualContent"></div></section>
+   <section id="tab-fiscal" hidden><div id="fiscalContent"></div></section>
+   <section id="tab-comandas" hidden>
+    <form id="comandaForm" class="form-card"><h2>Abrir comanda</h2><p class="hint">CPF identifica o cadastro permanente, a comanda e o programa PanqueCoins. Não é exibido na cozinha ou na TV.</p><div class="form-grid"><label>CPF<input name="cpf" inputmode="numeric" maxlength="14" autocomplete="off" required></label><label>Mesa<input name="table" type="number" min="1" max="999" required></label></div><button id="comandaFind" type="button" class="soft">Consultar cliente por CPF</button><p id="comandaIdentity" class="hint" aria-live="polite">Consulte o CPF para identificar o cliente.</p><div id="comandaRegister" hidden><div class="form-grid"><label>Nome<input name="name" maxlength="80"></label><label>Telefone<input name="phone" inputmode="tel"></label></div><label><input type="checkbox" name="confirmExisting"> Confirmei que, se o telefone já estiver cadastrado, pertence a este cliente e o nome corresponde.</label></div><button id="comandaOpen" type="submit" class="primary" disabled>Abrir comanda e lançar pedido</button><p id="comandaStatus" class="hint" role="status"></p></form><div id="comandaList"></div>
+   </section>
+   <section id="tab-bi" hidden>
+    <div id="biScreen" class="bi-screen">
+     <header class="bi-head"><div><span class="bi-brand">XTL FOOD · DISK PANQUECÃO</span><h2>Central de indicadores</h2><p id="biDate">—</p></div><div class="bi-actions"><span id="biStatus" class="bi-status" role="status">Aguardando dados</span><button id="biPrivacy" type="button" class="soft" aria-pressed="false">Ocultar valores</button><button id="biFullscreen" type="button" class="primary">Modo TV</button></div></header>
+     <div id="biCards" class="bi-cards"></div>
+     <div class="bi-grid" id="biCharts"></div>
+     <footer class="bi-foot"><span>Receita: pedidos pagos e concluídos · atualização a cada 30 s</span><span>XTL — Feito para durar</span></footer>
+    </div>
+   </section>
+   <section id="tab-reports" hidden>
+    <form id="reportForm" class="form-card"><h2>Relatórios do estabelecimento</h2><div class="form-grid"><label>De<input id="reportStart" type="date" required></label><label>Até<input id="reportEnd" type="date" required></label></div><button type="submit" class="primary">Consultar período</button> <button type="button" id="reportExport" class="soft" disabled>Exportar CSV</button><p id="reportStatus" class="hint" role="status" aria-live="polite"></p></form>
+    <div id="reportContent"></div>
    </section>
    <section id="tab-catalog" hidden>
     <div class="section-head"><div><h2>Preços do cardápio</h2><p>Edição controlada de preços, tamanhos e adicionais. Nomes, fotos e receitas permanecem inalterados.</p></div><span class="status-tag">Gestão</span></div>
@@ -135,7 +186,7 @@
 <dialog id="customerDialog" class="dialog"><form id="customerForm" class="dialog-content"><header class="dialog-head"><h2 id="customerFormTitle">Cliente</h2><button type="button" class="close" data-close="customerDialog" aria-label="Fechar">×</button></header><input type="hidden" id="customerId"><label>Nome<input id="customerName" required maxlength="80"></label><label>WhatsApp com DDD<input id="customerPhone" required inputmode="tel"></label><label>Observações internas<textarea id="customerNotes" maxlength="500" rows="3"></textarea></label><button class="primary full" type="submit">Salvar cliente</button></form></dialog>
 <dialog id="manualDialog" class="dialog"><form id="manualForm" class="dialog-content"><header class="dialog-head"><h2>Novo pedido manual</h2><button type="button" class="close" data-close="manualDialog" aria-label="Fechar">×</button></header>
 <p class="hint">Use quando o cliente fizer contato diretamente. O valor é recalculado pelo catálogo no servidor.</p>
-<label>Nome do cliente<input name="name" required maxlength="80"></label><label>WhatsApp com DDD<input name="phone" inputmode="tel" required></label>
+<p id="manualComandaHint" class="hint" hidden></p><label>Nome do cliente<input name="name" required maxlength="80"></label><label>WhatsApp com DDD<input name="phone" inputmode="tel" required></label>
 <label>Atendimento<select name="type"><option value="pickup">Retirada</option><option value="table">Mesa</option><option value="delivery">Entrega</option></select></label>
 <div id="manualTable" hidden><label>Mesa/comanda<input name="table" maxlength="12"></label></div>
 <div id="manualDelivery" hidden><div class="form-grid"><label>Cidade<select id="manualCity"><option value="Nova Hartz">Nova Hartz</option><option value="Araricá">Araricá</option></select></label><label>Bairro<select id="manualNeighborhood"></select></label></div><label>Rua ou estrada<input id="manualStreet"></label><label>Número<input id="manualNumber"></label><label>Complemento<input id="manualComplement"></label></div>
