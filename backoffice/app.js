@@ -309,6 +309,7 @@
    ['Produtos mais vendidos (até 100)',['Produto','Tamanho','Quantidade','Receita de produtos'],d.products.map(x=>[x.product,x.variant,x.quantity,reportMoney(x.revenue_cents)])],
    ['Pós-venda por vencimento',['Situação','Tarefas','Contatados','Convites Google','Atrasados'],d.followup.map(x=>[({pending:'Pendente',claimed:'Assumido',contacted:'Contatado',issue:'Problema',satisfied:'Concluído',no_response:'Sem resposta'})[x.state]||x.state,x.tasks,x.contacted,x.review_invites,x.overdue])],
    ['Fechamento de caixa',['Data','Dinheiro contado','Diferença','Receita registrada'],d.closings.map(x=>[x.day,reportMoney(x.counted_cash_cents),reportMoney(x.discrepancy_cents),reportMoney(x.summary?.total_cents)])],
+   ['Comandas abertas no período',['Situação atual','Comandas','Mesas distintas'],(d.tabs||[]).map(x=>[x.state==='open'?'Aberta':'Fechada',x.tabs,x.tables])],
    ['Alterações de preço (até 100)',['Produto','Opção','Anterior','Novo','Data'],d.prices.map(x=>[x.product,x.variant,x.old_price,x.new_price,new Date(x.changed_at).toLocaleString('pt-BR')])],
    ...(d.technical?[
     ['Perfis da equipe',['Perfil','Ativo','Contas'],d.technical.staff.map(x=>[reportRole[x.role]||x.role,x.active?'Sim':'Não',x.total])],
@@ -378,7 +379,7 @@
   const q=(...states)=>states.reduce((n,k)=>n+Number(queue[k]||0),0);
   $('#biDate').textContent=(data.day||'').split('-').reverse().join('/')+' · Caixa '+(data.cash_closed?'fechado':'aberto');
   const cards=$('#biCards'),charts=$('#biCharts');clear(cards);clear(charts);
-  const kpis=[['Receita de hoje',biMoney(t.revenue_cents),true],['Pedidos recebidos hoje',biFmt(m.received)],['Pagos e concluídos',biFmt(t.orders)],['Ticket médio',t.orders?biMoney(Math.round(Number(t.revenue_cents)/t.orders)):'—',true],['Clientes compradores',biFmt(t.customers)],['Em preparo',biFmt(q('accepted','preparing'))],['Em entrega',biFmt(q('out_for_delivery'))],['Pós-venda pendente',biFmt(f.due)],['Problemas em aberto',biFmt(f.issues)],['Tempo até aceite',biMinutes(m.accept_minutes)],['Tempo de entrega',biMinutes(m.delivery_minutes)],['Cancelados hoje',biFmt(m.cancelled)]];
+  const kpis=[['Receita de hoje',biMoney(t.revenue_cents),true],['Pedidos recebidos hoje',biFmt(m.received)],['Pagos e concluídos',biFmt(t.orders)],['Ticket médio',t.orders?biMoney(Math.round(Number(t.revenue_cents)/t.orders)):'—',true],['Clientes compradores',biFmt(t.customers)],['Em preparo',biFmt(q('accepted','preparing'))],['Em entrega',biFmt(q('out_for_delivery'))],['Pós-venda pendente',biFmt(f.due)],['Problemas em aberto',biFmt(f.issues)],['Tempo até aceite',biMinutes(m.accept_minutes)],['Tempo de entrega',biMinutes(m.delivery_minutes)],['Cancelados hoje',biFmt(m.cancelled)],['Mesas ocupadas',biFmt(data.occupied_tables)],['Comandas abertas',biFmt(data.open_tabs)]];
   for(const [label,value,financial] of kpis)cards.append(biMetric(label,value,financial));
   charts.append(biBars('Vendas dos últimos 7 dias',(data.daily||[]).map(x=>[x.day.slice(5).split('-').reverse().join('/'),x.revenue_cents]),biMoney,true));
   charts.append(biBars('Fila operacional agora',[['Aguardando confirmação',q('pending_customer','awaiting_acceptance')],['Cozinha',q('accepted','preparing')],['Devolvidos',q('returned_to_attendant')],['Preparados',q('completed')],['Em entrega',q('out_for_delivery')]],biFmt));
