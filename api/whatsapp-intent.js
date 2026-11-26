@@ -148,9 +148,11 @@ module.exports = async function handler(req, res) {
         form.set('chat_id', config.chat);
         form.set('caption', (preview ? '🧪 TESTE — NÃO PREPARAR!\n' : '') +
             '🔔 NOVO PEDIDO\nAguardando confirmação pelo WhatsApp.');
-        form.set('reply_markup', JSON.stringify({
-            inline_keyboard: [[{ text: '💬 Confirmar pedido com cliente', url: whatsAppLink }]]
-        }));
+        const keyboard = [[{ text: '💬 Confirmar pedido com cliente', url: whatsAppLink }]];
+        if (persisted && require('../lib/telegram-approval').approvalEnabled()) {
+            keyboard.push([{ text: '✅ Aprovar pedido — liberar produção', callback_data: 'accept:' + requestId }]);
+        }
+        form.set('reply_markup', JSON.stringify({ inline_keyboard: keyboard }));
         form.set('document', new Blob([receipt], { type: 'application/pdf' }),
             (preview ? 'TESTE-NAO-PREPARAR-' : 'PRE-PEDIDO-') + id + '-cupom-termico.pdf');
         started = true;
