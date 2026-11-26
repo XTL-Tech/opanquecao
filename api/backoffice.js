@@ -6,6 +6,7 @@ const db=require('../lib/backoffice-neon');
 const auth=require('../lib/backoffice-neon-auth');
 const areas=require('../delivery-areas.json');
 const operations=require('../lib/operational-orders');
+const afterSales=require('../lib/after-sales');
 
 function respond(res,status,payload){return res.status(status).json(payload);}
 function requireId(id){if(!c.UUID.test(id))c.fail('Identificador de pedido inválido.');return id;}
@@ -129,6 +130,7 @@ module.exports=async function handler(req,res){
    throw new auth.AuthError('Acesso não autorizado para este perfil.',403);
   }
   if(method==='GET'){
+   if(act==='after_sales')return respond(res,200,await afterSales.queue(actor));
    if(act==='dashboard')return respond(res,200,{actor,...await db.dashboard()});
    if(act==='catalog')return respond(res,200,{catalog:await db.getCatalog()});
    if(act==='customers')return respond(res,200,{customers:await db.searchCustomers(req.query?.term,req.query?.cursor||0)});
@@ -137,6 +139,7 @@ module.exports=async function handler(req,res){
    if(act==='session')return respond(res,200,{actor});
    return respond(res,404,{error:'Recurso não encontrado.'});
   }
+  if(act==='after_sale_status')return respond(res,200,{ok:true,...await afterSales.change(actor,payload(req))});
   const result=await action(req,actor,payload(req));
   return respond(res,200,{ok:true,...result});
  }catch(err){
