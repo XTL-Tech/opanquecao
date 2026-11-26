@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Disk Panquecão | Panquecas, Açaí e Entregas em Nova Hartz</title>
     <meta name="description" content="Disk Panquecão em Nova Hartz: panquecas, açaí, massas e refeições com fotos. Entrega em Nova Hartz e Araricá, retirada e consumo no local.">
-    <meta name="robots" content="index,follow,max-image-preview:large">
+    <meta name="robots" content="noindex,nofollow,noarchive">
     <link rel="canonical" href="https://opanquecao.vercel.app/">
     <link rel="alternate" type="text/plain" title="Informações públicas para agentes de IA" href="/llms.txt">
     <link rel="alternate" type="application/json" title="Perfil público do estabelecimento" href="/ai/business.json">
@@ -1001,15 +1001,16 @@
 </head>
 
 <!-- Meta Pixel: consentimento e eventos de marketing centralizados, sem PII. -->
-<script src="/meta-pixel.js" defer></script>
+<!-- Preview: nenhum pixel de rastreamento -->
 
     
-<body>
+<body data-premium-preview="true">
 <div id="analyticsNotice" hidden role="region" aria-label="Preferências de privacidade" class="analytics-notice">
     <p>Usamos dados necessários para receber seu pré-pedido. Com sua escolha, também podemos usar o Pixel da Meta para medir visitas. <a href="/privacidade.html">Saiba mais sobre privacidade</a>.</p>
     <div class="analytics-actions"><button type="button" id="analyticsReject">Somente essenciais</button><button type="button" id="analyticsAccept">Aceitar análise</button></div>
 </div>
 
+<div class="preview-bar"><span>PREVIEW XTL TECH · Nenhum pedido real</span><nav aria-label="Simular funcionamento"><a href="?xtl_demo_loja=aberta" id="previewOpen">Loja aberta</a><a href="?xtl_demo_loja=fechada" id="previewClosed">Loja fechada</a></nav></div>
 <header>
     <div class="container">
         <h1 class="restaurant-logo"><img src="img/logo-disk-panquecao.webp" width="160" height="175" alt="Disk Panquecão" style="max-width:40vw;height:auto;vertical-align:middle"></h1>
@@ -1020,6 +1021,7 @@
         <a href="#como-chegar">Como chegar</a>
     </nav>
 </header>
+<section class="premium-hero" aria-labelledby="premiumTitle"><div class="premium-hero-media"><img src="/img/cardapio/c02-p15.webp" alt="Imagem ilustrativa da especialidade Panquetudo" width="560" height="420" fetchpriority="high"><span>Imagem ilustrativa do cardápio</span></div><div class="premium-hero-copy"><span class="premium-eyebrow">NOVA HARTZ · DESDE O PRIMEIRO ATÉ O ÚLTIMO PEDAÇO</span><h2 id="premiumTitle">Sua fome merece<br>uma experiência.</h2><p id="premiumHeroText">Recheios generosos, sabores marcantes e o prazer de estar à mesa.</p><a class="premium-cta" id="premiumCta" href="#cardapio">Explorar cardápio <span aria-hidden="true">↓</span></a><span class="premium-hours">QUARTA A DOMINGO · 19H–23H</span></div></section>
 <div id="storeLightsStatus" class="store-lights-status" hidden><strong>● LUZES APAGADAS</strong><p>Voltamos no próximo horário de atendimento. O cardápio continua disponível para você conhecer.</p></div>
 <p id="storeOpenStatus" role="status" aria-live="polite" hidden></p>
 
@@ -1033,8 +1035,10 @@
 
 <main class="main-content" id="cardapio" style="scroll-margin-top: 84px">
     <section class="category-home container" id="categoryHome" aria-labelledby="categoriesTitle">
-        <p class="category-kicker">FEITO PARA A SUA FOME</p>
-        <h2 id="categoriesTitle" tabindex="-1">Escolha uma categoria</h2>
+        <p class="category-kicker">DA NOSSA COZINHA PARA SUA MESA</p>
+        <h2 id="categoriesTitle" tabindex="-1">Escolha sua experiência</h2>
+        <p class="premium-intro">Dos clássicos salgados à última colherada doce.</p>
+        <div class="premium-search"><label for="premiumSearch">Encontre seu favorito</label><input type="search" id="premiumSearch" placeholder="Busque por prato ou ingrediente" autocomplete="off"><div id="premiumResults" hidden aria-live="polite"></div></div>
         <div id="categoryCards" class="category-cards" aria-label="Categorias do cardápio"></div>
     </section>
     <div class="category-toolbar container" id="categoryToolbar" hidden>
@@ -1048,6 +1052,7 @@
         <p id="menuLoading" role="status">Carregando cardápio…</p>
     </div>
 </main>
+<section class="premium-loyalty"><div><span class="premium-eyebrow">EM BREVE · PROGRAMA DE FIDELIDADE</span><h2>PanqueCoins</h2><p>Peça. Acumule. Saboreie.</p><small>Benefícios sujeitos à liberação do programa.</small></div><div class="premium-medal" aria-hidden="true">P</div></section>
 <dialog class="product-dialog" id="productDialog" aria-labelledby="productDialogTitle">
     <form method="dialog"><button autofocus>Voltar ao cardápio</button></form>
     <h2 id="productDialogTitle"></h2>
@@ -1410,6 +1415,9 @@
             quickLink.textContent = category.titulo;
             switcher.append(quickLink);
         }
+        const search=document.getElementById("premiumSearch"), results=document.getElementById("premiumResults");
+        const fold=s=>String(s||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
+        search.addEventListener("input",()=>{const q=fold(search.value).trim();results.replaceChildren();results.hidden=q.length<2;if(results.hidden)return;let n=0;for(const category of data.categorias){for(const item of category.itens){if(n>=15||!fold(item.nome+" "+(item.ingredientes||"")).includes(q))continue;const b=document.createElement("button");b.type="button";b.textContent=item.nome+" · "+category.titulo;b.onclick=()=>{history.pushState(null,"","#"+category.id);showRoute(true);const card=[...document.getElementById(category.id).querySelectorAll(".menu-item")].find(x=>x.dataset.product===item.nome);card?.querySelector(".product-details")?.click();};results.append(b);n++;}}if(!n)results.textContent="Nenhum prato encontrado."});
         let lastCategory;
         const shareButton = document.getElementById('shareCategory');
         shareButton.addEventListener('click', async () => {
@@ -1707,5 +1715,7 @@
  html.store-lights-off .closed-browse-note{display:block;padding:12px;background:#ececec;color:#272727;border-radius:8px;text-align:center}
  @media(prefers-reduced-motion:reduce){html.store-lights-off .restaurant-logo img{transition:none}}
 </style>
+<link rel="stylesheet" href="/premium-preview.css">
+<script src="/premium-preview.js" defer></script>
 </body>
 </html>
