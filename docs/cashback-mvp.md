@@ -1,4 +1,4 @@
-# panqueCOINS — programa de fidelidade Disk Panquecão
+# PanqueCoins — programa de fidelidade Disk Panquecão
 Status: **fundação em homologação, desativada por padrão**. Nenhum crédito financeiro ou desconto está ativo em produção.
 
 ## Regra proposta
@@ -9,10 +9,10 @@ Status: **fundação em homologação, desativada por padrão**. Nenhum crédito
 - Resgate em compra futura antes do vencimento, limitado ao subtotal de produtos e ao saldo; sem desconto automático sem consentimento. Cadastro/telefone não é autenticação para resgatar saldo publicamente.
 
 ## Identidade e modalidades de resgate
-- Nome comercial obrigatório: **panqueCOINS**. Unidade promocional interna, não criptomoeda, não sacável, não transferível.
-- Proposta de conversão: 1 panqueCOIN = R$ 1,00 de desconto; 0,01 panqueCOIN = R$ 0,01. Internamente, valores inteiros em centavos.
+- Nome comercial obrigatório: **PanqueCoins**. Unidade promocional interna, não criptomoeda, não sacável, não transferível.
+- Proposta de conversão: 1 PanqueCoin = R$ 1,00 de desconto; 0,01 PanqueCoin = R$ 0,01. Internamente, valores inteiros em centavos.
 - Opção 1: descontar saldo de produtos em novo pedido elegível.
-- Opção 2: acumular panqueCOINS dentro do mês para trocar por uma panqueca doce tamanho M. Proposta inicial: 25 panqueCOINS para qualquer sabor doce M elegível; limiar e sabores sujeitos à aprovação comercial antes da ativação. O catálogo estático consultado possui preços M de R$ 23 a R$ 30; o preço vigente deve ser consultado no Neon.
+- Opção 2: acumular PanqueCoins dentro do mês para trocar por uma panqueca doce tamanho M. Proposta inicial: 25 PanqueCoins para qualquer sabor doce M elegível; limiar e sabores sujeitos à aprovação comercial antes da ativação. O catálogo estático consultado possui preços M de R$ 23 a R$ 30; o preço vigente deve ser consultado no Neon.
 - A recompensa deve ser um item existente do catálogo (categoria panquecas-doces, variante M), com preço de tabela preservado e desconto registrado separadamente. Sem crédito sobre item resgatado; não combinar os dois resgates usando o mesmo saldo. Frete e adicionais não incluídos na recompensa.
 - Exibir carteira, saldo disponível, vencimento e progresso até a recompensa. Informar no pós-venda somente benefícios efetivamente liberados.
 - As duas opções usam o mesmo saldo, as mesmas reservas e expiração; não criar uma segunda moeda ou saldo duplicado.
