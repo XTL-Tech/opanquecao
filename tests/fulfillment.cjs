@@ -10,7 +10,10 @@ const areas=JSON.parse(fs.readFileSync(path.resolve('delivery-areas.json'),'utf8
         street:'Rua das Flores',number:'123',complement:'Casa 2',
         reference:'Portão azul',latitude:-29.585,longitude:-50.938
     };
-    for(const [city,entries] of Object.entries(areas.cities))for(const entry of entries)assert.equal(standardDeliveryFee(city,entry.name,areas),1000);
+    for(const [city,entries] of Object.entries(areas.cities))for(const entry of entries)assert.equal(standardDeliveryFee(city,entry.name,areas),entry.feeCents??1000);
+    for(const name of ["Campo da Brazina","Ferrabraz","Jardim","Bela Vista"])assert.equal(standardDeliveryFee('Araricá',name,areas),1500);
+    for(const name of ["Alto Ferrabraz","Porto Palmeira","Linha Ferrabraz"])assert.equal(standardDeliveryFee('Araricá',name,areas),2000);
+    assert.equal(standardDeliveryFee('Araricá','Centro',areas),1000);
     assert.equal(standardDeliveryFee('Nova Hartz','__other__',areas),null);
     assert.equal(standardDeliveryFee('Nova Hartz','Inventado',areas),null);
     const delivery=normalizeFulfillment(base,areas);
