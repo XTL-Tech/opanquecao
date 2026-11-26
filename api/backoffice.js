@@ -8,6 +8,7 @@ const areas=require('../delivery-areas.json');
 const operations=require('../lib/operational-orders');
 const afterSales=require('../lib/after-sales');
 const reports=require('../lib/management-reports');
+const liveBI=require('../lib/live-bi');
 
 function respond(res,status,payload){return res.status(status).json(payload);}
 function requireId(id){if(!c.UUID.test(id))c.fail('Identificador de pedido inválido.');return id;}
@@ -135,6 +136,7 @@ module.exports=async function handler(req,res){
     if(actor.role!=='admin')throw new auth.AuthError('Somente o superadministrador.',403);
     return respond(res,200,await operations.queue(actor,req.query?.view));
    }
+   if(act==='live_bi')return respond(res,200,await liveBI.live(actor));
    if(act==='management_reports')return respond(res,200,await reports.report(actor,req.query));
    if(act==='after_sales')return respond(res,200,await afterSales.queue(actor));
    if(act==='dashboard')return respond(res,200,{actor,...await db.dashboard()});
