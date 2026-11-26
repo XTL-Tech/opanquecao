@@ -24,3 +24,100 @@ html.store-lights-off .premium-hero,html.store-lights-off .premium-loyalty,html.
 /* Lighter dining room palette: neutral charcoal, cream and burgundy. */
 .premium-hero{background:#282426;border-bottom-color:#872b40}.premium-hero-media img{filter:saturate(.98) brightness(.94)}.premium-hero-media:after{background:linear-gradient(90deg,#282426 0%,transparent 24%)}.premium-hero-copy{padding-block:clamp(28px,4vw,56px)}.premium-hero h2{min-height:2.08em}.premium-hero p{min-height:3.4em}.category-card-action{background:#f9eef0}.category-card:hover .category-card-action{background:#873044;color:#fff}.category-card-media img{filter:none}.hero-controls{display:flex;align-items:center;gap:9px;margin-top:18px;flex-wrap:wrap}.hero-controls button{min-width:44px;min-height:44px;padding:8px;border:1px solid #aaa0a0;background:transparent;color:#fff;font:inherit;border-radius:5px;cursor:pointer}.hero-controls button:focus-visible{outline:2px solid #fff;outline-offset:3px}#heroDots{display:flex;gap:4px}#heroDots button{min-width:28px;min-height:44px;padding:6px;border:0;position:relative}#heroDots button:after{content:"";display:block;width:9px;height:9px;border-radius:50%;background:#b5a7a9;margin:auto}#heroDots button[aria-current="true"]:after{background:#fff;outline:2px solid #fff;outline-offset:3px}.hero-controls[hidden]{display:none!important}.premium-loyalty{border-block-color:#822c41}body>footer{background:#242124}html.store-lights-off .premium-hero-media img{filter:grayscale(1) brightness(.52)}
 @media(max-width:700px){.premium-hero-media:after{background:linear-gradient(0deg,#282426 0%,transparent 30%)}.premium-hero h2{min-height:0}.premium-hero p{min-height:0}.hero-controls{margin-top:12px}.hero-controls button{min-height:44px}}
+
+/* Gourmet Jovem: shared visual language, locally scoped to storefront. */
+:root{--g-cream:#faf8f3;--g-paper:#fff;--g-ink:#282426;--g-muted:#665c60;--g-wine:#852638;--g-wine-hover:#692032;--g-line:#e5dbd7;--g-gold:#e4bb70;--g-green:#394b3f;--g-radius:14px;--g-small:9px;--g-shadow:0 4px 18px #39282c0a;--primary:var(--g-wine);--secondary:var(--g-ink)}
+body{background:var(--g-cream);color:var(--g-ink)}
+body>header.gourmet-header{padding:0!important;background:var(--g-paper)!important;border-bottom:1px solid var(--g-line);color:var(--g-ink);position:relative}
+.local-strip{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px max(20px,calc((100vw - 1150px)/2));background:#252124;color:#e9e1d9;font-size:10px;letter-spacing:.1em;font-weight:700}
+.local-strip span:last-child{letter-spacing:0;font-weight:500}
+.gourmet-header-inner.container{display:flex;align-items:center;justify-content:space-between;gap:clamp(12px,3vw,36px);max-width:1200px;padding:14px 24px}
+.gourmet-header .restaurant-logo{margin:0;text-align:left;line-height:1.15;flex-shrink:0}
+.gourmet-header .restaurant-logo a{display:flex;align-items:center;gap:12px;text-decoration:none}
+body>header.gourmet-header .restaurant-logo img{width:62px!important;height:68px!important;max-width:none!important;object-fit:contain}
+.gourmet-header .brand-caption{display:grid;color:var(--g-wine)!important;gap:5px}
+.brand-caption strong{font:800 17px/1.1 Montserrat,sans-serif;letter-spacing:-.04em}
+.brand-caption small{font:500 11px/1.1 'Open Sans',sans-serif;color:var(--g-muted)}
+.gourmet-header .site-tabs{display:flex;flex-wrap:nowrap;justify-content:center;align-items:center;gap:4px;padding:0;margin:0;border:0;max-width:none;width:auto}
+.gourmet-header .site-tabs a{display:block;flex:none;white-space:nowrap;min-height:44px;padding:14px 10px;color:var(--g-muted)!important;font-weight:700;font-size:13px;letter-spacing:0}
+.gourmet-header .site-tabs a[aria-current]{color:var(--g-wine)!important;box-shadow:inset 0 -2px var(--g-wine)}
+.header-cta{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:44px;padding:12px 16px;background:var(--g-wine);color:white!important;border-radius:var(--g-small);font-size:12px;font-weight:800;text-decoration:none;white-space:nowrap}
+.header-cta:hover{background:var(--g-wine-hover)}
+.premium-hero{background:var(--g-wine);border-bottom:0;min-height:420px;grid-template-columns:1fr 1fr}
+.premium-hero-media:after{background:linear-gradient(90deg,var(--g-wine),transparent 23%)}
+.premium-hero-copy{padding-inline:clamp(24px,5vw,90px)}
+.premium-hero h2,.category-home h2,.section-header h2,.premium-loyalty h2,.local-story h2{font-family:Montserrat,'Open Sans',sans-serif;font-weight:800;letter-spacing:-.045em}
+.premium-hero h2{font-size:clamp(34px,4.2vw,64px);line-height:1.05;color:#fff}
+.premium-hero p{color:#f9e9eb;font-weight:500}
+.premium-cta{background:#fff8ef;color:var(--g-wine);border:0;border-radius:var(--g-small)}
+.premium-cta:hover{background:#f4e7d9}
+.premium-hours{color:#f4dfbd}
+.hero-controls button{border-color:#ffffff60;border-radius:var(--g-small);font-weight:600;font-size:13px}
+#heroDots button{min-width:34px}
+.category-home{max-width:1200px!important;padding-top:clamp(30px,5vw,64px)!important}
+.category-home h2,.section-header h2{color:var(--g-ink);line-height:1.12}
+.category-kicker{color:var(--g-wine)!important}
+.premium-search{max-width:680px;margin:24px auto 30px}
+.premium-search label{color:var(--g-muted);letter-spacing:0;text-transform:none;font-weight:700;font-size:13px}
+.premium-search input{border-color:var(--g-line);border-radius:var(--g-small);min-height:52px;box-shadow:var(--g-shadow)}
+.category-cards,.menu-grid{gap:clamp(12px,2vw,22px)}
+.category-card,.menu-item{background:var(--g-paper);border:1px solid var(--g-line);border-radius:var(--g-radius);box-shadow:var(--g-shadow)}
+.category-card-title,.menu-item .item-title{font-family:Montserrat,'Open Sans',sans-serif;letter-spacing:-.02em;font-weight:800;color:var(--g-ink)}
+.category-card-title{font-size:clamp(15px,1.7vw,19px)}
+.category-card-copy{gap:8px;padding:16px}
+.category-card-count,.item-desc,.cart-guide,.cart-option,.cart-note{color:var(--g-muted)}
+.category-card-action{background:#f9eff1;color:var(--g-wine);border:0;border-radius:var(--g-small);min-height:44px}
+.category-card:hover .category-card-action{background:var(--g-wine);color:#fff}
+.menu-item .card-primary-action,.product-dialog .order-primary,#sendOrder,#cartDialog button.checkout-next{background:var(--g-wine);border:1px solid var(--g-wine);border-radius:var(--g-small);font-weight:800;color:white}
+.menu-item .card-primary-action:hover,.product-dialog .order-primary:hover,#sendOrder:hover,#cartDialog button.checkout-next:hover{background:var(--g-wine-hover);border-color:var(--g-wine-hover)}
+.menu-item .item-copy>.details-link{color:var(--g-wine)}
+.item-photo img{border-radius:var(--g-small)}
+.size-box{background:#f8f3f0!important;border-color:var(--g-line)!important;border-radius:var(--g-small)}
+.size-label,.single-price,.size-value,.cart-item-price{color:var(--g-wine)!important}
+.category-toolbar.container{border-color:var(--g-line)}
+.category-toolbar>a,.category-switcher a{border-radius:var(--g-small);border-color:var(--g-line);color:var(--g-wine)}
+.product-dialog,#cartDialog{border:1px solid var(--g-line);border-radius:var(--g-radius);background:var(--g-cream);color:var(--g-ink)}
+#productDialogTitle,#cartTitle{font-family:Montserrat,sans-serif;letter-spacing:-.03em}
+#cartDialog .cart-header{background:var(--g-wine);color:white}
+#cartDialog .cart-line,.cart-stepper{border-color:var(--g-line);border-radius:var(--g-small)}
+.order-form input:not([type=checkbox]):not([type=radio]),.order-form select,.order-form textarea{border:1px solid var(--g-line);border-radius:var(--g-small);background:white;color:var(--g-ink)}
+#openCart{background:var(--g-wine);border-radius:var(--g-radius)}
+.premium-loyalty{background:var(--g-wine);border:0;color:white}
+.premium-loyalty h2{color:white}
+.premium-loyalty small,.premium-loyalty .loyalty-sub{color:#f1dce1;font-size:13px}
+.local-story{display:grid;grid-template-columns:1.2fr 1fr;align-items:center;gap:20px;max-width:1150px;margin:clamp(24px,5vw,60px) auto;padding:clamp(20px,4vw,48px);background:#edf1eb;border-radius:var(--g-radius);overflow:hidden}
+.local-story .category-kicker{color:var(--g-green)!important}
+.local-story h2{font-size:clamp(27px,3vw,43px);line-height:1.12;margin:12px 0;color:var(--g-green)}
+.local-story p:not(.category-kicker){line-height:1.65;color:#465849;max-width:500px;font-size:15px}
+.local-link{display:inline-flex;align-items:center;gap:12px;color:var(--g-green);text-decoration:none;font-weight:800;margin-top:16px;min-height:44px}
+.local-landscape{width:100%;height:auto;display:block;border-radius:var(--g-radius)}
+body>footer.gourmet-footer{background:#252124;color:#ded8d5;padding:40px 0 calc(104px + env(safe-area-inset-bottom,0px));text-align:left;border:0}
+.gourmet-footer .container{max-width:1200px;padding-inline:24px}
+.footer-main{display:grid;grid-template-columns:1.3fr 1fr 1fr 1.1fr;gap:28px;padding-bottom:28px;border-bottom:1px solid #ffffff24}
+.footer-main h2,.gourmet-footer .footer-categories h2{font:800 15px/1.35 Montserrat,sans-serif;color:#fff;margin:0 0 12px;letter-spacing:-.02em}
+.footer-main .footer-brand h2{font-size:22px;color:#fff;letter-spacing:-.04em;margin-top:12px}
+.footer-brand img{object-fit:contain;width:70px;height:auto}
+.footer-main p{font-size:13px;line-height:1.65;color:#d4ccca;margin:0 0 9px}
+.gourmet-footer .footer-info{padding:0;margin:0;width:auto;max-width:none;background:transparent;border:0;box-shadow:none;text-align:left}
+.gourmet-footer .info-actions{display:flex;flex-direction:column;align-items:flex-start;gap:4px;padding:0;margin:0}
+body>footer.gourmet-footer .info-actions a{color:#f0dcc0;background:transparent;border:0;border-radius:0;padding:7px 0;text-decoration:none;font-size:13px;min-height:36px;line-height:1.4;text-align:left;white-space:normal}
+.gourmet-footer .footer-categories{max-width:none;text-align:left;margin:24px 0}
+.gourmet-footer .footer-category-links{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));justify-content:start;gap:5px 16px}
+body>footer.gourmet-footer .footer-category-links a{border:0;padding:5px 0;color:#ded8d5;min-height:36px;font-size:12px;text-align:left;background:none}
+body>footer.gourmet-footer a:hover{color:#fff;text-decoration:underline}
+.footer-notes{border-top:1px solid #ffffff24;padding:15px 0;font-size:12px;line-height:1.6;color:#d0c7c4}
+.footer-notes summary{cursor:pointer;min-height:30px;font-weight:700}
+.footer-notes ul{list-style:none;padding:8px 0;margin:0}.footer-notes li{padding:3px 0}
+.footer-bottom{border-top:1px solid #ffffff24;display:flex;justify-content:space-between;align-items:center;gap:12px;padding-top:18px;font-size:11px;line-height:1.5;color:#c9c0be;flex-wrap:wrap}
+.footer-bottom a{color:inherit}
+.gourmet-footer .footer-credit{padding:0;margin:0;color:#d8d0cd;opacity:1;font-size:11px}
+html.store-lights-off body>header.gourmet-header{background:#e8e8e8!important;color:#222}
+html.store-lights-off .local-story,html.store-lights-off .premium-hero,html.store-lights-off .premium-loyalty{filter:grayscale(1)}
+html.store-lights-off .premium-hero{background:#282828}
+html.store-lights-off .premium-hero-media:after{background:linear-gradient(90deg,#282828,transparent 24%)}
+html.store-lights-off .premium-hero h2,html.store-lights-off .premium-hero p{color:#eee}
+html.store-lights-off .premium-cta{color:white}
+@media(max-width:900px){.header-cta{display:none}.footer-main{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:700px){.local-strip{padding:8px 16px;justify-content:center;letter-spacing:.06em}.local-strip span:last-child{display:none}.gourmet-header-inner.container{flex-direction:column;align-items:stretch;gap:6px;padding:10px 16px 0}.gourmet-header .restaurant-logo a{justify-content:center}.gourmet-header .site-tabs{width:100%;justify-content:space-around;gap:0}.gourmet-header .site-tabs a{font-size:12px;padding:12px 8px;text-align:center;flex:1}.premium-hero{min-height:0}.premium-hero-media:after{background:linear-gradient(0deg,var(--g-wine),transparent 26%)}.premium-hero-copy{padding:14px 22px 28px}.premium-hero h2{font-size:clamp(32px,8vw,46px)}.category-card-copy{padding:12px}.local-story{grid-template-columns:1fr;margin-inline:16px}.local-landscape{max-height:180px;object-fit:contain}.footer-main{gap:20px 16px}.footer-main .footer-brand{grid-column:1/-1;display:grid;grid-template-columns:auto 1fr;gap:0 14px;align-items:center}.footer-brand img{grid-row:1/3}.footer-main .footer-brand h2{font-size:20px;margin:0}.footer-brand p{margin:5px 0}.gourmet-footer .footer-category-links{grid-template-columns:repeat(2,minmax(0,1fr))}.footer-bottom{display:grid;gap:10px}html.store-lights-off .premium-hero-media:after{background:linear-gradient(0deg,#282828,transparent 26%)}}
+@media(max-width:370px){.footer-main{grid-template-columns:1fr}.footer-main .footer-brand{grid-column:auto}.hero-controls{gap:4px}#heroDots button{min-width:27px}}
+@media(prefers-reduced-motion:reduce){.category-card,.category-card-media img,.menu-item{transition:none!important}}
