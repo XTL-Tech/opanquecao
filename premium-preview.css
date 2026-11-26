@@ -121,3 +121,27 @@ html.store-lights-off .premium-cta{color:white}
 @media(max-width:700px){.local-strip{padding:8px 16px;justify-content:center;letter-spacing:.06em}.local-strip span:last-child{display:none}.gourmet-header-inner.container{flex-direction:column;align-items:stretch;gap:6px;padding:10px 16px 0}.gourmet-header .restaurant-logo a{justify-content:center}.gourmet-header .site-tabs{width:100%;justify-content:space-around;gap:0}.gourmet-header .site-tabs a{font-size:12px;padding:12px 8px;text-align:center;flex:1}.premium-hero{min-height:0}.premium-hero-media:after{background:linear-gradient(0deg,var(--g-wine),transparent 26%)}.premium-hero-copy{padding:14px 22px 28px}.premium-hero h2{font-size:clamp(32px,8vw,46px)}.category-card-copy{padding:12px}.local-story{grid-template-columns:1fr;margin-inline:16px}.local-landscape{max-height:180px;object-fit:contain}.footer-main{gap:20px 16px}.footer-main .footer-brand{grid-column:1/-1;display:grid;grid-template-columns:auto 1fr;gap:0 14px;align-items:center}.footer-brand img{grid-row:1/3}.footer-main .footer-brand h2{font-size:20px;margin:0}.footer-brand p{margin:5px 0}.gourmet-footer .footer-category-links{grid-template-columns:repeat(2,minmax(0,1fr))}.footer-bottom{display:grid;gap:10px}html.store-lights-off .premium-hero-media:after{background:linear-gradient(0deg,#282828,transparent 26%)}}
 @media(max-width:370px){.footer-main{grid-template-columns:1fr}.footer-main .footer-brand{grid-column:auto}.hero-controls{gap:4px}#heroDots button{min-width:27px}}
 @media(prefers-reduced-motion:reduce){.category-card,.category-card-media img,.menu-item{transition:none!important}}
+
+/* Partner placements: no popups or interrupted ordering. */
+.gourmet-partners{max-width:1150px;margin:clamp(28px,5vw,64px) auto;padding:0 20px}
+.gourmet-partners-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:22px}
+.gourmet-partners-heading h2{font:800 clamp(23px,3vw,34px)/1.18 Montserrat,'Open Sans',sans-serif;letter-spacing:-.035em;color:var(--g-ink);margin:9px 0}
+.gourmet-partners-heading p:not(.category-kicker){font-size:14px;color:var(--g-muted);line-height:1.6;margin:0}
+.partner-disclosure{color:var(--g-muted);font-size:11px;white-space:nowrap;padding-top:6px}
+.gourmet-partners-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.gourmet-partner{display:flex;flex-direction:column;min-width:0;padding:20px;border:1px solid var(--g-line);border-radius:var(--g-radius);box-shadow:var(--g-shadow);background:var(--g-paper)}
+.partner-status{display:flex;justify-content:space-between;gap:8px;font-size:10px;font-weight:800;letter-spacing:.08em;color:var(--g-muted)}
+.gourmet-partner h3{font:800 16px/1.3 Montserrat,sans-serif;letter-spacing:-.02em;margin:14px 0 6px}
+.gourmet-partner p{font-size:13px;line-height:1.5;margin:0;color:var(--g-muted)}
+.permanent-partner{background:linear-gradient(150deg,#111418,#232c37);color:#f3f6fa;border-color:#394658}
+.permanent-partner .partner-status{color:#bacbde}
+.xtl-wordmark{font:900 clamp(27px,3.5vw,42px)/1 Montserrat,sans-serif;letter-spacing:-.045em;color:#e9edf2;margin-top:24px;min-height:49px;display:flex;align-items:center;gap:9px}
+.xtl-wordmark span{font-size:.42em;letter-spacing:.14em;color:#90bfff}
+.permanent-partner h3{color:#f3f6fa}.permanent-partner p{color:#bacbde}
+.available-partner{border-style:dashed;background:#fffdfa;box-shadow:none}
+.partner-placeholder{display:grid;place-items:center;width:46px;height:46px;border-radius:50%;border:1px dashed #c4a6ab;color:var(--g-wine);font-size:24px;margin-top:24px}
+.gourmet-partners-foot{display:flex;align-items:center;justify-content:center;gap:12px;margin-top:18px;font-size:13px;color:var(--g-muted)}
+.gourmet-partners-foot a{display:inline-flex;align-items:center;gap:8px;min-height:44px;color:var(--g-wine);font-weight:800;text-decoration:none}
+.gourmet-partners-foot a:hover{text-decoration:underline}
+html.store-lights-off .gourmet-partners{filter:grayscale(1)}
+@media(max-width:700px){.gourmet-partners-grid{grid-template-columns:1fr;gap:10px}.gourmet-partners-heading{flex-direction:column;gap:4px}.gourmet-partner{padding:16px}.xtl-wordmark,.partner-placeholder{margin-top:14px}.gourmet-partners-foot{flex-wrap:wrap;gap:0 10px}}
