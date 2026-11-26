@@ -151,11 +151,13 @@
  }
  function showTab(tab){
   if(S.data?.operational)return;
-  if(['kitchen','courier'].includes(tab)&&S.actor?.role!=='admin')return;
+  if(['kitchen','courier','integrations'].includes(tab)&&S.actor?.role!=='admin')return;
+  if(tab==='reports'&&!['admin','manager'].includes(S.actor?.role))return;
   $('#tab-operational').hidden=true;
-  S.tab=tab;for(const name of ['orders','customers','cash','catalog','after-sales'])$('#tab-'+name).hidden=name!==tab;
+  S.tab=tab;for(const name of ['orders','customers','cash','catalog','after-sales','reports','integrations'])$('#tab-'+name).hidden=name!==tab;
   document.querySelectorAll('[data-tab]').forEach(n=>n.classList.toggle('active',n.dataset.tab===tab));
   const meta={orders:['Pedidos','Acompanhe cada pedido, do primeiro contato à entrega.'],
+   reports:['Relatórios gerenciais','Resultados comerciais e indicadores operacionais.'],integrations:['Integrações XTL','Ambiente técnico restrito.'],
    kitchen:['Fila da cozinha','Visão de superadmin'],courier:['Entregas','Visão de superadmin'],
    'after-sales':['Pós-venda','Acompanhe a satisfação 30 minutos após a entrega.'],
    customers:['Clientes','Cadastros e relacionamento com o cliente.'],
@@ -164,13 +166,14 @@
   $('#pageTitle').textContent=meta[tab][0];$('#pageSubtitle').textContent=meta[tab][1];
   if(S.data){
    renderTab();if(tab==='catalog')ensureCatalog();
-   if(tab==='cash')refreshAsaas();
+   if(tab==='integrations')refreshAsaas();
   }
  }
  function render(){if(!S.data)return;if(S.data.operational){renderOperational();return;}$('#todayText').textContent='📅 '+S.data.today.split('-').reverse().join('/');
   $('#staffLabel').textContent=S.actor.email||'Atendente';
   $('#staffRole').textContent=S.actor.role==='admin'?'Superadministrador XTL':S.actor.role==='manager'?'Administração do estabelecimento':'Atendimento';
   document.querySelectorAll('[data-superadmin]').forEach(n=>n.hidden=S.actor.role!=='admin');
+  document.querySelectorAll('[data-management]').forEach(n=>n.hidden=!['admin','manager'].includes(S.actor.role));
   $('#pendingCount').textContent=S.data.orders.filter(x=>['pending_customer','awaiting_acceptance'].includes(x.status)).length||'';
   renderTab();if(S.tab!=='after-sales')void refreshAfterSales();
  }
@@ -182,7 +185,7 @@
   $('#pageTitle').textContent=kitchen?'Fila da cozinha':'Entregas';
   $('#pageSubtitle').textContent=kitchen?'Pedidos aceitos e em preparo.':'Pedidos preparados e suas entregas em andamento.';
   $('#navigation').hidden=!isAdmin;
-  for(const name of ['orders','customers','cash','catalog','after-sales'])$('#tab-'+name).hidden=true;
+  for(const name of ['orders','customers','cash','catalog','after-sales','reports','integrations'])$('#tab-'+name).hidden=true;
   const section=$('#tab-operational');section.hidden=false;
   const list=$('#operationalQueue');clear(list);
   const orders=data.orders||[];
@@ -276,7 +279,71 @@
   const actor=S.actor;
   try{const data=await request('/api/backoffice?action=operational_queue&view='+view);if(S.actor===actor&&S.tab===view)renderOperational(data,view);}catch(e){show(e.message,true);}
  }
- function renderTab(){if(['kitchen','courier'].includes(S.tab))void adminOperational(S.tab);if(S.tab==='orders')renderOrders();if(S.tab==='customers')renderCustomers();if(S.tab==='cash')renderCash();if(S.tab==='catalog')renderCatalog();if(S.tab==='after-sales')refreshAfterSales();}
+ let reportBusy=false, reportData=null;
+ function reportRows(title,headers,rows){
+  const section=el('section',null,'form-card');section.append(el('h3',title));
+  if(!rows.length){section.append(el('p','Sem registros no período.','hint'));return section;}
+  const wrap=el('div',null,'table-wrap'),table=el('table'),head=el('thead'),tr=el('tr'),body=el('tbody');
+  headers.forEach(h=>tr.append(el('th',h)));head.append(tr);
+  rows.forEach(row=>{const line=el('tr');row.forEach(v=>line.append(el('td',v==null?'—':String(v))));body.append(line);});
+  table.append(head,body);wrap.append(table);section.append(wrap);return section;
+ }
+ const reportMoney=v=>money(Number(v||0)),reportMin=v=>v==null?'Sem dados':Number(v).toLocaleString('pt-BR')+' min';
+ const reportRole={admin:'Superadministrador',manager:'Administração',attendant:'Atendimento',kitchen:'Cozinha',courier:'Motoboy',system:'Sistema'};
+ const reportMode={delivery:'Entrega',pickup:'Retirada',table:'Mesa'};
+ function reportSections(d){
+  return [
+   ['Vendas por dia',['Data','Pedidos pagos','Receita'],d.days.map(x=>[x.day,x.orders,reportMoney(x.revenue_cents)])],
+   ['Meios de pagamento',['Meio','Pedidos','Receita'],d.methods.map(x=>[payment[x.payment_method]||x.payment_method,x.orders,reportMoney(x.revenue_cents)])],
+   ['Modalidades',['Modalidade','Pedidos','Receita'],d.types.map(x=>[reportMode[x.mode]||x.mode,x.orders,reportMoney(x.revenue_cents)])],
+   ['Situação dos pedidos recebidos',['Status atual','Pedidos','Valor nominal'],d.states.map(x=>[label[x.status]||x.status,x.orders,reportMoney(x.order_value_cents)])],
+   ['Produtos mais vendidos (até 100)',['Produto','Tamanho','Quantidade','Receita de produtos'],d.products.map(x=>[x.product,x.variant,x.quantity,reportMoney(x.revenue_cents)])],
+   ['Pós-venda por vencimento',['Situação','Tarefas','Contatados','Convites Google','Atrasados'],d.followup.map(x=>[({pending:'Pendente',claimed:'Assumido',contacted:'Contatado',issue:'Problema',satisfied:'Concluído',no_response:'Sem resposta'})[x.state]||x.state,x.tasks,x.contacted,x.review_invites,x.overdue])],
+   ['Fechamento de caixa',['Data','Dinheiro contado','Diferença','Receita registrada'],d.closings.map(x=>[x.day,reportMoney(x.counted_cash_cents),reportMoney(x.discrepancy_cents),reportMoney(x.summary?.total_cents)])],
+   ['Alterações de preço (até 100)',['Produto','Opção','Anterior','Novo','Data'],d.prices.map(x=>[x.product,x.variant,x.old_price,x.new_price,new Date(x.changed_at).toLocaleString('pt-BR')])],
+   ...(d.technical?[
+    ['Perfis da equipe',['Perfil','Ativo','Contas'],d.technical.staff.map(x=>[reportRole[x.role]||x.role,x.active?'Sim':'Não',x.total])],
+    ['Atividade por operador',['Perfil','Operador','Alterações'],d.technical.activity.map(x=>[reportRole[x.role]||x.role,x.operator,x.changes])],
+    ['Transições auditadas',['Anterior','Novo','Quantidade'],d.technical.events.map(x=>[label[x.previous_status]||x.previous_status,label[x.next_status]||x.next_status,x.transitions])]
+   ]:[])
+  ];
+ }
+ function renderReports(d){
+  const target=$('#reportContent');clear(target);
+  const sales=d.sales||{},ops=d.operations||{},clients=d.clients||{};
+  const metrics=[['Receita recebida',reportMoney(sales.revenue_cents)],['Pedidos pagos e concluídos',sales.orders||0],
+   ['Ticket médio',sales.orders?reportMoney(Math.round(Number(sales.revenue_cents)/sales.orders)):'—'],
+   ['Receita de produtos',reportMoney(sales.products_cents)],['Taxas de entrega',reportMoney(sales.fees_cents)],
+   ['Clientes compradores',sales.customers||0],['Clientes anteriores',clients.returning||0],['Recompraram no período',clients.repeat_in_period||0],
+   ['Tempo médio até aceite',reportMin(ops.avg_accept_minutes)],['Tempo médio em entrega',reportMin(ops.avg_delivery_minutes)],
+   ['Pedidos entregues sem pagamento',ops.delivered_unpaid||0],['Valor nominal pendente',reportMoney(ops.unpaid_cents)],
+   ['PanqueCoins emitidas',d.coins?.enabled?reportMoney(d.coins.issued_cents):'Programa desativado']];
+  const grid=el('div',null,'cash-grid');for(const [name,value] of metrics){const item=el('div',null,'cash-tile');item.append(el('small',name),el('strong',String(value)));grid.append(item);}target.append(grid);
+  if(d.technical){target.append(el('p','Catálogo: '+d.technical.source+' · revisão '+(d.technical.catalog?.revision??'—')+' · Telegram pendente: '+(ops.telegram_pending||0)+' · envio incerto: '+(ops.telegram_uncertain||0),'hint'));}
+  reportSections(d).forEach(([title,headers,rows])=>target.append(reportRows(title,headers,rows)));
+  $('#reportExport').disabled=false;
+ }
+ async function refreshReports(){
+  if(reportBusy||S.demo||!['manager','admin'].includes(S.actor?.role))return;
+  const actor=S.actor,start=$('#reportStart'),end=$('#reportEnd');
+  if(!start.value)start.value=S.data.today.slice(0,7)+'-01';if(!end.value)end.value=S.data.today;
+  reportBusy=true;$('#reportExport').disabled=true;reportData=null;clear($('#reportContent'));$('#reportStatus').textContent='Carregando dados do Neon…';
+  try{
+   const result=await request('/api/backoffice?action=management_reports&start='+encodeURIComponent(start.value)+'&end='+encodeURIComponent(end.value));
+   if(S.actor!==actor||S.tab!=='reports')return;reportData=result;renderReports(result);
+   $('#reportStatus').textContent='Receita por data de liquidação; pedidos por data de entrada. '+result.period.from+' a '+result.period.to+'.';
+  }catch(e){$('#reportStatus').textContent=e.message;}
+  finally{reportBusy=false;}
+ }
+ function exportReports(){
+  if(!reportData||!['admin','manager'].includes(S.actor?.role))return;
+  const esc=v=>{let x=String(v??'');if(/^[=+@\-\t\r]/.test(x))x="'"+x;return '"'+x.replaceAll('"','""')+'"';};
+  const rows=[['XTL FOOD',reportData.period.from,reportData.period.to],['Receita recebida',reportMoney(reportData.sales?.revenue_cents)],['Pedidos pagos e concluídos',reportData.sales?.orders||0]];
+  for(const [title,headers,data] of reportSections(reportData))rows.push([], [title],headers,...data);
+  const blob=new Blob(['\ufeff'+rows.map(row=>row.map(esc).join(';')).join('\r\n')],{type:'text/csv;charset=utf-8'});
+  const url=URL.createObjectURL(blob),a=el('a');a.href=url;a.download='xtl-food-relatorio-'+reportData.period.from+'-'+reportData.period.to+'.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+ }
+ function renderTab(){if(S.tab==='reports')void refreshReports();if(S.tab==='integrations')void refreshAsaas();if(['kitchen','courier'].includes(S.tab))void adminOperational(S.tab);if(S.tab==='orders')renderOrders();if(S.tab==='customers')renderCustomers();if(S.tab==='cash')renderCash();if(S.tab==='catalog')renderCatalog();if(S.tab==='after-sales')refreshAfterSales();}
  async function lookupOrders(more=false){
   if(S.demo||!S.data)return renderOrders();
   try{
@@ -556,11 +623,13 @@
  }
  function loggedOut(){S.actor=null;S.data=null;S.catalogLoadedAt=0;S.catalogPending=null;$('#appShell').hidden=true;$('#loginScreen').hidden=false;}
  async function boot(){
+  $('#reportForm').addEventListener('submit',e=>{e.preventDefault();void refreshReports();});
+  $('#reportExport').addEventListener('click',exportReports);
   setInterval(()=>{if(S.actor&&!S.demo&&!S.data?.operational&&!document.hidden)void refreshAfterSales();},60000);
   document.addEventListener('visibilitychange',()=>{if(!document.hidden)void refreshAfterSales();});
   for(const b of document.querySelectorAll('[data-close]'))b.addEventListener('click',()=>closeDialog(b.dataset.close));
   $('#navigation').addEventListener('click',e=>{const b=e.target.closest('[data-tab]');if(b)showTab(b.dataset.tab);});
-  $('#refresh').addEventListener('click',async()=>{await reload();if(S.tab==='catalog')await ensureCatalog(true);if(S.tab==='cash')await refreshAsaas();});
+  $('#refresh').addEventListener('click',async()=>{await reload();if(S.tab==='catalog')await ensureCatalog(true);if(S.tab==='integrations')await refreshAsaas();});
   $('#orderSearch').addEventListener('input',()=>{
     if(S.demo)return renderOrders();
     clearTimeout(S.orderSearchTimer);
