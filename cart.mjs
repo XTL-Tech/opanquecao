@@ -2,6 +2,7 @@ import { money, orderOptions, priceOrder, extraOptions, extraSummary, flavorChoi
 import { buildSimpleWhatsAppMessage, whatsappOrderUrl } from './whatsapp-order.mjs';
 import { normalizeFulfillment, standardDeliveryFee } from './fulfillment.mjs';
 import { renderPartners, loadCheckoutPartners } from './partners.mjs';
+import { accountRequest } from './customer-account-client.mjs';
 let checkoutPartners;
 let partnersGeneration=0;
 function preparePartners(){const gen=++partnersGeneration;checkoutPartners=undefined;void loadCheckoutPartners().then(data=>{if(gen===partnersGeneration)checkoutPartners=data;});}
@@ -503,7 +504,7 @@ function updateOtherNeighborhood() {
     const out=byId('deliveryStandardFee');if(out){const subtotal=cart.reduce((n,l)=>n+l.cents*l.quantity,0);out.textContent=fee===null?'Taxa para esta localidade: a confirmar pela loja.':'Taxa para o bairro: '+money(fee)+' · Total estimado: '+money(subtotal+fee);}
 }
 checkoutForm.elements.deliveryNeighborhood.addEventListener('change', updateOtherNeighborhood);
-checkoutForm.elements.deliveryCity.addEventListener('change', async () => {
+async function populateDeliveryNeighborhoods() {
     const city = checkoutForm.elements.deliveryCity.value;
     neighborhoodSelect.replaceChildren(new Option('Carregando bairros…', ''));
     neighborhoodSelect.value = '';
@@ -522,8 +523,58 @@ checkoutForm.elements.deliveryCity.addEventListener('change', async () => {
     neighborhoodSelect.add(new Option('Outro bairro / localidade', '__other__'));
     neighborhoodSelect.disabled = checkoutForm.elements.fulfillmentType.value !== 'delivery';
     updateOtherNeighborhood();
-});
+}
+checkoutForm.elements.deliveryCity.addEventListener('change', populateDeliveryNeighborhoods);
 setDeliveryMode();
+
+
+let savedAddresses=[],savedNext=null,savedLoading=false;
+const savedStatus=byId('savedAccountStatus'),savedSelect=byId('savedAddressSelect');
+function savedMessage(msg){if(savedStatus)savedStatus.textContent=msg;}
+function displaySavedAddresses(){
+ if(!savedSelect)return;
+ savedSelect.replaceChildren(new Option('Escolha um endereço',''));
+ for(const a of savedAddresses)savedSelect.add(new Option(a.label+' · '+a.data.city,a.id));
+ byId('savedAddresses').hidden=false;
+ byId('moreSavedAddresses').hidden=!savedNext;
+}
+async function fetchSavedAddresses(more=false){
+ const result=await accountRequest('addresses',null,more&&savedNext?{after:savedNext}:{});
+ savedAddresses=more?[...savedAddresses,...result.addresses]:result.addresses;savedNext=result.next;
+ displaySavedAddresses();
+}
+if(byId('loadSavedAccount'))byId('loadSavedAccount').onclick=async()=>{
+ if(savedLoading)return;savedLoading=true;byId('loadSavedAccount').disabled=true;
+ try{
+  const data=await accountRequest('state');
+  checkoutForm.elements.customerName.value=data.profile?.name||'';
+  checkoutForm.elements.customerPhone.value=data.profile?.phone||'';
+  checkoutForm.dispatchEvent(new Event('input',{bubbles:true}));
+  await fetchSavedAddresses();
+  savedMessage(savedAddresses.length?'Dados carregados. Escolha seu endereço ou informe outro.':'Dados carregados. Cadastre endereços em Minha conta.');
+ }catch(err){
+  savedAddresses=[];savedNext=null;displaySavedAddresses();byId('savedAddresses').hidden=true;
+  savedMessage(err.status===401?'Entre em Minha conta para carregar seus dados. Seu carrinho será preservado.':'Não foi possível carregar a conta. Você pode continuar sem cadastro.');
+ }finally{savedLoading=false;byId('loadSavedAccount').disabled=false;}
+};
+if(byId('moreSavedAddresses'))byId('moreSavedAddresses').onclick=async()=>{
+ if(savedLoading)return;savedLoading=true;try{await fetchSavedAddresses(true);}catch{savedMessage('Não foi possível carregar mais endereços.');}finally{savedLoading=false;}
+};
+if(savedSelect)savedSelect.onchange=async()=>{
+ if(savedLoading)return;const found=savedAddresses.find(x=>x.id===savedSelect.value);if(!found)return;
+ savedLoading=true;savedSelect.disabled=true;
+ try{
+  const d=found.data,e=checkoutForm.elements;
+  e.fulfillmentType.value='delivery';setDeliveryMode();clearLocation();
+  e.deliveryCity.value=d.city;await populateDeliveryNeighborhoods();
+  if(e.deliveryCity.value!==d.city||e.fulfillmentType.value!=='delivery')return;
+  const known=[...e.deliveryNeighborhood.options].some(x=>x.value===d.neighborhood);
+  e.deliveryNeighborhood.value=known?d.neighborhood:'__other__';e.deliveryOtherNeighborhood.value=d.neighborhood==='__other__'?d.otherNeighborhood||'':known?'':d.neighborhood;
+  for(const [field,key] of [['deliveryStreet','street'],['deliveryNumber','number'],['deliveryComplement','complement'],['deliveryReference','reference']])e[field].value=d[key]||'';
+  updateOtherNeighborhood();checkoutForm.dispatchEvent(new Event('input',{bubbles:true}));
+  savedMessage('Endereço selecionado. Confira os dados e a taxa antes de enviar.');
+ }catch{savedMessage('Não foi possível carregar esse endereço. Preencha manualmente.');}finally{savedLoading=false;savedSelect.disabled=false;}
+};
 
 function getFulfillment() {
     const e = checkoutForm.elements;
