@@ -736,7 +736,7 @@ checkoutForm.onsubmit = async event => {
                 throw new Error(data.error || 'O registro no bot não pôde ser confirmado.');
             }
             registration = {id: data.id, test: data.test, signature};
-            if(!data.test && fulfillment.type==='delivery') rememberDelivery(trackingId);
+            if(data.tracking===true && !data.test && fulfillment.type==='delivery') rememberDelivery(trackingId);
             lastRegistration = registration;
         }
         if (registration.test) {
