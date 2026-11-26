@@ -432,7 +432,7 @@
   try{
    const d=await request('/api/backoffice?action=comandas');if(S.actor!==actor||S.tab!=='comandas')return;
    $('#comandaStatus').textContent=d.cpfEnabled?'CPF protegido · uma comanda aberta por CPF':'Abertura por CPF ainda não configurada.';
-   $('#comandaOpen').disabled=!d.cpfEnabled;
+   $('#comandaFind').disabled=!d.cpfEnabled;$('#comandaOpen').disabled=!d.cpfEnabled||$('#comandaForm').dataset.ready!=='yes';
    const target=$('#comandaList');clear(target);
    if(!d.tabs.length)target.append(el('p','Nenhuma comanda aberta.','empty'));
    for(const t of d.tabs){
@@ -722,14 +722,33 @@
  }
  function loggedOut(){exitBiTV();biData=null;biLastOK=0;clear($('#biCards'));clear($('#biCharts'));S.actor=null;S.data=null;S.catalogLoadedAt=0;S.catalogPending=null;$('#appShell').hidden=true;$('#loginScreen').hidden=false;}
  async function boot(){
+  const cf=$('#comandaForm');
+  function resetCpfLookup(){
+   cf.elements.name.value='';cf.elements.phone.value='';cf.elements.name.required=false;cf.elements.phone.required=false;
+   $('#comandaRegister').hidden=true;cf.elements.confirmExisting.checked=false;
+   $('#comandaIdentity').textContent='Consulte o CPF para identificar o cliente.';$('#comandaOpen').disabled=true;
+   cf.dataset.identified='';cf.dataset.ready='';
+  }
+  cf.elements.cpf.addEventListener('input',resetCpfLookup);
   $('#comandaFind').addEventListener('click',async()=>{
-   const input=$('#comandaForm').elements.cpf;
-   if(!input.value.trim())return show('Informe o CPF da comanda.',true);
-   try{const d=await run('comanda_find',{cpf:input.value});await addComandaOrder(d.tab);}catch(e){show(e.message,true);}finally{input.value='';}
+   const input=cf.elements.cpf,typed=input.value;resetCpfLookup();
+   if(!typed.trim())return show('Informe o CPF do cliente.',true);
+   try{
+    const d=await run('comanda_customer',{cpf:typed});if(input.value!==typed)return;
+    const x=d.customer;
+    if(x?.tab_id){cf.reset();resetCpfLookup();await addComandaOrder({id:x.tab_id,customer_name:x.customer_name,table_number:x.table_number,cpf_suffix:x.cpf_suffix});return;}
+    if(x){cf.dataset.identified='yes';$('#comandaIdentity').textContent='Cliente localizado: '+x.customer_name+' · CPF final '+x.cpf_suffix;}
+    else{$('#comandaRegister').hidden=false;cf.elements.name.required=true;cf.elements.phone.required=true;$('#comandaIdentity').textContent='Primeira visita identificada por CPF. Complete o cadastro.';}
+    cf.dataset.ready='yes';$('#comandaOpen').disabled=false;
+   }catch(e){show(e.message,true);}
   });
-  $('#comandaForm').addEventListener('submit',async e=>{
-   e.preventDefault();const f=e.currentTarget;$('#comandaOpen').disabled=true;
-   try{await run('comanda_open',{cpf:f.elements.cpf.value,table:f.elements.table.value,name:f.elements.name.value,phone:f.elements.phone.value});f.reset();await refreshComandas();show('Comanda aberta.');}catch(err){show(err.message,true);}finally{f.elements.cpf.value='';$('#comandaOpen').disabled=false;}
+  cf.addEventListener('submit',async e=>{
+   e.preventDefault();if(cf.dataset.ready!=='yes')return show('Consulte o CPF primeiro.',true);
+   $('#comandaOpen').disabled=true;
+   try{
+    const d=await run('comanda_open',{cpf:cf.elements.cpf.value,table:cf.elements.table.value,name:cf.elements.name.value,phone:cf.elements.phone.value,confirmExisting:cf.elements.confirmExisting.checked});
+    cf.reset();resetCpfLookup();await refreshComandas();show('Comanda aberta.');await addComandaOrder(d.tab);
+   }catch(err){show(err.message,true);$('#comandaOpen').disabled=false;}
   });
   $('#biFullscreen').addEventListener('click',toggleBiTV);
   $('#biPrivacy').addEventListener('click',()=>{biPrivate=!biPrivate;$('#biPrivacy').setAttribute('aria-pressed',String(biPrivate));$('#biPrivacy').textContent=biPrivate?'Mostrar valores':'Ocultar valores';if(biData)drawBI(biData);});
