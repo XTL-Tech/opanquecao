@@ -5,6 +5,7 @@ const login=$('accountLogin'),dashboard=$('accountDashboard'),profile=$('profile
 const demo=document.body.dataset.premiumPreview==='true';
 $('accountDemoNotice').hidden=!demo;
 let config,areas,next=null,records=[],editing=null,email='',working=false,widget=null,challenge='';
+const signalSession=kind=>{if(!demo)try{window.localStorage.setItem('dp-account-session-change-v1',kind+':'+Date.now());}catch{}};
 const status=msg=>{$('accountStatus').textContent=msg;};
 const report=e=>status(e?.message||'Não foi possível concluir. Tente novamente.');
 async function busy(task){
@@ -62,9 +63,9 @@ async function showLogin(){
  if(widget===null)widget=window.turnstile.render('#accountTurnstile',{sitekey:config.siteKey,action:'customer_otp',callback:t=>challenge=t,'expired-callback':()=>challenge='','error-callback':()=>challenge=''});
 }
 $('otpRequest').onsubmit=e=>{e.preventDefault();void busy(async()=>{email=$('otpRequest').elements.email.value.trim().toLowerCase();if(!demo&&!challenge)throw new Error('Conclua a verificação de segurança.');try{await accountRequest('otp_request',{email,challenge:demo?'demo':challenge});}finally{challenge='';if(widget!==null)window.turnstile.reset(widget);}$('otpRequest').hidden=true;$('otpVerify').hidden=false;if(demo)$('otpVerify').elements.otp.value='123456';status(demo?'Código de teste: 123456. Nenhum e-mail enviado.':'Confira sua caixa de entrada.');$('otpVerify').elements.otp.focus();});};
-$('otpVerify').onsubmit=e=>{e.preventDefault();void busy(async()=>{const state=await accountRequest('otp_verify',{email,otp:$('otpVerify').elements.otp.value});$('otpVerify').reset();await showAccount(state);status('Bem-vindo!');});};
+$('otpVerify').onsubmit=e=>{e.preventDefault();void busy(async()=>{const state=await accountRequest('otp_verify',{email,otp:$('otpVerify').elements.otp.value});$('otpVerify').reset();signalSession('login');await showAccount(state);status('Bem-vindo!');});};
 $('changeEmail').onclick=()=>busy(async()=>{await showLogin();status('');});
-$('accountLogout').onclick=()=>busy(async()=>{await accountRequest('logout',{});records=[];next=null;profile.reset();clearAddress();$('accountEmail').textContent='';$('addressList').replaceChildren();await showLogin();status('Você saiu da conta.');});
+$('accountLogout').onclick=()=>busy(async()=>{await accountRequest('logout',{});signalSession('logout');records=[];next=null;profile.reset();clearAddress();$('accountEmail').textContent='';$('addressList').replaceChildren();await showLogin();status('Você saiu da conta.');});
 profile.onsubmit=e=>{e.preventDefault();void busy(async()=>{await accountRequest('profile_save',{name:profile.elements.name.value,phone:profile.elements.phone.value});status('Seus dados foram salvos.');});};
 $('addAddress').onclick=()=>busy(()=>openAddress(null));
 $('cancelAddress').onclick=()=>{clearAddress();status('Edição cancelada.');};
