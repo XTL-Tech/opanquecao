@@ -12,10 +12,10 @@ assert.deepEqual(category.itens.map(p=>p.nome),[
 assert.equal(catalog.categorias.length,12);
 assert.equal(catalog.categorias.reduce((n,c)=>n+c.itens.length,0),82);
 for(const [index,item] of category.itens.entries()){
- assert.equal(item.preco,'R$ 25,00');
+ assert.equal(item.preco,'R$ 30,00');
  assert.match(item.ingredientes,/Pão baguete/);
  assert.ok(html.includes('"'+item.nome+'": "cardapio/c09-p0'+(index+1)+'.webp"'),
    'A foto existente deve continuar associada ao novo nome');
  assert.ok(seed.includes('"nome": "'+item.nome+'"'),'Nome divergente no catálogo inicial de homologação');
 }
-console.log('PASS: apenas os 3 nomes de baguetes, preços e fotos preservados');
+console.log('PASS: 3 nomes de baguetes, preços atualizados e fotos preservadas');
