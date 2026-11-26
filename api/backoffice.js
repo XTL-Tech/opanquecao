@@ -91,7 +91,7 @@ async function action(req,actor,body){
   })};
  }
  if(a==='catalog_price'){
-  if(actor.role!=='manager')throw new auth.AuthError('Somente a gestão pode alterar preços.',403);
+  if(!['admin','manager'].includes(actor.role))throw new auth.AuthError('Somente a gestão pode alterar preços.',403);
   if(typeof body.category!=='string'||typeof body.product!=='string'||typeof body.variant!=='string')
    c.fail('Seleção de produto inválida.');
   return {catalog:await db.changePrice({
@@ -130,6 +130,10 @@ module.exports=async function handler(req,res){
    throw new auth.AuthError('Acesso não autorizado para este perfil.',403);
   }
   if(method==='GET'){
+   if(act==='operational_queue'){
+    if(actor.role!=='admin')throw new auth.AuthError('Somente o superadministrador.',403);
+    return respond(res,200,await operations.queue(actor,req.query?.view));
+   }
    if(act==='after_sales')return respond(res,200,await afterSales.queue(actor));
    if(act==='dashboard')return respond(res,200,{actor,...await db.dashboard()});
    if(act==='catalog')return respond(res,200,{catalog:await db.getCatalog()});
@@ -138,6 +142,10 @@ module.exports=async function handler(req,res){
    if(act==='events')return respond(res,200,{events:await db.events(requireId(req.query?.id))});
    if(act==='session')return respond(res,200,{actor});
    return respond(res,404,{error:'Recurso não encontrado.'});
+  }
+  if(act==='operational_status'){
+   if(actor.role!=='admin')throw new auth.AuthError('Somente o superadministrador.',403);
+   const body=payload(req);return respond(res,200,{ok:true,...await operations.transition(actor,body,body.view)});
   }
   if(act==='after_sale_status')return respond(res,200,{ok:true,...await afterSales.change(actor,payload(req))});
   const result=await action(req,actor,payload(req));
