@@ -7,6 +7,8 @@ const code=fs.readFileSync('store-hours-client.mjs','utf8');
 async function sample(mode,demoAvailable=true){
   const w=new JSDOM(html,{url:'https://preview.vercel.app/?xtl_demo_loja='+mode,runScripts:'outside-only'}).window;
   const d=w.document;
+  // Test original production scheduling logic without the visual-preview override.
+  delete d.body.dataset.premiumPreview;
   w.HTMLDialogElement.prototype.showModal=function(){this.open=true};
   w.HTMLDialogElement.prototype.close=function(){this.open=false};
   w.setInterval=()=>0;
