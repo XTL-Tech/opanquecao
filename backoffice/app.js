@@ -161,9 +161,10 @@
   if(['reports','bi'].includes(tab)&&!['admin','manager'].includes(S.actor?.role))return;
   if(tab!=='bi')exitBiTV();
   $('#tab-operational').hidden=true;
-  S.tab=tab;for(const name of ['orders','customers','cash','catalog','after-sales','reports','integrations','bi'])$('#tab-'+name).hidden=name!==tab;
+  S.tab=tab;for(const name of ['orders','customers','cash','catalog','after-sales','reports','integrations','bi','comandas'])$('#tab-'+name).hidden=name!==tab;
   document.querySelectorAll('[data-tab]').forEach(n=>n.classList.toggle('active',n.dataset.tab===tab));
   const meta={orders:['Pedidos','Acompanhe cada pedido, do primeiro contato à entrega.'],
+   comandas:['Mesas e comandas','Controle do consumo no local.'],
    bi:['BI ao vivo','Visão executiva com atualização automática e modo TV.'],
    reports:['Relatórios gerenciais','Resultados comerciais e indicadores operacionais.'],integrations:['Integrações XTL','Ambiente técnico restrito.'],
    kitchen:['Fila da cozinha','Visão de superadmin'],courier:['Entregas','Visão de superadmin'],
@@ -193,7 +194,7 @@
   $('#pageTitle').textContent=kitchen?'Fila da cozinha':'Entregas';
   $('#pageSubtitle').textContent=kitchen?'Pedidos aceitos e em preparo.':'Pedidos preparados e suas entregas em andamento.';
   $('#navigation').hidden=!isAdmin;
-  for(const name of ['orders','customers','cash','catalog','after-sales','reports','integrations','bi'])$('#tab-'+name).hidden=true;
+  for(const name of ['orders','customers','cash','catalog','after-sales','reports','integrations','bi','comandas'])$('#tab-'+name).hidden=true;
   const section=$('#tab-operational');section.hidden=false;
   const list=$('#operationalQueue');clear(list);
   const orders=data.orders||[];
@@ -411,7 +412,36 @@
   document.body.classList.add('bi-tv');$('#biFullscreen').textContent='Sair do modo TV';
   try{if(document.documentElement.requestFullscreen)await document.documentElement.requestFullscreen();}catch{/* CSS fullscreen remains available on TV browsers. */}
  }
- function renderTab(){if(S.tab==='bi')void refreshBI();if(S.tab==='reports')void refreshReports();if(S.tab==='integrations')void refreshAsaas();if(['kitchen','courier'].includes(S.tab))void adminOperational(S.tab);if(S.tab==='orders')renderOrders();if(S.tab==='customers')renderCustomers();if(S.tab==='cash')renderCash();if(S.tab==='catalog')renderCatalog();if(S.tab==='after-sales')refreshAfterSales();}
+ let comandaBusy=false;
+ function resetComandaManual(){
+  S.comandaId=null;const f=$('#manualForm');for(const key of ['name','phone','type','table'])f.elements[key].disabled=false;
+  $('#manualComandaHint').hidden=true;
+ }
+ async function addComandaOrder(tab){
+  await ensureCatalog();if(!S.data?.catalog?.catalog)return show('Catálogo indisponível.',true);
+  resetComandaManual();const f=$('#manualForm');f.reset();await fillManual();
+  S.comandaId=tab.id;f.elements.name.value=tab.customer_name||'';f.elements.phone.value='';f.elements.type.value='table';f.elements.table.value=String(tab.table_number);
+  for(const key of ['name','phone','type','table'])f.elements[key].disabled=true;
+  $('#manualComandaHint').hidden=false;$('#manualComandaHint').textContent='Lançamento na mesa '+tab.table_number+' · CPF final '+tab.cpf_suffix;
+  updateManualType();openDialog('manualDialog');
+ }
+ async function refreshComandas(){
+  if(comandaBusy||S.demo||!S.actor||S.data?.operational||S.tab!=='comandas')return;comandaBusy=true;
+  const actor=S.actor;
+  try{
+   const d=await request('/api/backoffice?action=comandas');if(S.actor!==actor||S.tab!=='comandas')return;
+   $('#comandaStatus').textContent=d.cpfEnabled?'CPF protegido · uma comanda aberta por CPF':'Abertura por CPF ainda não configurada.';
+   $('#comandaOpen').disabled=!d.cpfEnabled;
+   const target=$('#comandaList');clear(target);
+   if(!d.tabs.length)target.append(el('p','Nenhuma comanda aberta.','empty'));
+   for(const t of d.tabs){
+    const card=el('article',null,'form-card');card.append(el('h3','Mesa '+t.table_number+' · CPF final '+t.cpf_suffix),el('p',t.customer_name),el('p','Consumo: '+money(t.total_cents)+' · Pendente: '+money(t.pending_cents)),el('p',t.orders+' pedido(s) · '+t.unfinished+' não finalizado(s)','hint'));
+    card.append(button('Lançar pedido',()=>addComandaOrder(t),'primary'));
+    const close=button('Fechar comanda',async()=>{if(!confirm('Fechar esta comanda?'))return;try{await run('comanda_close',{id:t.id});await refreshComandas();show('Comanda fechada.');}catch(e){show(e.message,true);}});close.disabled=Number(t.unfinished)>0;card.append(close);target.append(card);
+   }
+  }catch(e){$('#comandaStatus').textContent=e.message;}finally{comandaBusy=false;}
+ }
+ function renderTab(){if(S.tab==='comandas')void refreshComandas();if(S.tab==='bi')void refreshBI();if(S.tab==='reports')void refreshReports();if(S.tab==='integrations')void refreshAsaas();if(['kitchen','courier'].includes(S.tab))void adminOperational(S.tab);if(S.tab==='orders')renderOrders();if(S.tab==='customers')renderCustomers();if(S.tab==='cash')renderCash();if(S.tab==='catalog')renderCatalog();if(S.tab==='after-sales')refreshAfterSales();}
  async function lookupOrders(more=false){
   if(S.demo||!S.data)return renderOrders();
   try{
@@ -636,7 +666,7 @@
   try{
    const result=await run(action,body);
    if(action==='catalog_price'&&result?.catalog){S.data.catalog=result.catalog;S.catalogLoadedAt=Date.now();}
-   await reload();closeDialog('detailDialog');closeDialog('customerDialog');closeDialog('priceDialog');closeDialog('manualDialog');show(S.demo?'DEMONSTRAÇÃO: '+success:success);}
+   await reload();closeDialog('detailDialog');closeDialog('customerDialog');closeDialog('priceDialog');closeDialog('manualDialog');if(action==='manual_order')resetComandaManual();show(S.demo?'DEMONSTRAÇÃO: '+success:success);}
   catch(e){show(e.message,true);}
  }
  function openCustomer(c){
@@ -691,6 +721,10 @@
  }
  function loggedOut(){exitBiTV();biData=null;biLastOK=0;clear($('#biCards'));clear($('#biCharts'));S.actor=null;S.data=null;S.catalogLoadedAt=0;S.catalogPending=null;$('#appShell').hidden=true;$('#loginScreen').hidden=false;}
  async function boot(){
+  $('#comandaForm').addEventListener('submit',async e=>{
+   e.preventDefault();const f=e.currentTarget;$('#comandaOpen').disabled=true;
+   try{await run('comanda_open',{cpf:f.elements.cpf.value,table:f.elements.table.value,name:f.elements.name.value,phone:f.elements.phone.value});f.reset();await refreshComandas();show('Comanda aberta.');}catch(err){show(err.message,true);}finally{f.elements.cpf.value='';$('#comandaOpen').disabled=false;}
+  });
   $('#biFullscreen').addEventListener('click',toggleBiTV);
   $('#biPrivacy').addEventListener('click',()=>{biPrivate=!biPrivate;$('#biPrivacy').setAttribute('aria-pressed',String(biPrivate));$('#biPrivacy').textContent=biPrivate?'Mostrar valores':'Ocultar valores';if(biData)drawBI(biData);});
   document.addEventListener('fullscreenchange',()=>{if(!document.fullscreenElement&&document.body.classList.contains('bi-tv'))exitBiTV();});
@@ -732,6 +766,7 @@
   $('#catalogSearch').addEventListener('input',renderCatalog);
   $('#newCustomer').addEventListener('click',()=>openCustomer(null));
   $('#newOrder').addEventListener('click',async()=>{
+    resetComandaManual();
     await ensureCatalog();
     if(!S.data?.catalog?.catalog)return show('Catálogo indisponível.',true);
     $('#manualForm').reset();await fillManual();updateManualType();openDialog('manualDialog');
@@ -816,7 +851,7 @@
     type==='table'?{type,table:f.elements.table.value}:{type:'pickup'};
    const line={category:catId,product:item.nome,option:variant.value==='preco'?'Único':variant.value.startsWith('size:')?variant.value.slice(5):variant.value.slice(5),
     quantity,note:'',flavors:[],freeExtras:[],paidExtras:[],cents:parseMobilePrice(variant.dataset.price)};
-   await mutate('manual_order',{name:f.elements.name.value,phone:f.elements.phone.value,
+   await mutate('manual_order',{name:f.elements.name.value,phone:f.elements.phone.value,...(S.comandaId?{comandaId:S.comandaId}:{}),
     fulfillment,lines:[line],note:$('#manualNote').value},'Pedido manual criado.');
   });
   $('#logout').addEventListener('click',async()=>{
