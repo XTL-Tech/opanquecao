@@ -17,5 +17,5 @@ jobs:
         with:
           node-version: '24'
       - run: npm ci
-      - run: node tests/customer-account.cjs
+      - run: node tests/customer-account.cjs && node tests/account-retention.cjs
       - run: node --check customer-account.mjs && node --check customer-account-client.mjs && node --check cart.mjs
