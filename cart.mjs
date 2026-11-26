@@ -4,7 +4,7 @@ import { normalizeFulfillment, standardDeliveryFee } from './fulfillment.mjs';
 import { renderPartners, loadCheckoutPartners } from './partners.mjs';
 let checkoutPartners;
 let partnersGeneration=0;
-function preparePartners(){const gen=++partnersGeneration;checkoutPartners=undefined;void loadCheckoutPartners().then(data=>{if(gen===partnersGeneration)checkoutPartners=data;});}
+function preparePartners(){if(document.body.dataset.premiumPreview==="true")return;const gen=++partnersGeneration;checkoutPartners=undefined;void loadCheckoutPartners().then(data=>{if(gen===partnersGeneration)checkoutPartners=data;});}
 
 const byId = id => document.getElementById(id);
 const cart = [];
@@ -16,8 +16,9 @@ let deepLinkOpened = false;
 let checkoutEventSent = false;
 const trackedPreOrders = new Set();
 const initialStoreStatus = window.storeOperationStatus;
+const premiumPreview=document.body.dataset.premiumPreview==="true";
 let storeOpenForOrders = !initialStoreStatus?.enabled ||
-    (initialStoreStatus.open === true && initialStoreStatus.simulated !== true);
+    (initialStoreStatus.open === true && (premiumPreview || initialStoreStatus.simulated !== true));
 
 // Eventos Meta somente mediante consentimento. Preço de item é subtotal, não receita realizada.
 const trackMeta = (eventName, data) => window.XTLMeta?.track?.(eventName, data) === true;
@@ -42,7 +43,7 @@ function trackAddToCart(line) {
         content_category: line.category
     });
 }
-const storageKey = 'disk-panquecao-cart-v1';
+const storageKey = premiumPreview?'disk-panquecao-preview-cart-v1':'disk-panquecao-cart-v1';
 let feedbackTimer;
 function announceAdded(line) {
     byId('cartFeedbackText').textContent = '✓ ' + orderProductName(line) + ' adicionado';
@@ -187,7 +188,7 @@ function refresh() {
 
 document.addEventListener('store-operation-status', event => {
     const {enabled,open} = event.detail || {};
-    storeOpenForOrders = !enabled || (open === true && event.detail.simulated !== true);
+    storeOpenForOrders = !enabled || (open === true && (premiumPreview || event.detail.simulated !== true));
     if (!storeOpenForOrders) {
         if(byId("cartDialog")?.open)byId("cartDialog").close();
         if(byId("whatsappOrderLink"))byId("whatsappOrderLink").hidden=true;
@@ -705,6 +706,7 @@ function openWhatsApp(url) {
 
 checkoutForm.onsubmit = async event => {
     event.preventDefault();
+    if(premiumPreview){if(!storeOpenForOrders||!cart.length)return;orderStatus.textContent="DEMONSTRAÇÃO: pedido simulado com sucesso. Nenhum dado enviado.";renderPartners(byId("localPartners"));fallback.hidden=true;return;}
     if (sending) return;
     hideCheckoutPartners();
     if (!storeOpenForOrders) {
