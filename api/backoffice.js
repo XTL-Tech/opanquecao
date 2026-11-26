@@ -9,6 +9,7 @@ const operations=require('../lib/operational-orders');
 const afterSales=require('../lib/after-sales');
 const reports=require('../lib/management-reports');
 const liveBI=require('../lib/live-bi');
+const comandas=require('../lib/comandas');
 
 function respond(res,status,payload){return res.status(status).json(payload);}
 function requireId(id){if(!c.UUID.test(id))c.fail('Identificador de pedido inválido.');return id;}
@@ -31,8 +32,9 @@ async function action(req,actor,body){
   return {customer};
  }
  if(a==='manual_order'){
-  const customer=await db.upsertCustomer({name:c.name(body.name),phone:c.phone(body.phone)});
-  const fulfillment=(await import('../fulfillment.mjs')).normalizeFulfillment(body.fulfillment,areas);
+  const tab=body.comandaId?await comandas.context(actor,body.comandaId):null;
+  const customer=tab?{id:tab.customer_id,name:tab.name,phone:tab.phone}:await db.upsertCustomer({name:c.name(body.name),phone:c.phone(body.phone)});
+  const fulfillment=(await import('../fulfillment.mjs')).normalizeFulfillment(tab?{type:'table',table:String(tab.table_number)}:body.fulfillment,areas);
   const catalog=(await db.getCatalog()).catalog;
   if(!catalog)throw new db.StoreError('Catálogo indisponível.');
   const {priceOrder}=await import('../order-catalog.mjs');
@@ -40,7 +42,7 @@ async function action(req,actor,body){
   const result=await db.createOrder({
    requestId:randomUUID(),customer,items,fulfillment,
    note:c.note(body.note,400),origin:'manual',status:'awaiting_acceptance',
-   telegramState:'not_applicable'
+   telegramState:'not_applicable',comandaId:tab?.id
   });
   return {order:result.record};
  }
@@ -136,6 +138,7 @@ module.exports=async function handler(req,res){
     if(actor.role!=='admin')throw new auth.AuthError('Somente o superadministrador.',403);
     return respond(res,200,await operations.queue(actor,req.query?.view));
    }
+   if(act==='comandas')return respond(res,200,await comandas.list(actor));
    if(act==='live_bi')return respond(res,200,await liveBI.live(actor));
    if(act==='management_reports')return respond(res,200,await reports.report(actor,req.query));
    if(act==='after_sales')return respond(res,200,await afterSales.queue(actor));
@@ -151,6 +154,8 @@ module.exports=async function handler(req,res){
    if(actor.role!=='admin')throw new auth.AuthError('Somente o superadministrador.',403);
    const body=payload(req);return respond(res,200,{ok:true,...await operations.transition(actor,body,body.view)});
   }
+  if(act==='comanda_open')return respond(res,200,{ok:true,...await comandas.open(actor,payload(req))});
+  if(act==='comanda_close')return respond(res,200,{ok:true,...await comandas.close(actor,payload(req))});
   if(act==='after_sale_status')return respond(res,200,{ok:true,...await afterSales.change(actor,payload(req))});
   const result=await action(req,actor,payload(req));
   return respond(res,200,{ok:true,...result});
