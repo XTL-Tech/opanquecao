@@ -147,3 +147,5 @@ html.store-lights-off .gourmet-partners{filter:grayscale(1)}
 @media(max-width:700px){.gourmet-partners-grid{grid-template-columns:1fr;gap:10px}.gourmet-partners-heading{flex-direction:column;gap:4px}.gourmet-partner{padding:16px}.xtl-wordmark,.partner-placeholder{margin-top:14px}.gourmet-partners-foot{flex-wrap:wrap;gap:0 10px}}
 
 .local-photo-stack{display:grid;gap:12px;grid-template-columns:1.3fr 1fr;align-items:start;min-width:0}.local-photo{margin:0;min-width:0}.local-photo>a{display:block;background:#dae4d8;border-radius:12px;overflow:hidden}.local-photo img{display:block;width:100%;aspect-ratio:4/5;object-fit:cover;color:#394b3f;font-size:13px}.local-photo figcaption{font-size:10px;color:#465849;line-height:1.5;margin-top:6px;overflow-wrap:anywhere}.local-photo figcaption a{color:inherit;text-decoration:underline}.local-photo-city{margin-top:20px}.premium-hero h2{overflow-wrap:anywhere;font-size:clamp(30px,3.9vw,59px)}@media(max-width:700px){.local-photo img{aspect-ratio:4/3}.local-photo-city{margin-top:0}.premium-hero h2{font-size:clamp(28px,7.6vw,43px)}}
+
+.brand-caption small{max-width:180px;line-height:1.35;font-size:10px;white-space:normal}
