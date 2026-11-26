@@ -112,7 +112,7 @@
 </section>
    <section id="tab-store-hours" hidden>
     <form id="hoursForm" class="form-card"><h2>Expediente semanal</h2><p class="hint">Horário oficial de Brasília. Fora do expediente, a loja entra no modo luzes apagadas. Não use horários fictícios.</p>
-    <div id="hoursWeek"></div><label><input name="acceptingOrders" type="checkbox"> Aceitar pedidos online dentro do horário (desmarque para pausa de emergência)</label>
+    <div id="hoursWeek"></div><h2>Feriados e datas especiais</h2><p class="hint">Datas sugeridas não alteram o expediente sozinhas. Configure uma exceção apenas quando necessário. Datas municipais futuras devem ser conferidas com a Prefeitura.</p><div id="holidayRows"></div><button id="holidayAdd" type="button" class="soft">Adicionar data especial</button><label><input name="acceptingOrders" type="checkbox"> Aceitar pedidos online dentro do horário (desmarque para pausa de emergência)</label>
     <div class="form-grid"><label>Exceção temporária<select name="manualState"><option value="auto">Seguir agenda</option><option value="closed">Fechar temporariamente</option><option value="open">Abrir temporariamente</option></select></label><label>Duração da exceção (minutos)<input name="overrideMinutes" type="number" min="5" max="1440" value="60"></label></div>
     <p class="hint">Ao salvar no modo automático, uma exceção anterior será encerrada.</p><button id="hoursSave" type="submit" class="primary" disabled>Salvar horário</button><p id="hoursStatus" role="status"></p></form>
    </section>
