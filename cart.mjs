@@ -1,6 +1,6 @@
 import { money, orderOptions, priceOrder, extraOptions, extraSummary, flavorChoices, orderProductName } from './order-catalog.mjs';
 import { buildSimpleWhatsAppMessage, whatsappOrderUrl } from './whatsapp-order.mjs';
-import { normalizeFulfillment } from './fulfillment.mjs';
+import { normalizeFulfillment, standardDeliveryFee } from './fulfillment.mjs';
 import { renderPartners, loadCheckoutPartners } from './partners.mjs';
 let checkoutPartners;
 let partnersGeneration=0;
@@ -496,6 +496,8 @@ function updateOtherNeighborhood() {
     byId('deliveryOtherWrap').hidden = !show;
     otherNeighborhood.disabled = !show || checkoutForm.elements.fulfillmentType.value !== 'delivery';
     otherNeighborhood.required = show && !otherNeighborhood.disabled;
+    const fee=standardDeliveryFee(checkoutForm.elements.deliveryCity.value,neighborhoodSelect.value,deliveryAreasData);
+    const out=byId('deliveryStandardFee');if(out){const subtotal=cart.reduce((n,l)=>n+l.cents*l.quantity,0);out.textContent=fee===null?'Taxa para esta localidade: a confirmar pela loja.':'Taxa padrão: '+money(fee)+' · Total estimado: '+money(subtotal+fee);}
 }
 checkoutForm.elements.deliveryNeighborhood.addEventListener('change', updateOtherNeighborhood);
 checkoutForm.elements.deliveryCity.addEventListener('change', async () => {
@@ -516,6 +518,7 @@ checkoutForm.elements.deliveryCity.addEventListener('change', async () => {
     }
     neighborhoodSelect.add(new Option('Outro bairro / localidade', '__other__'));
     neighborhoodSelect.disabled = checkoutForm.elements.fulfillmentType.value !== 'delivery';
+    updateOtherNeighborhood();
 });
 setDeliveryMode();
 
@@ -723,8 +726,9 @@ checkoutForm.onsubmit = async event => {
         orderStatus.textContent = error?.message || 'Confira o pedido e seu contato.';
         return;
     }
+    const deliveryFeeCents=fulfillment.type==='delivery'&&checkoutForm.elements.deliveryNeighborhood.value!=='__other__'?standardDeliveryFee(fulfillment.city,fulfillment.neighborhood,deliveryAreasData):null;
     const directMessage = buildSimpleWhatsAppMessage({
-        lines, note, name: customer.name, fulfillment
+        lines, note, name: customer.name, fulfillment,deliveryFeeCents
     });
     const directUrl = whatsappOrderUrl(directMessage);
     fallback.hidden = true;
@@ -758,7 +762,7 @@ checkoutForm.onsubmit = async event => {
             if (!response.ok || data.status !== 'registered' || data.pending) {
                 throw new Error(data.error || 'O registro no bot não pôde ser confirmado.');
             }
-            registration = {id: data.id, test: data.test, signature};
+            registration = {id: data.id, test: data.test, signature,deliveryFeeCents:Number.isSafeInteger(data.deliveryFeeCents)?data.deliveryFeeCents:null};
             if(data.tracking===true && !data.test && fulfillment.type==='delivery') rememberDelivery(trackingId);
             lastRegistration = registration;
         }
@@ -781,7 +785,7 @@ checkoutForm.onsubmit = async event => {
             if (counted) trackedPreOrders.add(registration.id);
         }
         const message = buildSimpleWhatsAppMessage({
-            lines, note, name: customer.name, fulfillment, orderRef: registration.id
+            lines, note, name: customer.name, fulfillment, orderRef: registration.id,deliveryFeeCents:registration.deliveryFeeCents??null
         });
         orderStatus.textContent = 'Pré-registro #' + registration.id +
             ' e cupom térmico enviados ao bot. Abrindo WhatsApp: confira e toque em Enviar.';
