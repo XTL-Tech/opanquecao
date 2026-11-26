@@ -185,7 +185,7 @@ module.exports = async function handler(req, res) {
             });
             if (!claimed.created) {
                 return claimed.record.telegram_state==='sent'
-                    ? res.status(201).json({id,status:'registered',test:false,replayed:true})
+                    ? res.status(201).json({id,status:'registered',test:false,replayed:true,tracking:deliveryDetails.type==='delivery'})
                     : res.status(202).json({id,pending:true,
                         error:'Este pré-pedido já existe, mas o envio ao Telegram requer conferência. Não reenvie automaticamente.'});
             }
@@ -256,7 +256,7 @@ module.exports = async function handler(req, res) {
             }
         }
         console.info(JSON.stringify({ event: 'whatsapp_intent', id, status: 'registered', receipt: true, preview }));
-        return res.status(201).json({ id, status: 'registered', test: preview });
+        return res.status(201).json({ id, status: 'registered', test: preview, tracking: persisted && deliveryDetails.type==='delivery' });
     } catch {
         if(persisted){
             try { await backoffice.patchOrder(requestId,{telegram_state:'eq.pending'},{telegram_state:'uncertain'}); }
