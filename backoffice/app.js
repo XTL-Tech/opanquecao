@@ -151,9 +151,12 @@
  }
  function showTab(tab){
   if(S.data?.operational)return;
+  if(['kitchen','courier'].includes(tab)&&S.actor?.role!=='admin')return;
+  $('#tab-operational').hidden=true;
   S.tab=tab;for(const name of ['orders','customers','cash','catalog','after-sales'])$('#tab-'+name).hidden=name!==tab;
   document.querySelectorAll('[data-tab]').forEach(n=>n.classList.toggle('active',n.dataset.tab===tab));
   const meta={orders:['Pedidos','Acompanhe cada pedido, do primeiro contato à entrega.'],
+   kitchen:['Fila da cozinha','Visão de superadmin'],courier:['Entregas','Visão de superadmin'],
    'after-sales':['Pós-venda','Acompanhe a satisfação 30 minutos após a entrega.'],
    customers:['Clientes','Cadastros e relacionamento com o cliente.'],
    cash:['Caixa diário','Conferência e fechamento dos pagamentos recebidos.'],
@@ -166,27 +169,29 @@
  }
  function render(){if(!S.data)return;if(S.data.operational){renderOperational();return;}$('#todayText').textContent='📅 '+S.data.today.split('-').reverse().join('/');
   $('#staffLabel').textContent=S.actor.email||'Atendente';
-  $('#staffRole').textContent=S.actor.role==='manager'?'Gestão':'Atendimento';
+  $('#staffRole').textContent=S.actor.role==='admin'?'Superadministrador XTL':S.actor.role==='manager'?'Administração do estabelecimento':'Atendimento';
+  document.querySelectorAll('[data-superadmin]').forEach(n=>n.hidden=S.actor.role!=='admin');
   $('#pendingCount').textContent=S.data.orders.filter(x=>['pending_customer','awaiting_acceptance'].includes(x.status)).length||'';
   renderTab();if(S.tab!=='after-sales')void refreshAfterSales();
  }
- function renderOperational(){
-  const kitchen=S.actor.role==='kitchen';
+ function renderOperational(data=S.data,view=S.actor.role){
+  const isAdmin=S.actor.role==='admin';
+  const kitchen=view==='kitchen';
   $('#staffLabel').textContent=S.actor.email||'Equipe';
-  $('#staffRole').textContent=kitchen?'Cozinha':'Motoboy';
+  $('#staffRole').textContent=isAdmin?'Superadministrador XTL':kitchen?'Cozinha':'Motoboy';
   $('#pageTitle').textContent=kitchen?'Fila da cozinha':'Entregas';
   $('#pageSubtitle').textContent=kitchen?'Pedidos aceitos e em preparo.':'Pedidos preparados e suas entregas em andamento.';
-  $('#navigation').hidden=true;
+  $('#navigation').hidden=!isAdmin;
   for(const name of ['orders','customers','cash','catalog','after-sales'])$('#tab-'+name).hidden=true;
   const section=$('#tab-operational');section.hidden=false;
   const list=$('#operationalQueue');clear(list);
-  const orders=S.data.orders||[];
+  const orders=data.orders||[];
   if(!orders.length){list.append(el('p','Nenhum pedido disponível.','empty'));return;}
   for(const o of orders){
    const card=el('article',null,'form-card');
    card.append(el('h2','#'+o.ref_code+' · '+(label[o.status]||o.status)),el('p',time(o.created_at),'hint'));
    const move=async(next,reason)=>{
-    try{await run('order_status',{id:o.request_id,next,reason});await reload();show('Pedido atualizado.');}
+    try{await run(isAdmin?'operational_status':'order_status',{id:o.request_id,next,reason,...(isAdmin?{view}:{})});await reload();show('Pedido atualizado.');}
     catch(e){show(e.message,true);}
    };
    if(kitchen){
@@ -266,7 +271,12 @@
   }catch(e){if(S.tab==='after-sales')show(e.message,true);}
   finally{afterSalesBusy=false;}
  }
- function renderTab(){if(S.tab==='orders')renderOrders();if(S.tab==='customers')renderCustomers();if(S.tab==='cash')renderCash();if(S.tab==='catalog')renderCatalog();if(S.tab==='after-sales')refreshAfterSales();}
+ async function adminOperational(view){
+  if(S.actor?.role!=='admin'||S.demo)return;
+  const actor=S.actor;
+  try{const data=await request('/api/backoffice?action=operational_queue&view='+view);if(S.actor===actor&&S.tab===view)renderOperational(data,view);}catch(e){show(e.message,true);}
+ }
+ function renderTab(){if(['kitchen','courier'].includes(S.tab))void adminOperational(S.tab);if(S.tab==='orders')renderOrders();if(S.tab==='customers')renderCustomers();if(S.tab==='cash')renderCash();if(S.tab==='catalog')renderCatalog();if(S.tab==='after-sales')refreshAfterSales();}
  async function lookupOrders(more=false){
   if(S.demo||!S.data)return renderOrders();
   try{
@@ -325,12 +335,12 @@
  async function refreshAsaasHistory(){
   const status=$('#asaasHistoryStatus'),checkouts=$('#asaasHistoryCheckouts'),events=$('#asaasHistoryEvents');
   clear(checkouts);clear(events);
-  if(S.demo||S.actor?.role!=='manager'){status.textContent='';return;}
+  if(S.demo||S.actor?.role!=='admin'){status.textContent='';return;}
   const btn=$('#asaasHistoryRefresh');btn.disabled=true;status.textContent='Consultando registros do Sandbox...';
   try{
    const info=await request('/api/asaas-sandbox?view=history');
    if(info.mode!=='sandbox')throw Error('Ambiente inesperado.');
-   if(S.demo||S.actor?.role!=='manager')return;
+   if(S.demo||S.actor?.role!=='admin')return;
    for(const x of info.checkouts||[]){
     const row=el('tr');td(row,time(x.created_at));td(row,scenarioLabel[x.scenario]||'—');td(row,x.external_ref);
     td(row,(sandboxStatus[x.status]||'—')+(x.reviewed_at?' · revisado':''));checkouts.append(row);
@@ -345,7 +355,7 @@
  }
  async function refreshAsaas(){
   const card=$('#asaasSandboxCard'),btn=$('#asaasSandboxCreate');
-  if(S.demo||S.actor?.role!=='manager'){
+  if(S.demo||S.actor?.role!=='admin'){
    card.hidden=true;clear($('#asaasHistoryCheckouts'));clear($('#asaasHistoryEvents'));$('#asaasHistoryStatus').textContent='';return;
   }
   card.hidden=false;btn.disabled=true;
@@ -400,7 +410,7 @@
  function renderCatalog(){
   const catalog=S.data.catalog?.catalog, target=$('#catalogTable');clear(target);
   if(!catalog){$('#catalogNotice').textContent='Carregando cardápio...';return;}
-  const canEdit=S.actor.role==='manager'&&(S.demo||S.data.catalogWritable!==false);
+  const canEdit=['admin','manager'].includes(S.actor.role)&&(S.demo||S.data.catalogWritable!==false);
   $('#catalogNotice').textContent=canEdit?'Alterações registradas com revisão do catálogo. Pedido antigo não muda de preço.':
    'Somente uma conta de gestão pode alterar valores.';
   const term=$('#catalogSearch').value.trim().toLowerCase();
