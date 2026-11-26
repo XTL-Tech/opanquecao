@@ -1,0 +1,47 @@
+'use strict';
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const {JSDOM}=require('jsdom');
+const catalog=JSON.parse(fs.readFileSync('cardapio.json','utf8'));
+const areas=JSON.parse(fs.readFileSync('delivery-areas.json','utf8'));
+const w=new JSDOM(fs.readFileSync('index.html','utf8'),{url:'https://opanquecao.vercel.app/',runScripts:'outside-only'}).window,d=w.document;
+Object.assign(global,{window:w,document:d,Option:w.Option});
+w.HTMLDialogElement.prototype.showModal=function(){this.open=true};
+w.HTMLDialogElement.prototype.close=function(){this.open=false};
+w.HTMLElement.prototype.scrollIntoView=function(){};
+const $=id=>d.getElementById(id),sleep=()=>new Promise(r=>setTimeout(r,30));
+let connected=true,mutations=[];
+global.fetch=async(url,init={})=>{
+ const u=new URL(url,w.location.origin);
+ if(u.pathname==='/delivery-areas.json')return {ok:true,json:async()=>areas};
+ if(u.pathname!=='/api/customer-account')throw new Error('Unexpected network: '+url);
+ const action=u.searchParams.get('action');
+ if(init.method==='POST')mutations.push(action);
+ if(action==='config')return {ok:true,json:async()=>({enabled:true,siteKey:'test'})};
+ if(action==='logout'){connected=false;return {ok:true,json:async()=>({signedOut:true})};}
+ if(!connected)return {ok:false,status:401,json:async()=>({error:'Entre na sua conta.'})};
+ if(action==='state')return {ok:true,json:async()=>({email:'cliente@example.test',profile:{name:'Cliente Fictício',phone:'51999999999'}})};
+ if(action==='addresses')return {ok:true,json:async()=>({addresses:[{id:'test-address',label:'Casa',revision:1,data:{city:'Nova Hartz',neighborhood:'Centro',street:'Rua de Teste',number:'100'}}],next:null})};
+ throw new Error('Unexpected action: '+action);
+};
+(async()=>{
+ const inline=[...d.querySelectorAll('script:not([src])')].at(-1).textContent;
+ w.eval(inline.replace(/\n\s*initMenu\(\);\s*$/,''));
+ await import('../cart.mjs');
+ w.renderMenu(catalog);d.dispatchEvent(new w.CustomEvent('menu-ready',{detail:catalog}));await sleep();
+ assert.equal($('customerAccountNav').hidden,false);
+ d.querySelector('.category-card[href="#panquecas-salgadas"]').click();
+ d.querySelector('#panquecas-salgadas .menu-item .product-details').click();
+ d.querySelector('#productDialogContent form').onsubmit({preventDefault(){}});
+ await $('openCart').onclick();$('startCheckout').click();await sleep();
+ const e=$('checkout').elements;
+ assert.equal(e.customerName.value,'Cliente Fictício');assert.equal(e.customerPhone.value,'51999999999');
+ assert.equal($('savedAddresses').hidden,false);
+ $('savedAddressSelect').value='test-address';await $('savedAddressSelect').onchange();
+ assert.equal(e.deliveryCity.value,'Nova Hartz');assert.equal(e.deliveryStreet.value,'Rua de Teste');assert.equal(e.deliveryNumber.value,'100');
+ await $('checkoutAccountLogout').onclick();
+ assert.equal(e.customerName.value,'');assert.equal(e.customerPhone.value,'');assert.equal(e.deliveryStreet.value,'');
+ assert.equal($('savedAddresses').hidden,true);assert.equal(JSON.parse(w.localStorage.getItem('disk-panquecao-cart-v1')).lines.length,1);
+ assert.deepEqual(mutations,['logout']);console.log('PASS: authenticated checkout, saved address, sign-out, preserved cart, zero order requests.');
+ w.close();process.exit(0);
+})().catch(e=>{console.error(e);process.exit(1)});
