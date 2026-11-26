@@ -1018,7 +1018,7 @@
         <nav class="site-tabs" aria-label="Navegação principal">
             <a href="#cardapio">Cardápio</a>
             <a href="#contato">Contato</a>
-            <a href="#como-chegar">Como chegar</a><a href="/minha-conta.html">Minha conta</a>
+            <a href="#como-chegar">Como chegar</a><a href="/minha-conta.html" id="customerAccountNav">Minha conta</a>
         </nav>
         <a class="header-cta" href="#cardapio">Escolher meu sabor <span aria-hidden="true">→</span></a>
     </div>
@@ -1054,7 +1054,7 @@
         <p id="menuLoading" role="status">Carregando cardápio…</p>
     </div>
 </main>
-<section class="premium-loyalty"><div><span class="premium-eyebrow">EM BREVE · PROGRAMA DE FIDELIDADE</span><h2>PanqueCoins</h2><p>Peça. Acumule. Saboreie.</p><p class="loyalty-sub">Porque ser de casa tem suas vantagens.</p><small>Benefícios sujeitos à liberação do programa.</small></div><div class="premium-medal" aria-hidden="true">P</div></section>
+<section class="premium-loyalty"><div><span class="premium-eyebrow">EM BREVE · PROGRAMA DE FIDELIDADE</span><h2>PanqueCoins</h2><p>Peça. Acumule. Saboreie.</p><p class="loyalty-sub">Porque ser de casa tem suas vantagens.</p><small>O acúmulo começa após a ativação. Recompensas e regras de uso serão divulgadas antes da liberação dos resgates.</small><a class="loyalty-join" href="/minha-conta.html" id="loyaltyAccountLink">Quero fazer parte →</a></div><div class="premium-medal" aria-hidden="true">P</div></section>
 <dialog class="product-dialog" id="productDialog" aria-labelledby="productDialogTitle">
     <form method="dialog"><button autofocus>Voltar ao cardápio</button></form>
     <h2 id="productDialogTitle"></h2>
@@ -1589,8 +1589,8 @@
     <form id="checkout" class="order-form" hidden>
         <p class="checkout-assurance"><strong>Quase pronto!</strong> Escolha como receber e informe os dados necessários. A loja confirmará o pedido pelo WhatsApp.</p>
         <section class="checkout-account" aria-label="Minha conta">
-    <div><strong>Já é de casa?</strong><p>Reutilize seus dados e endereços ou continue sem cadastro.</p></div>
-    <div class="checkout-account-actions"><button type="button" id="loadSavedAccount">Usar minha conta</button><a href="/minha-conta.html">Gerenciar conta ↗</a></div>
+    <div><strong id="savedAccountHeading">Seja de casa!</strong><p id="savedAccountPitch">Crie sua conta, salve seus endereços e prepare-se para acumular PanqueCoins quando o programa for liberado. Você também pode pedir sem cadastro.</p></div>
+    <div class="checkout-account-actions"><a class="account-join" id="accountJoinLink" href="/minha-conta.html">Entrar ou criar conta →</a><button type="button" id="loadSavedAccount" hidden>Atualizar dados</button><button type="button" id="checkoutAccountLogout" hidden>Sair da conta</button></div>
     <p id="savedAccountStatus" role="status" aria-live="polite"></p>
     <div id="savedAddresses" hidden><label>Endereço cadastrado<select id="savedAddressSelect"><option value="">Escolha um endereço</option></select></label><button type="button" id="moreSavedAddresses" hidden>Carregar mais</button></div>
  </section><div class="customer-fields">
@@ -1739,5 +1739,5 @@ a.whatsapp-float{position:fixed;left:auto;right:max(16px,env(safe-area-inset-rig
 body.has-cart a.whatsapp-float{bottom:calc(84px + env(safe-area-inset-bottom,0px))}
 a.whatsapp-float:focus-visible{outline:3px solid #145c37;outline-offset:3px}
 </style>
-<style>.checkout-account{border:1px solid #e5dbd7;background:#fff;border-radius:12px;padding:14px;color:#282426}.checkout-account p{font-size:13px;line-height:1.5;color:#665c60;margin:4px 0}.checkout-account-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px}.checkout-account button,.checkout-account a{min-height:44px;display:inline-flex;align-items:center;border-radius:9px;font-weight:700;font-size:13px}.checkout-account a{color:#852638}.checkout-account [hidden]{display:none!important}#savedAddresses{margin-top:12px}.gourmet-header .site-tabs a[href="/minha-conta.html"]{color:#852638!important}@media(max-width:700px){.gourmet-header .site-tabs a{padding-inline:3px;white-space:normal;font-size:11px}}</style></body>
+<style>.checkout-account{border:1px solid #e5dbd7;background:#fff;border-radius:12px;padding:14px;color:#282426}.checkout-account p{font-size:13px;line-height:1.5;color:#665c60;margin:4px 0}.checkout-account-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px}.checkout-account button,.checkout-account a{min-height:44px;display:inline-flex;align-items:center;border-radius:9px;font-weight:700;font-size:13px}.checkout-account a{color:#852638}.checkout-account [hidden]{display:none!important}#savedAddresses{margin-top:12px}.gourmet-header .site-tabs a[href="/minha-conta.html"]{color:#852638!important}@media(max-width:700px){.gourmet-header .site-tabs a{padding-inline:3px;white-space:normal;font-size:11px}}</style><style>.checkout-account .account-join,.loyalty-join{display:inline-flex;align-items:center;min-height:44px;background:#852638;color:white!important;padding:10px 14px;border-radius:9px;font-weight:800;text-decoration:none}.loyalty-join{background:#fff8ef;color:#852638!important;margin-top:12px}.checkout-account .account-join:hover,.loyalty-join:hover{text-decoration:underline}#checkoutAccountLogout{background:transparent!important;color:#852638!important;border:1px solid #e5dbd7!important}.checkout-account [hidden]{display:none!important}</style></body>
 </html>
