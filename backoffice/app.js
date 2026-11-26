@@ -240,6 +240,7 @@
     const card=el('article',null,'form-card');
     const state={pending:t.due?'Contato disponível':'Aguardando 30 minutos',claimed:'Em atendimento',contacted:'Aguardando resposta',issue:'Problema relatado'};
     card.append(el('h3','#'+t.ref_code+' · '+state[t.state]),el('p',t.customer_name||'Cliente'),el('p','Contato previsto: '+new Date(t.due_at).toLocaleString('pt-BR')));
+    if(t.review_due)card.append(el('p',t.review_requested_at?'Convite de avaliação registrado':'⭐ 3ª entrega — convidar para avaliação no Google','hint'));
     if(t.note)card.append(el('p',t.note));
     const move=async(next,note='')=>{
      try{await run('after_sale_status',{id:t.request_id,next,note});await refreshAfterSales();show('Pós-venda atualizado.');}catch(e){show(e.message,true);}
@@ -248,10 +249,12 @@
     if(t.state==='claimed'&&t.mine){
      if(/^\d{10,11}$/.test(t.customer_phone||'')){
       const link=el('a','💬 Perguntar pelo WhatsApp');
-      link.href='https://wa.me/55'+t.customer_phone+'?text='+encodeURIComponent('Olá! Aqui é o Disk Panquecão. Seu pedido chegou certinho? Deu tudo certo com o atendimento e a comida? 😊');
+      let message='Olá! Aqui é o Disk Panquecão. Seu pedido chegou certinho? Deu tudo certo com o atendimento e a comida? 😊';
+      if(t.review_due)message+='\n\nObrigado por pedir com a gente novamente! Se quiser, conte sua experiência sincera em uma avaliação do Disk Panquecão no Google.'+(data.reviewUrl?' '+data.reviewUrl:'');
+      link.href='https://wa.me/55'+t.customer_phone+'?text='+encodeURIComponent(message);
       link.target='_blank';link.rel='noopener noreferrer';card.append(link);
      }
-     card.append(button('Confirmar mensagem enviada',()=>move('contacted'),'primary'),button('Liberar tarefa',()=>move('pending')));
+     card.append(button(t.review_due?'Confirmar pós-venda e convite enviados':'Confirmar mensagem enviada',()=>move('contacted'),'primary'),button('Liberar tarefa',()=>move('pending')));
     }
     if(t.state==='contacted'&&t.mine){
      card.append(button('Tudo certo',()=>move('satisfied'),'primary'),button('Sem resposta',()=>move('no_response')));
