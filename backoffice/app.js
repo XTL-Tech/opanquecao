@@ -158,12 +158,13 @@
  function showTab(tab){
   if(S.data?.operational)return;
   if(['kitchen','courier','integrations'].includes(tab)&&S.actor?.role!=='admin')return;
-  if(['reports','bi'].includes(tab)&&!['admin','manager'].includes(S.actor?.role))return;
+  if(['reports','bi','ranking','fiscal'].includes(tab)&&!['admin','manager'].includes(S.actor?.role))return;
   if(tab!=='bi')exitBiTV();
   $('#tab-operational').hidden=true;
-  S.tab=tab;for(const name of ['orders','customers','cash','catalog','after-sales','reports','integrations','bi','comandas'])$('#tab-'+name).hidden=name!==tab;
+  S.tab=tab;for(const name of ['orders','customers','cash','catalog','after-sales','reports','integrations','bi','comandas','ranking','fiscal'])$('#tab-'+name).hidden=name!==tab;
   document.querySelectorAll('[data-tab]').forEach(n=>n.classList.toggle('active',n.dataset.tab===tab));
   const meta={orders:['Pedidos','Acompanhe cada pedido, do primeiro contato à entrega.'],
+   ranking:['Ranking anual','Classificação por categoria, sem divulgar valores.'],fiscal:['Fiscal e estornos','Solicitações e conciliação, sem execução externa.'],
    comandas:['Mesas e comandas','Controle do consumo no local.'],
    bi:['BI ao vivo','Visão executiva com atualização automática e modo TV.'],
    reports:['Relatórios gerenciais','Resultados comerciais e indicadores operacionais.'],integrations:['Integrações XTL','Ambiente técnico restrito.'],
@@ -194,7 +195,7 @@
   $('#pageTitle').textContent=kitchen?'Fila da cozinha':'Entregas';
   $('#pageSubtitle').textContent=kitchen?'Pedidos aceitos e em preparo.':'Pedidos preparados e suas entregas em andamento.';
   $('#navigation').hidden=!isAdmin;
-  for(const name of ['orders','customers','cash','catalog','after-sales','reports','integrations','bi','comandas'])$('#tab-'+name).hidden=true;
+  for(const name of ['orders','customers','cash','catalog','after-sales','reports','integrations','bi','comandas','ranking','fiscal'])$('#tab-'+name).hidden=true;
   const section=$('#tab-operational');section.hidden=false;
   const list=$('#operationalQueue');clear(list);
   const orders=data.orders||[];
@@ -442,7 +443,30 @@
    }
   }catch(e){$('#comandaStatus').textContent=e.message;}finally{comandaBusy=false;}
  }
- function renderTab(){if(S.tab==='comandas')void refreshComandas();if(S.tab==='bi')void refreshBI();if(S.tab==='reports')void refreshReports();if(S.tab==='integrations')void refreshAsaas();if(['kitchen','courier'].includes(S.tab))void adminOperational(S.tab);if(S.tab==='orders')renderOrders();if(S.tab==='customers')renderCustomers();if(S.tab==='cash')renderCash();if(S.tab==='catalog')renderCatalog();if(S.tab==='after-sales')refreshAfterSales();}
+ let annualBusy=false;
+ async function refreshAnnual(){
+  if(annualBusy||S.demo||!['admin','manager'].includes(S.actor?.role)||!['ranking','fiscal'].includes(S.tab))return;
+  const actor=S.actor,tab=S.tab;annualBusy=true;
+  const root=$(tab==='ranking'?'#annualContent':'#fiscalContent');clear(root);
+  try{
+   if(tab==='ranking'){
+    const d=await request('/api/backoffice?action=annual_ranking&year='+encodeURIComponent($('#annualYear').value));
+    if(S.actor!==actor||S.tab!==tab)return;
+    root.append(el('p',d.published?'Campanha publicada':'Campanha ainda não liberada · prévia administrativa','hint'));
+    for(const [key,title] of [['pancake','Campeão das panquecas'],['orders','Campeão dos pedidos'],['visits','Campeão de presença']]){
+     root.append(reportRows(title,['Posição','Participante'],d.entries.filter(e=>e.category===key).map(e=>[e.position+'º',e.alias])));
+    }
+   }else{
+    const d=await request('/api/backoffice?action=fiscal_refunds');
+    if(S.actor!==actor||S.tab!==tab)return;
+    root.append(el('p','Registro interno. Emissão e transferência externas ainda não habilitadas.','hint'));
+    root.append(reportRows('Solicitações fiscais',['Pedido ou comanda','Estado','Data'],d.fiscal.map(x=>[x.request_id||x.comanda_id,x.state,new Date(x.created_at).toLocaleString('pt-BR')])));
+    root.append(reportRows('Solicitações de devolução Pix',['Pedido','Valor','Motivo','Estado'],d.refunds.map(x=>[x.ref_code,money(x.amount_cents),x.reason,x.state])));
+   }
+  }catch(e){if(S.actor===actor&&S.tab===tab)root.append(el('p',e.message,'hint'));}
+  finally{annualBusy=false;}
+ }
+ function renderTab(){if(['ranking','fiscal'].includes(S.tab))void refreshAnnual();if(S.tab==='comandas')void refreshComandas();if(S.tab==='bi')void refreshBI();if(S.tab==='reports')void refreshReports();if(S.tab==='integrations')void refreshAsaas();if(['kitchen','courier'].includes(S.tab))void adminOperational(S.tab);if(S.tab==='orders')renderOrders();if(S.tab==='customers')renderCustomers();if(S.tab==='cash')renderCash();if(S.tab==='catalog')renderCatalog();if(S.tab==='after-sales')refreshAfterSales();}
  async function lookupOrders(more=false){
   if(S.demo||!S.data)return renderOrders();
   try{
@@ -722,6 +746,8 @@
  }
  function loggedOut(){exitBiTV();biData=null;biLastOK=0;clear($('#biCards'));clear($('#biCharts'));S.actor=null;S.data=null;S.catalogLoadedAt=0;S.catalogPending=null;$('#appShell').hidden=true;$('#loginScreen').hidden=false;}
  async function boot(){
+  $('#annualYear').addEventListener('change',refreshAnnual);
+  if(!S.demo)setInterval(()=>{if(S.tab==='ranking'&&!document.hidden)void refreshAnnual();},300000);
   const cf=$('#comandaForm');
   function resetCpfLookup(){
    cf.elements.name.value='';cf.elements.phone.value='';cf.elements.name.required=false;cf.elements.phone.required=false;
