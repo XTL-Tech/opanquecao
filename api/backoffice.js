@@ -12,6 +12,7 @@ const liveBI=require('../lib/live-bi');
 const comandas=require('../lib/comandas');
 const annual=require('../lib/annual-ranking-fiscal');
 const ads=require('../lib/ad-contracts');
+const storeOperations=require('../lib/store-operations');
 
 function respond(res,status,payload){return res.status(status).json(payload);}
 function requireId(id){if(!c.UUID.test(id))c.fail('Identificador de pedido inválido.');return id;}
@@ -144,6 +145,7 @@ module.exports=async function handler(req,res){
     if(actor.role!=='admin')throw new auth.AuthError('Somente o superadministrador.',403);
     return respond(res,200,await operations.queue(actor,req.query?.view));
    }
+   if(act==='store_operations')return respond(res,200,await storeOperations.get(actor));
    if(act==='ad_contracts')return respond(res,200,await ads.list(actor));
    if(act==='annual_ranking')return respond(res,200,await annual.ranking(actor,req.query));
    if(act==='fiscal_refunds')return respond(res,200,await annual.queues(actor));
@@ -163,6 +165,7 @@ module.exports=async function handler(req,res){
    if(actor.role!=='admin')throw new auth.AuthError('Somente o superadministrador.',403);
    const body=payload(req);return respond(res,200,{ok:true,...await operations.transition(actor,body,body.view)});
   }
+  if(act==='store_operations_save')return respond(res,200,{ok:true,...await storeOperations.save(actor,payload(req))});
   if(act==='ad_contract_save')return respond(res,200,{ok:true,...await ads.save(actor,payload(req))});
   if(act==='ranking_enroll')return respond(res,200,await annual.enroll(actor,payload(req)));
   if(act==='ranking_withdraw')return respond(res,200,await annual.withdraw(actor,payload(req)));
