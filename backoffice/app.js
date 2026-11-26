@@ -9,7 +9,7 @@
  const demo=new URLSearchParams(location.search).get('demo')==='1';
  const S={actor:null,data:null,tab:'orders',selected:null,areas:null,demo,catalogLoadedAt:0,catalogPending:null};
  const label={pending_customer:'Aguardando cliente',awaiting_acceptance:'Aguardando aceite',
-  accepted:'Aceito',completed:'Concluído',delivered:'Entregue',cancelled:'Cancelado'};
+  accepted:'Aceito',preparing:'Em preparo',returned_to_attendant:'Devolvido ao atendimento',completed:'Preparado',out_for_delivery:'Saiu para entrega',delivered:'Entregue',cancelled:'Cancelado'};
  const payment={cash:'Dinheiro',pix:'Pix',credit:'Crédito',debit:'Débito',other:'Outro'};
  const money=n=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format((Number(n)||0)/100);
  const time=value=>value?new Date(value).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit',timeZone:'America/Sao_Paulo'}):'—';
@@ -150,6 +150,7 @@
   try{await pending;}finally{if(S.catalogPending===pending)S.catalogPending=null;}
  }
  function showTab(tab){
+  if(S.data?.operational)return;
   S.tab=tab;for(const name of ['orders','customers','cash','catalog'])$('#tab-'+name).hidden=name!==tab;
   document.querySelectorAll('[data-tab]').forEach(n=>n.classList.toggle('active',n.dataset.tab===tab));
   const meta={orders:['Pedidos','Acompanhe cada pedido, do primeiro contato à entrega.'],
@@ -162,11 +163,61 @@
    if(tab==='cash')refreshAsaas();
   }
  }
- function render(){if(!S.data)return;$('#todayText').textContent='📅 '+S.data.today.split('-').reverse().join('/');
+ function render(){if(!S.data)return;if(S.data.operational){renderOperational();return;}$('#todayText').textContent='📅 '+S.data.today.split('-').reverse().join('/');
   $('#staffLabel').textContent=S.actor.email||'Atendente';
   $('#staffRole').textContent=S.actor.role==='manager'?'Gestão':'Atendimento';
   $('#pendingCount').textContent=S.data.orders.filter(x=>['pending_customer','awaiting_acceptance'].includes(x.status)).length||'';
   renderTab();
+ }
+ function renderOperational(){
+  const kitchen=S.actor.role==='kitchen';
+  $('#staffLabel').textContent=S.actor.email||'Equipe';
+  $('#staffRole').textContent=kitchen?'Cozinha':'Motoboy';
+  $('#pageTitle').textContent=kitchen?'Fila da cozinha':'Entregas';
+  $('#pageSubtitle').textContent=kitchen?'Pedidos aceitos e em preparo.':'Pedidos preparados e suas entregas em andamento.';
+  $('#navigation').hidden=true;
+  for(const name of ['orders','customers','cash','catalog'])$('#tab-'+name).hidden=true;
+  const section=$('#tab-operational');section.hidden=false;
+  const list=$('#operationalQueue');clear(list);
+  const orders=S.data.orders||[];
+  if(!orders.length){list.append(el('p','Nenhum pedido disponível.','empty'));return;}
+  for(const o of orders){
+   const card=el('article',null,'form-card');
+   card.append(el('h2','#'+o.ref_code+' · '+(label[o.status]||o.status)),el('p',time(o.created_at),'hint'));
+   const move=async(next,reason)=>{
+    try{await run('order_status',{id:o.request_id,next,reason});await reload();show('Pedido atualizado.');}
+    catch(e){show(e.message,true);}
+   };
+   if(kitchen){
+    card.append(el('p',({delivery:'Entrega',pickup:'Retirada',table:'Mesa'}[o.mode]||'')+(o.table_name?' · '+o.table_name:'')));
+    for(const i of o.items||[]){
+     card.append(el('h3',i.quantity+'x '+i.product+(i.option&&i.option!=='Único'?' · '+i.option:'')));
+     const details=[i.flavors?.join(' / '),i.freeExtras?.join(', '),i.paidExtras?.join(', '),i.note].filter(Boolean).join(' · ');
+     if(details)card.append(el('p',details));
+    }
+    if(o.note)card.append(el('p','Observação: '+o.note));
+    if(o.status==='accepted')card.append(button('Iniciar preparo',()=>move('preparing'),'soft'));
+    card.append(button('Pedido preparado',()=>move('completed'),'primary'));
+    card.append(button('Devolver ao atendimento',()=>{
+      const reason=prompt('Informe o motivo da devolução ao atendente:');
+      if(reason?.trim())move('returned_to_attendant',reason.trim());
+    },'soft danger'));
+   }else{
+    const f=o.fulfillment||{};
+    const address=[f.street,f.number,f.neighborhood,f.city,'RS',f.postalCode].filter(Boolean).join(', ');
+    card.append(el('h3',o.customer_name||'Cliente'),el('p',address),el('p',[f.complement,f.reference].filter(Boolean).join(' · ')));
+    if(/^\d{10,11}$/.test(o.customer_phone||'')){
+     const phone=el('a','Ligar: '+o.customer_phone);phone.href='tel:+55'+o.customer_phone;card.append(phone);
+     card.append(button('WhatsApp',()=>window.open('https://wa.me/55'+o.customer_phone,'_blank','noopener,noreferrer')));
+    }
+    const lat=f.location?.latitude,lon=f.location?.longitude;
+    const dest=Number.isFinite(lat)&&Math.abs(lat)<=90&&Number.isFinite(lon)&&Math.abs(lon)<=180?lat+','+lon:address;
+    const map=el('a','Abrir rota no Google Maps');map.href='https://www.google.com/maps/dir/?api=1&destination='+encodeURIComponent(dest);map.target='_blank';map.rel='noopener noreferrer';card.append(map);
+    if(o.status==='completed')card.append(button('Sair para entrega',()=>move('out_for_delivery'),'primary'));
+    if(o.status==='out_for_delivery')card.append(button('Confirmar entrega',()=>{if(confirm('Confirma que entregou este pedido?'))move('delivered');},'primary'));
+   }
+   list.append(card);
+  }
  }
  function renderTab(){if(S.tab==='orders')renderOrders();if(S.tab==='customers')renderCustomers();if(S.tab==='cash')renderCash();if(S.tab==='catalog')renderCatalog();}
  async function lookupOrders(more=false){
@@ -350,6 +401,7 @@
     },'primary'));body.append(container);
    }
   }else if(o.fulfillment?.type==='table')body.append(el('p','Mesa/comanda: '+o.fulfillment.table));
+  if(o.return_reason)body.append(el('div','Devolvido pela cozinha: '+o.return_reason,'text-block'));
   if(o.note)body.append(el('div','Observação: '+o.note,'text-block'));
   const due=total(o),summary=el('div',null,'total-line');
   summary.append(el('span','Total previsto'),el('strong',due===null?'Entrega a confirmar':money(due)));body.append(summary);
@@ -357,15 +409,18 @@
   if(customer&&!S.demo)actions.append(button('WhatsApp',()=>window.open('https://wa.me/55'+customer.phone,'_blank','noopener,noreferrer')));
   const choices={pending_customer:[['Cliente confirmou','awaiting_acceptance'],['Cancelar','cancelled']],
    awaiting_acceptance:[['Aceitar pedido','accepted'],['Cancelar','cancelled']],
-   accepted:[['Marcar concluído','completed'],['Cancelar','cancelled']],
-   completed:[['Marcar entregue','delivered'],['Cancelar','cancelled']]};
+   accepted:[['Iniciar preparo','preparing'],['Marcar preparado','completed'],['Cancelar','cancelled']],
+   preparing:[['Marcar preparado','completed'],['Cancelar','cancelled']],
+   returned_to_attendant:[['Revisar e reenviar para aceite','awaiting_acceptance'],['Cancelar','cancelled']],
+   completed:o.fulfillment?.type==='delivery'?[['Cancelar','cancelled']]:[['Marcar entregue','delivered'],['Cancelar','cancelled']],
+   out_for_delivery:[['Marcar entregue','delivered'],['Cancelar','cancelled']]};
   for(const [text,next] of choices[o.status]||[])actions.append(button(text,async()=>{
    if(next==='accepted'&&due===null)return show('Defina a taxa de entrega antes de aceitar.',true);
    if(next==='cancelled'&&o.payment_status==='paid')return show('Pedido pago exige estorno; não pode cancelar aqui.',true);
    if(['cancelled','delivered'].includes(next)&&!confirm('Confirmar: '+text.toLowerCase()+'?'))return;
    await mutate('order_status',{id,next},'Situação atualizada.');
   },next==='cancelled'?'soft danger':'primary'));
-  if(['accepted','completed','delivered'].includes(o.status)&&o.payment_status==='pending'){
+  if(['accepted','preparing','completed','out_for_delivery','delivered'].includes(o.status)&&o.payment_status==='pending'){
    const box=el('div',null,'payment-box');box.append(el('h3','Registrar pagamento recebido'));
    const sel=el('select');for(const [key,value] of Object.entries(payment)){const opt=el('option',value);opt.value=key;sel.append(opt);}
    const label=el('label');const check=el('input');check.type='checkbox';label.append(check,el('span','Confirmo que o pagamento já foi recebido'));
