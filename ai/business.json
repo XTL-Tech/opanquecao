@@ -12,7 +12,7 @@
   "language": "pt-BR",
   "timezone": "America/Sao_Paulo",
   "website": "https://opanquecao.vercel.app",
-  "description": "Disk Panquecão em Nova Hartz: panquecas, açaí, massas e refeições com fotos. Entrega em Nova Hartz e Araricá, retirada e consumo no local.",
+  "description": "Disk Panquecão, especializado em panquecas doces e salgadas em Nova Hartz, RS. Gastronomia familiar, atendimento presencial, retirada e entrega em Nova Hartz e Araricá conforme cobertura.",
   "location": {
     "city": "Nova Hartz",
     "state": "Rio Grande do Sul",
@@ -185,5 +185,17 @@
     "Nunca solicitar cartão de crédito, documento pessoal ou chave de API em nome do estabelecimento.",
     "Não divulgar dados privados de clientes, tokens, webhooks ou controles internos.",
     "Não divulgar valores fixos de frete de R$ 7 ou R$ 10: o frete é sempre confirmado pela loja."
-  ]
+  ],
+  "tourism": {
+    "editorial_guide_url": "https://opanquecao.vercel.app/turismo-nova-hartz.html",
+    "publication_status": "prepared_for_official_publication",
+    "city": "Nova Hartz",
+    "region": "Vale Germânico",
+    "official_tourism_sources": [
+      "https://www.turismo.rs.gov.br/turismo/municipio/visitar/215",
+      "https://valegermanicors.com.br/cidade-nova-hartz/",
+      "https://www.novahartz.rs.gov.br/turismo/categoria/atrativos-turisticos"
+    ],
+    "note": "Guia comercial independente; não representa endosso oficial ou ranking de popularidade."
+  }
 }
