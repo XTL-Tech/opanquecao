@@ -552,6 +552,50 @@ checkoutForm.addEventListener('input', () => {
     orderStatus.textContent = '';
 });
 
+
+ // Acompanhamento apenas enquanto o navegador mantém o site aberto.
+ // Não solicita permissão de notificações nem armazena dados pessoais.
+const deliveryTrackingKey='dp-delivery-tracking-v1';
+let deliveryTimer=null;
+function readDeliveryTracking(){
+ try{
+  const v=JSON.parse(window.localStorage.getItem(deliveryTrackingKey)||'null');
+  return v&&typeof v.id==='string'&&Date.now()-v.at<86400000?v:null;
+ }catch{return null;}
+}
+function rememberDelivery(id){
+ try{window.localStorage.setItem(deliveryTrackingKey,JSON.stringify({id,at:Date.now(),notified:false}));}catch{return;}
+ startDeliveryTracking();
+}
+async function checkDelivery(){
+ const v=readDeliveryTracking();
+ if(!v||v.notified){if(deliveryTimer!==null)clearInterval(deliveryTimer);deliveryTimer=null;return;}
+ if(document.hidden)return;
+ try{
+  const r=await fetch('/api/delivery-status',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:v.id}),cache:'no-store'});
+  if(!r.ok)return;
+  const d=await r.json();
+  if(d.status==='out_for_delivery'){
+   // Recheck in case a new order replaced the tracked order.
+   if(readDeliveryTracking()?.id!==v.id)return;
+   window.localStorage.setItem(deliveryTrackingKey,JSON.stringify({...v,notified:true}));
+   window.alert('🛵 Seu pedido do Disk Panquecão saiu para entrega!');
+   clearInterval(deliveryTimer);deliveryTimer=null;
+  }else if(['delivered','cancelled'].includes(d.status)){
+   if(readDeliveryTracking()?.id===v.id)window.localStorage.removeItem(deliveryTrackingKey);
+   clearInterval(deliveryTimer);deliveryTimer=null;
+  }
+ }catch{/* Tracking must never interrupt ordering. */}
+}
+function startDeliveryTracking(){
+ const v=readDeliveryTracking();
+ if(!v||v.notified||deliveryTimer!==null)return;
+ deliveryTimer=setInterval(checkDelivery,30000);
+ if(!document.hidden)void checkDelivery();
+}
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)void checkDelivery();});
+startDeliveryTracking();
+
 function requestId() {
     const bytes = new Uint8Array(16);
     window.crypto.getRandomValues(bytes);
@@ -672,11 +716,12 @@ checkoutForm.onsubmit = async event => {
             registration = lastRegistration;
         } else {
             const challenge = await getChallenge();
+            const trackingId = requestId();
             const response = await fetch('/api/whatsapp-intent', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    requestId: requestId(), name: customer.name, phone: customer.phone,
+                    requestId: trackingId, name: customer.name, phone: customer.phone,
                     lines, note,
                     fulfillment: fulfillment.type === 'delivery'
                         ? {...fulfillment, latitude: fulfillment.location?.latitude,
@@ -691,6 +736,7 @@ checkoutForm.onsubmit = async event => {
                 throw new Error(data.error || 'O registro no bot não pôde ser confirmado.');
             }
             registration = {id: data.id, test: data.test, signature};
+            if(!data.test && fulfillment.type==='delivery') rememberDelivery(trackingId);
             lastRegistration = registration;
         }
         if (registration.test) {
