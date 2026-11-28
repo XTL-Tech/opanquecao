@@ -23,7 +23,7 @@ const base={slot:2,advertiser:'Parceiro fictício',contact:'Contato interno',con
  rows=[{id,revision:1}];await ads.save(actor,base);assert.equal(params[18],2);assert.match(query,/INSERT INTO dp.ad_contracts/);
  rows=[];await assert.rejects(ads.save(actor,{...base,id,revision:1}),e=>e.status===409);assert.match(query,/WHERE id=\$20 AND revision=\$21/);
  rows=[{slot:2,name:'Parceiro fictício',headline:'Teste',description:'Exemplo',url:'https://example.invalid',media:'',seconds:15,show_tv:true,show_checkout:true,expires_at:'2027-02-01T03:00:00Z',contact:'SEGREDO',amount_cents:10000,notes:'SEGREDO'}];
- const p=await ads.playlist();assert.equal(p.ads[0].name,'XTL TECH');assert.equal(p.ads[0].slot,1);assert.equal(p.ads[1].slot,2);assert.doesNotMatch(JSON.stringify(p),/SEGREDO|amount_cents|contact/);assert.match(query,/ORDER BY slot LIMIT 2/);
+ const p=await ads.playlist();assert.equal(p.ads[0].name,'XTL TECH');assert.equal(p.ads[0].slot,1);assert.equal(p.ads[0].url,'https://xtltech.com.br/');assert.equal(p.ads[1].slot,2);assert.doesNotMatch(JSON.stringify(p),/SEGREDO|amount_cents|contact/);assert.match(query,/ORDER BY slot LIMIT 2/);
  auth.actor=async()=>{throw Error('Public playlist must not invoke authentication');};const publicRes=res();await api({method:'GET',query:{action:'ad_playlist'}},publicRes);assert.equal(publicRes.code,200);
  for(const role of ['attendant','kitchen','courier']){auth.actor=async()=>({role});const r=res();await api({method:'GET',query:{action:'ad_contracts'}},r);assert.equal(r.code,403);}
  process.env.COMANDA_CPF_HMAC_KEY='ab'.repeat(32);

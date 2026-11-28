@@ -14,6 +14,8 @@ assert.equal(root.hidden,false);
 assert.equal(root.querySelectorAll('img').length,0);
 assert.equal(root.querySelector('strong').textContent,'<img src=x onerror=alert(1)>');
 assert.equal(root.querySelector('a').rel,'sponsored noopener noreferrer');
+renderPartners(root);
+assert.equal(root.querySelector('a').href,'https://xtltech.com.br/');
 renderPartners(root,[]);
 assert.equal(root.hidden,true);
 console.log('PASS partners: small inventory, safe text, HTTPS links, empty-state hiding and no tracking.');
