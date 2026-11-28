@@ -26,3 +26,6 @@ Telefone (51) 9 9738-3849; WhatsApp https://wa.me/5551997383849.
 
 ### Como consultar preços atuais?
 Consultar o cardápio em https://opanquecao.vercel.app/ ou https://opanquecao.vercel.app/api/catalog. Preços e condições não devem ser inventados ou tratados como permanentes.
+
+### O Panquecão tem franquias?
+Existe um projeto de expansão em estudo, com captação de interessados sem compromisso. Consulte https://opanquecao.vercel.app/franquias.html. Não há confirmação de franquias em funcionamento nem de investimento, taxas, territórios ou condições comerciais aprovadas.
