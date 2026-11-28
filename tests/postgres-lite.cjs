@@ -10,7 +10,7 @@ Object.assign(process.env,{DATABASE_URL:url,BACKOFFICE_ENABLED:'true',BACKOFFICE
 const db=require('../lib/backoffice-neon'),accounts=require('../lib/customer-accounts'),digital=require('../lib/digital-orders'),lite=require('../lib/lite-admin'),ops=require('../lib/store-operations'),status=require('../lib/store-hours-source');
 const query=(s,p=[])=>pool.query(s,p);
 (async()=>{
- const staff={id:'ci-manager',role:'manager'};
+ const staff={id:'22222222-2222-4222-8222-222222222222',role:'manager'};
  await query("INSERT INTO dp.staff(user_id,email,role) VALUES($1,$2,'manager')",[staff.id,'manager@example.invalid']);
  await query("INSERT INTO dp.catalog(id,data) VALUES('opanquecao',$1::jsonb) ON CONFLICT(id) DO NOTHING",[JSON.stringify(require('../cardapio.json'))]);
  const weekly=Object.fromEntries(Array.from({length:7},(_,i)=>[i,[]]));
@@ -38,6 +38,14 @@ const query=(s,p=[])=>pool.query(s,p);
  const guestId=randomUUID(),guest=await digital.guestCustomer(guestId,'Cliente presencial');
  assert.equal(guest.phone,null);await db.createOrder({...order,requestId:guestId,customer:guest,fulfillment:{type:'table',table:'4'},deliveryFeeCents:null,accountSubject:null,contact:{name:'Cliente presencial',phone:null}});
  assert.equal((await db.searchOrders({channel:'table'})).length,1);
+ Object.assign(process.env,{VERCEL_ENV:'production',TELEGRAM_APPROVAL_ENABLED:'true',TELEGRAM_APPROVAL_WEBHOOK_SECRET:'a'.repeat(40),TELEGRAM_CHAT_ID:'-100123',TELEGRAM_BOT_TOKEN:'fake',TELEGRAM_APPROVAL_USERS:JSON.stringify({'123':staff.id})});
+ const telegram=require('../lib/telegram-approval'),calls=[];
+ global.fetch=async(url,options)=>{assert.match(url,/^https:\/\/api\.telegram\.org\/botfake\//);calls.push({url,body:JSON.parse(options.body)});return{ok:true,json:async()=>({ok:true})};};
+ const click=async(action,secret='a'.repeat(40),user=123)=>{const r={code:0,setHeader(){},status(n){this.code=n;return this;},json(v){this.body=v;return this;}};await telegram.handler({method:'POST',headers:{'x-telegram-bot-api-secret-token':secret},body:{callback_query:{id:'test',data:action+':'+guestId,from:{id:user},message:{chat:{id:-100123},message_id:1,text:'Pedido fictício'}}}},r);return r;};
+ assert.equal((await click('reject','wrong')).code,403);await click('reject','a'.repeat(40),999);assert.equal((await db.getOrder(guestId)).status,'awaiting_acceptance');
+ await Promise.all([click('accept'),click('reject')]);const final=(await db.getOrder(guestId)).status;assert.ok(['accepted','cancelled'].includes(final));
+ await click(final==='accepted'?'reject':'accept');assert.equal((await db.getOrder(guestId)).status,final);
+ assert.equal(calls.filter(c=>c.url.endsWith('/editMessageText')).length,1);
  const report=await db.dashboard();assert.equal(report.orders.length,2);
  const secrets=(await query('SELECT cpf_hash,cpf_last2 FROM dp.customer_accounts WHERE subject=$1',[a])).rows[0];assert.notEqual(secrets.cpf_hash,cpf);assert.equal(secrets.cpf_last2,'25');
  console.log('PASS PostgreSQL real: migrations, account ownership, CPF uniqueness, fee snapshot, concurrent order and decision, guest and store hours');
