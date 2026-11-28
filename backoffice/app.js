@@ -525,7 +525,7 @@
   try{
    const d=await request('/api/backoffice?action=store_operations');if(S.actor!==actor||S.tab!=='store-hours')return;
    const c=d.config;hoursRevision=c?.revision||0;drawHours(c?.weekly_schedule||{});drawHolidays(d.holidays,c?.holiday_exceptions||{});
-   const f=$('#hoursForm').elements;f.acceptingOrders.checked=c?.accepting_orders===true;f.manualState.value='auto';
+   const f=$('#hoursForm').elements;f.acceptingOrders.checked=c?.accepting_orders===true;f.manualState.value=c?.manual_state!=='auto'&&Date.parse(c?.manual_override_until)>Date.now()?c.manual_state:'auto';if(f.manualState.value!=='auto')f.overrideMinutes.value=String(Math.max(5,Math.ceil((Date.parse(c.manual_override_until)-Date.now())/60000)));
    $('#hoursStatus').textContent=(d.integrated?'Controle online ativo. ':'Integração do horário ainda não ativada. ')+(c?'Estado atual da agenda: '+(d.status.open?'Aberta':'Fechada')+' · '+d.status.reason:'Nenhum horário cadastrado.');hoursLoaded=true;$('#hoursSave').disabled=false;
   }catch(e){$('#hoursStatus').textContent=e.message;}finally{hoursBusy=false;}
  }
@@ -866,7 +866,7 @@
   if(!S.demo)setInterval(()=>{if(S.tab==='bi')void refreshBI();},30000);
   $('#reportForm').addEventListener('submit',e=>{e.preventDefault();void refreshReports();});
   $('#reportExport').addEventListener('click',exportReports);
-  setInterval(()=>{if(S.actor&&!S.demo&&!S.data?.operational&&!document.hidden)void refreshAfterSales();},60000);
+  setInterval(()=>{if(S.actor&&!S.demo&&!S.data?.operational&&!S.data?.lite&&!document.hidden)void refreshAfterSales();},60000);
   // Poll only active operational screens; never reset an open dialog or search.
   if(!S.demo)setInterval(()=>{
    if(!S.actor||document.hidden||document.querySelector('dialog[open]'))return;
