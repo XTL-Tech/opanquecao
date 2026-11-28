@@ -874,7 +874,7 @@ checkoutForm.onsubmit = async event => {
                     requestId: trackingId, name: customer.name, phone: customer.phone,
                     lines, note,
                     fulfillment: fulfillment.type === 'delivery'
-                        ? {...fulfillment, latitude: fulfillment.location?.latitude,
+                        ? {...fulfillment, neighborhood: checkoutForm.elements.deliveryNeighborhood.value, otherNeighborhood: checkoutForm.elements.deliveryOtherNeighborhood.value, latitude: fulfillment.location?.latitude,
                             longitude: fulfillment.location?.longitude}
                         : fulfillment,
                     challenge
