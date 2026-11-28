@@ -741,11 +741,13 @@ function validateCustomer() {
     }
     return {name, phone};
 }
+let deliveryAccountRequired=false;
 async function ensureTurnstile() {
     if (widgetId !== undefined) return;
     const response = await fetch('/api/order-config', {cache: 'no-store'});
     if (!response.ok) throw new Error('Não conseguimos iniciar o registro seguro de pedidos.');
     const config = await response.json();
+    deliveryAccountRequired=config.deliveryAccountRequired===true;
     if (!config.siteKey) throw new Error('O registro pelo bot está indisponível neste momento.');
     if (!window.turnstile) {
         await new Promise((resolve, reject) => {
@@ -851,6 +853,9 @@ checkoutForm.onsubmit = async event => {
             registration = lastRegistration;
         } else {
             const challenge = await getChallenge();
+            if(deliveryAccountRequired&&fulfillment.type==='delivery'&&(!activeAccount?.profile?.hasCpf)){
+                const e=new Error('Entre em Minha conta e vincule seu CPF para continuar.');e.accountRequired=true;throw e;
+            }
             const trackingId = requestId();
             const response = await fetch('/api/whatsapp-intent', {
                 method: 'POST',
@@ -867,6 +872,7 @@ checkoutForm.onsubmit = async event => {
                 signal: AbortSignal.timeout(50000)
             });
             const data = await response.json();
+            if((response.status===401||response.status===403)&&fulfillment.type==='delivery'&&deliveryAccountRequired){const e=new Error(data.error||'Confira sua conta.');e.accountRequired=true;throw e;}
             if(response.status===423){const e=new Error('Loja fechada. Volte no próximo expediente.');e.storeClosed=true;throw e;}
             if (!response.ok || data.status !== 'registered' || data.pending) {
                 throw new Error(data.error || 'O registro no bot não pôde ser confirmado.');
@@ -908,6 +914,10 @@ checkoutForm.onsubmit = async event => {
             fallback.hidden=true;
             if(error?.storeClosed){storeOpenForOrders=false;document.documentElement.classList.add('store-lights-off');const lights=byId('storeLightsStatus');if(lights)lights.hidden=false;}
             return;
+        }
+        if(error?.accountRequired||(deliveryAccountRequired&&fulfillment.type==='delivery')){
+            orderStatus.textContent=error?.message||'Não foi possível registrar seu pedido.';
+            fallback.hidden=true;return;
         }
         orderStatus.textContent = (error?.message || 'Não foi possível registrar no bot.') +
             ' Você ainda pode contatar a loja; esse caminho não gera alerta no bot.';
