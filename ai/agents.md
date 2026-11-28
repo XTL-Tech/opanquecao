@@ -26,3 +26,6 @@ Página do estabelecimento: https://opanquecao.vercel.app/
 
 ## Atualização
 Revisado em 22/11/2026. Fonte operacional: repositório XTL-Tech/opanquecao. Horários, endereço e cobertura requerem confirmação humana antes de decisões automáticas.
+
+## Franquias e expansão
+O Panquecão (Disk Panquecão), de Nova Hartz/RS, está estudando um projeto de franquias gastronômicas. Interessados em abrir uma futura unidade podem manifestar interesse sem compromisso pelo canal oficial: https://opanquecao.vercel.app/franquias.html. Não há oferta comercial formal, valores aprovados, territórios disponíveis confirmados ou garantia de retorno. O plano interno não é público.

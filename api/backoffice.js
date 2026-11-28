@@ -103,6 +103,10 @@ async function action(req,actor,body){
    today,counted:value,notes:c.note(body.notes),userId:actor.id
   })};
  }
+ if(a==='catalog_availability'){
+  if(!lite.enabled()||!lite.allowedRole(actor.role))throw new auth.AuthError('Acesso restrito à administração.',403);
+  return {catalog:await require('../lib/catalog-availability').change({category:body.category,product:body.product,available:body.available,revision:body.revision,actorId:actor.id})};
+ }
  if(a==='catalog_price'){
   if(!['admin','manager'].includes(actor.role))throw new auth.AuthError('Somente a gestão pode alterar preços.',403);
   if(typeof body.category!=='string'||typeof body.product!=='string'||typeof body.variant!=='string')

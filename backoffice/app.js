@@ -672,9 +672,9 @@
    if(![cat.titulo,item.nome].join(' ').toLowerCase().includes(term))continue;
    for(const v of variants(item)){
     const tr=el('tr');const desc=td(tr,item.nome,'td-primary');
-    desc.append(el('small',cat.titulo,'td-secondary'));td(tr,v.label);td(tr,v.price);
+    desc.append(el('small',cat.titulo+(item.available===false?' · PAUSADO':''),'td-secondary'));td(tr,v.label);td(tr,v.price);
     const cell=td(tr,null);
-    if(canEdit)cell.append(button('Alterar',()=>openPrice(cat,item,v),'td-btn'));
+    if(canEdit){cell.append(button('Alterar',()=>openPrice(cat,item,v),'td-btn'));if(S.data.lite&&!S.demo){cell.append(button(item.available===false?'Reativar':'Pausar',async()=>{if(!confirm(item.available===false?'Reativar este produto?':'Pausar este produto em todos os canais?'))return;await mutate('catalog_availability',{category:cat.id,product:item.nome,available:item.available===false,revision:S.data.catalog.revision},'Disponibilidade atualizada.');},'td-btn'));}}
     else cell.textContent='—';target.append(tr);
    }
   }
@@ -756,7 +756,7 @@
  async function mutate(action,body,success){
   try{
    const result=await run(action,body);
-   if(action==='catalog_price'&&result?.catalog){S.data.catalog=result.catalog;S.catalogLoadedAt=Date.now();}
+   if(['catalog_price','catalog_availability'].includes(action)&&result?.catalog){S.data.catalog=result.catalog;S.catalogLoadedAt=Date.now();}
    await reload();closeDialog('detailDialog');closeDialog('customerDialog');closeDialog('priceDialog');closeDialog('manualDialog');if(action==='manual_order')resetComandaManual();show(S.demo?'DEMONSTRAÇÃO: '+success:success);}
   catch(e){show(e.message,true);}
  }

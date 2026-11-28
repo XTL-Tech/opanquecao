@@ -46,8 +46,8 @@ export function orderOptions(item) {
 // enviadas pelo navegador. Os preços dos três produtos permanecem inalterados.
 export function flavorChoices(catalog, category, product) {
     if (category !== 'panquecas-2-sabores') return null;
-    const salty = catalog.categorias.find(entry => entry.id === 'panquecas-salgadas')?.itens.map(item => item.nome) || [];
-    const sweet = catalog.categorias.find(entry => entry.id === 'panquecas-doces')?.itens.map(item => item.nome) || [];
+    const salty = catalog.categorias.find(entry => entry.id === 'panquecas-salgadas')?.itens.filter(item => item.available !== false).map(item => item.nome) || [];
+    const sweet = catalog.categorias.find(entry => entry.id === 'panquecas-doces')?.itens.filter(item => item.available !== false).map(item => item.nome) || [];
     if (product === 'Panqueca Meio a Meio (2 Sabores Salgados)') {
         return [{ label: '1º sabor salgado', options: salty }, { label: '2º sabor salgado', options: salty }];
     }
@@ -82,6 +82,7 @@ export function priceOrder(catalog, lines) {
     return lines.map(line => {
         const item = catalog.categorias.find(category => category.id === line?.category)
             ?.itens.find(item => item.nome === line.product);
+        if (item?.available === false) throw new Error('Produto temporariamente indisponível. Atualize seu carrinho.');
         const option = item && orderOptions(item).find(option => option.label === line.option);
         if (!option || !Number.isInteger(line.quantity) || line.quantity < 1 || line.quantity > 10 ||
             typeof line.note !== 'string' || line.note.length > 160) {

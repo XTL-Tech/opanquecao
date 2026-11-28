@@ -16,7 +16,7 @@ module.exports = async function handler(req, res) {
     try {
         // Responder 200 diretamente evita o 307 e a segunda requisição ao JSON.
         const catalog = await loadCatalog();
-        return res.status(200).json(catalog);
+        return res.status(200).json(require('../lib/catalog-availability').publicCatalog(catalog));
     } catch {
         res.setHeader('Cache-Control', 'no-store');
         return res.status(503).json({ error: 'Cardápio temporariamente indisponível. Tente novamente.' });
