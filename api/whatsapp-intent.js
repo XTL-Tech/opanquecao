@@ -113,8 +113,7 @@ module.exports = async function handler(req, res) {
         if(!claimed.created)return res.status(200).json({...reply,replayed:true,telegramConfirmed:claimed.record.telegram_state==='sent'});
         try{
             const keyboard=[];
-            if(require('../lib/telegram-approval').approvalEnabled()&&!digital.prepaid(deliveryDetails))keyboard.push([{text:'Aceitar pedido',callback_data:'accept:'+requestId},{text:'Rejeitar pedido',callback_data:'reject:'+requestId}]);
-            if(digital.prepaid(deliveryDetails)&&require('../lib/telegram-approval').approvalEnabled())keyboard.push([{text:'Rejeitar pedido',callback_data:'reject:'+requestId}]);
+            if(require('../lib/telegram-approval').approvalEnabled())keyboard.push([{text:'Aceitar pedido',callback_data:'accept:'+requestId},{text:'Rejeitar pedido',callback_data:'reject:'+requestId}]);
             if(normalizedPhone)keyboard.push([{text:'Contato WhatsApp',url:'https://wa.me/55'+normalizedPhone}]);
             const loc=deliveryDetails.location;
             if(loc)keyboard.push([{text:'Ver rota de entrega',url:'https://www.google.com/maps?q='+loc.latitude+','+loc.longitude}]);
