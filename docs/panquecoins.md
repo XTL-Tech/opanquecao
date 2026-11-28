@@ -1,0 +1,9 @@
+# PanqueCoins — política comercial e implantação
+- Cadastro: e-mail autenticado, nome completo, CPF válido/único (HMAC), data de nascimento e WhatsApp. A confirmação do número é feita pela equipe a partir de código enviado pelo próprio cliente pelo WhatsApp oficial.
+- Cadastro não obriga a compra. Nenhuma compra sem conta é atribuída por aproximação de telefone.
+- Retorno efetivo aprovado: 5% dos itens pagos e concluídos, sem frete. 1 PanqueCoin = R$ 0,10; 0,5 PanqueCoin por real; precisão contábil em centavos, sem arredondar para cima. Sem crédito retroativo automático.
+- Resgate mínimo proposto: preço da panqueca doce M de entrada disponível no catálogo atual. Em 28/11/2026, R$23,00 (230 PanqueCoins); demais sabores M até R$30. Escopo de resgate (desconto geral ou produto) e cancelamentos/estornos devem ser definidos antes da ativação financeira. Não prometer saldo utilizável antes disso.
+- Aniversário (futuro): 50% no próprio prato principal do aniversariante, presencial, cadastro completo, pelo menos um acompanhante pagante, uma vez por CPF/ano, no aniversário ou próximo dia de funcionamento se fechado. Não habilitado.
+- Separar cadastro (PANQUECOINS_ENROLLMENT_ENABLED) de delivery obrigatório e pedidos digitais. Manter dados no banco comercial, sem CPF em texto puro; não armazenar código de confirmação em claro.
+- Operação: cliente solicita código e abre WhatsApp oficial. Gestor procura conta pelo telefone, verifica remetente na conversa, informa número do remetente e código. Nunca confirmar apenas porque o cliente digitou o telefone. Alteração de telefone invalida verificação.
+- Antes de ativar créditos: vinculação inequívoca de pedidos autenticados, ledger transacional idempotente, estornos e resgate definidos e testados; homologação de OTP e WhatsApp real. Não ativar pontos simulados em produção.
