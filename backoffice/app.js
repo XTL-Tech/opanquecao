@@ -155,7 +155,9 @@
   S.catalogPending=pending;
   try{await pending;}finally{if(S.catalogPending===pending)S.catalogPending=null;}
  }
+ const liteTabs=new Set(['orders','customers','catalog','store-hours']);
  function showTab(tab){
+  if(S.data?.lite&&!liteTabs.has(tab))return;
   if(S.data?.operational)return;
   if(['kitchen','courier','integrations'].includes(tab)&&S.actor?.role!=='admin')return;
   if(['reports','bi','ranking','fiscal','partners','store-hours'].includes(tab)&&!['admin','manager'].includes(S.actor?.role))return;
@@ -186,8 +188,9 @@
   $('#staffRole').textContent=S.actor.role==='admin'?'Superadministrador XTL':S.actor.role==='manager'?'Administração do estabelecimento':'Atendimento';
   document.querySelectorAll('[data-superadmin]').forEach(n=>n.hidden=S.actor.role!=='admin');
   document.querySelectorAll('[data-management]').forEach(n=>n.hidden=!['admin','manager'].includes(S.actor.role));
+  if(S.data.lite){document.querySelectorAll('[data-tab]').forEach(n=>n.hidden=!liteTabs.has(n.dataset.tab));$('#staffRole').textContent='Administração';$('#newOrder').hidden=true;$('#liteAccounts').hidden=false;}
   $('#pendingCount').textContent=S.data.orders.filter(x=>['pending_customer','awaiting_acceptance'].includes(x.status)).length||'';
-  renderTab();if(S.tab!=='after-sales')void refreshAfterSales();
+  renderTab();if(!S.data.lite&&S.tab!=='after-sales')void refreshAfterSales();
  }
  function renderOperational(data=S.data,view=S.actor.role){
   const isAdmin=S.actor.role==='admin';
@@ -564,6 +567,7 @@
   $('#ordersEmpty').hidden=matches.length>0;
   $('#moreOrders').hidden=S.demo||(!S.moreOrders&&orders.length<80);
   for(const o of matches){
+   const channel=$('#orderChannelFilter')?.value;if(channel&&o.fulfillment?.type!==channel)continue;
    const tr=el('tr');td(tr,'#'+o.ref_code,'td-primary');const who=td(tr,client(o.customer_id)?.name||'Cliente indisponível');
    who.append(el('small',client(o.customer_id)?.phone||'', 'td-secondary'));
    const type={delivery:'Entrega',pickup:'Retirada',table:'Mesa'}[o.fulfillment?.type]||'—';
@@ -712,14 +716,14 @@
   if(o.note)body.append(el('div','Observação: '+o.note,'text-block'));
   const due=total(o),summary=el('div',null,'total-line');
   summary.append(el('span','Total previsto'),el('strong',due===null?'Entrega a confirmar':money(due)));body.append(summary);
-  if(o.origin==='site'&&o.telegram_state!=='sent')body.append(el('p','⚠️ Telegram não confirmado; verifique o contato e o cupom antes do aceite.','hint'));
+  if(o.origin==='site'&&o.telegram_state!=='sent')body.append(el('p','Telegram não confirmado; verifique o pedido no painel antes do aceite.','hint'));
   if(customer&&!S.demo)actions.append(button('WhatsApp',()=>window.open('https://wa.me/55'+customer.phone,'_blank','noopener,noreferrer')));
   const choices={pending_customer:[['Cliente confirmou','awaiting_acceptance'],['Cancelar','cancelled']],
    awaiting_acceptance:[['Aceitar pedido','accepted'],['Cancelar','cancelled']],
    accepted:[['Iniciar preparo','preparing'],['Marcar preparado','completed'],['Cancelar','cancelled']],
    preparing:[['Marcar preparado','completed'],['Cancelar','cancelled']],
    returned_to_attendant:[['Revisar e reenviar para aceite','awaiting_acceptance'],['Cancelar','cancelled']],
-   completed:o.fulfillment?.type==='delivery'?[['Cancelar','cancelled']]:[['Marcar entregue','delivered'],['Cancelar','cancelled']],
+   completed:o.fulfillment?.type==='delivery'?(S.data?.lite?[['Saiu para entrega','out_for_delivery'],['Cancelar','cancelled']]:[['Cancelar','cancelled']]):[['Marcar entregue','delivered'],['Cancelar','cancelled']],
    out_for_delivery:[['Marcar entregue','delivered'],['Cancelar','cancelled']]};
   for(const [text,next] of choices[o.status]||[])actions.append(button(text,async()=>{
    if(next==='accepted'&&due===null)return show('Defina a taxa de entrega antes de aceitar.',true);
@@ -877,6 +881,7 @@
     S.orderSearchTimer=setTimeout(()=>lookupOrders(),450);
   });
   $('#orderStatusFilter').addEventListener('change',()=>lookupOrders());
+  $('#orderChannelFilter').addEventListener('change',renderOrders);
   $('#moreOrders').addEventListener('click',()=>lookupOrders(true));
   $('#clientSearch').addEventListener('input',()=>{
     clearTimeout(S.searchTimer);
@@ -890,6 +895,30 @@
         renderCustomers();
       }catch(e){show(e.message,true);}
     },450);
+  });
+  $('#accountSearchBtn').addEventListener('click',async()=>{
+   if(!S.data?.lite||S.demo)return;
+   const root=$('#accountSearchResults');clear(root);clear($('#accountHistory'));
+   try{const d=await run('account_search',{term:$('#accountSearchInput').value});$('#accountSearchInput').value='';
+    for(const c of d.accounts){const row=el('div',null,'form-card');row.append(el('strong',c.name||'Cadastro incompleto'),el('p',(c.phone||'—')+' · CPF final '+c.cpf_last2+' · '+c.orders+' pedidos'));
+     row.append(button('Histórico',async()=>{const target=$('#accountHistory');clear(target);try{const h=await request('/api/backoffice?action=account_history&subject='+encodeURIComponent(c.subject));if(!h.orders.length)target.append(el('p','Nenhum pedido vinculado.'));for(const o of h.orders){const r=el('div',null,'form-card');r.append(el('strong','#'+o.ref_code+' · '+(label[o.status]||o.status)),el('p',time(o.created_at)+' · '+money(o.subtotal_cents+(o.delivery_fee_cents||0))),el('p',(o.items||[]).map(i=>i.quantity+'× '+i.product).join(' · ')));target.append(r);}}catch(e){show(e.message,true);}}));root.append(row);
+    }if(!d.accounts.length)root.append(el('p','Nenhuma conta encontrada.'));
+   }catch(e){show(e.message,true);}
+  });
+  $('#deliveryMapBtn').addEventListener('click',async()=>{
+   if(!S.data?.lite||S.demo)return;
+   const root=$('#deliveryMapResult');clear(root);
+   try{
+    const d=await request('/api/backoffice?action=delivery_map'),points=d.points||[],gps=points.filter(p=>p.location);
+    if(gps.length){
+     const ns='http://www.w3.org/2000/svg',svg=document.createElementNS(ns,'svg');svg.setAttribute('viewBox','0 0 600 300');svg.setAttribute('role','img');svg.setAttribute('aria-label','Distribuição geográfica dos endereços com GPS; sem mapa-base');svg.classList.add('delivery-plot');
+     const lat=gps.map(p=>p.location.latitude),lon=gps.map(p=>p.location.longitude),lo=Math.min(...lon),hi=Math.max(...lon),bottom=Math.min(...lat),top=Math.max(...lat);
+     for(const p of gps){const circle=document.createElementNS(ns,'circle');circle.setAttribute('cx',String(20+560*(p.location.longitude-lo)/(hi-lo||1)));circle.setAttribute('cy',String(280-260*(p.location.latitude-bottom)/(top-bottom||1)));circle.setAttribute('r','5');circle.setAttribute('fill','#681b30');const title=document.createElementNS(ns,'title');title.textContent='#'+p.ref;circle.append(title);svg.append(circle);}
+     root.append(el('p',gps.length+' pontos com GPS · distribuição sem mapa-base.'),svg);
+    }
+    for(const p of points){const row=el('p','#'+p.ref+' · '+p.address+' ');const link=el('a','Abrir no mapa');link.href='https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(p.location?p.location.latitude+','+p.location.longitude:p.address);link.target='_blank';link.rel='noopener noreferrer';row.append(link);root.append(row);}
+    if(!points.length)root.append(el('p','Nenhuma entrega registrada.'));
+   }catch(e){show(e.message,true);}
   });
   $('#catalogSearch').addEventListener('input',renderCatalog);
   $('#newCustomer').addEventListener('click',()=>openCustomer(null));
