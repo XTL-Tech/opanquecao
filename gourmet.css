@@ -184,3 +184,16 @@ html.store-lights-off .gourmet-header .brand-caption small{color:#262626}
 .family-story-actions a:focus-visible{outline:2px solid var(--g-wine);outline-offset:3px}
 @media(max-width:1000px){.gourmet-header .header-cta{display:none}}
 @media(max-width:700px){.family-story{margin-inline:16px;scroll-margin-top:84px}.family-story-milestones{grid-template-columns:repeat(2,minmax(0,1fr))}.gourmet-header .site-tabs{flex-wrap:wrap}.gourmet-header .site-tabs a{flex:1 1 28%;white-space:normal}}
+
+/* Expansão da marca — captação de interesse, sem interferência no checkout. */
+.franchise-section{max-width:1150px;margin:clamp(28px,5vw,64px) auto;display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);align-items:center;gap:clamp(20px,4vw,48px);padding:clamp(22px,4vw,48px);background:#741c2d;color:#fffaf2;border-radius:var(--g-radius);scroll-margin-top:100px}
+.franchise-eyebrow{font-size:11px;font-weight:800;letter-spacing:.12em;color:#f3d29a}
+.franchise-section h2{font:800 clamp(27px,4vw,42px)/1.16 Montserrat,'Open Sans',sans-serif;letter-spacing:-.035em;color:#fffaf2;margin:12px 0 20px}
+.franchise-section p:not(.franchise-eyebrow){font-size:15px;line-height:1.7;margin:0 0 14px;color:#fff3e6}
+.franchise-cta{display:inline-flex;align-items:center;justify-content:center;gap:12px;min-height:48px;padding:12px 20px;border-radius:var(--g-small);background:#fff5df;color:#741c2d!important;font-weight:800;text-decoration:none;margin:8px 0 16px}
+.franchise-cta:hover{background:#f3d29a}.franchise-cta:focus-visible{outline:3px solid #f3d29a;outline-offset:4px}
+.franchise-section small{display:block;font-size:12px;line-height:1.6;color:#fff3e6;max-width:65ch}
+.franchise-brand{display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center;padding:24px 16px;border:1px solid #ffffff40;border-radius:var(--g-radius);background:#ffffff0c}
+.franchise-brand img{width:128px;height:auto;object-fit:contain}.franchise-brand strong{font:800 20px/1.35 Montserrat,'Open Sans',sans-serif;color:#fffaf2}.franchise-brand span{font-size:10px;letter-spacing:.06em;color:#f3d29a}
+@media(max-width:1100px){.gourmet-header .header-cta{display:none}.gourmet-header .site-tabs{flex-wrap:wrap}}
+@media(max-width:700px){.franchise-section{grid-template-columns:1fr;margin-inline:16px;scroll-margin-top:90px}.franchise-cta{width:100%}.franchise-brand{padding:16px}.franchise-brand img{width:90px}}

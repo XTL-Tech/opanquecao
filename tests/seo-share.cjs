@@ -29,6 +29,18 @@ assert.equal(xtlFoodTop.target,'_blank');
 assert.ok(xtlFoodTop.relList.contains('noopener'));
 assert.match(xtlFoodTop.textContent,/XTL FOOD/);
 
+const franchise=homeDoc.querySelector('#franquias');
+assert.ok(franchise,'Seção de franquias ausente');
+assert.equal(homeDoc.querySelectorAll('#franquias').length,1);
+assert.ok(homeDoc.querySelector('.site-tabs a[href="#franquias"]'));
+assert.ok(homeDoc.querySelector('.footer-brand a[href="#franquias"]'));
+const franchiseLink=franchise.querySelector('a.franchise-cta');
+assert.equal(new URL(franchiseLink.href).hostname,'wa.me');
+assert.equal(new URL(franchiseLink.href).pathname,'/5551997383849');
+assert.match(new URL(franchiseLink.href).searchParams.get('text'),/franquias do Panquecão/);
+assert.match(franchise.textContent,/sem compromisso/);
+assert.ok(franchiseLink.relList.contains('noopener'));
+assert.match(home,/infoSections = new Set\(\[[^\]]*'franquias'/);
 const familyStory=homeDoc.querySelector('#nossa-historia');
 assert.ok(familyStory,'Seção Nossa história ausente');
 assert.equal(homeDoc.querySelectorAll('#nossa-historia').length,1);
