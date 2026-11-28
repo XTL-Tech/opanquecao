@@ -93,6 +93,7 @@ if (window.menuCatalog) initializeCatalog(window.menuCatalog);
 function refresh() {
     try { if(!localMode)window.localStorage.setItem(storageKey, JSON.stringify({version: 1, updatedAt: Date.now(), lines: cart})); } catch {}
     if (!cart.length) checkoutStep = false;
+    if(deliveryAreasData&&typeof updateOtherNeighborhood==='function')updateOtherNeighborhood();
     if (!checkoutStep) hideCheckoutPartners();
     byId('checkout').hidden = !cart.length || !checkoutStep;
     byId('startCheckout').hidden = !cart.length || checkoutStep || !storeOpenForOrders || (localMode&&!digitalOrders);
@@ -505,7 +506,7 @@ function updateOtherNeighborhood() {
     otherNeighborhood.disabled = !show || checkoutForm.elements.fulfillmentType.value !== 'delivery';
     otherNeighborhood.required = show && !otherNeighborhood.disabled;
     const fee=standardDeliveryFee(checkoutForm.elements.deliveryCity.value,neighborhoodSelect.value,deliveryAreasData);
-    const out=byId('deliveryStandardFee');if(out){const subtotal=cart.reduce((n,l)=>n+l.cents*l.quantity,0);out.textContent=fee===null?'Taxa para esta localidade: a confirmar pela loja.':'Taxa para o bairro: '+money(fee)+' · Total estimado: '+money(subtotal+fee);}
+    const out=byId('deliveryStandardFee');if(out){const subtotal=cart.reduce((n,l)=>n+l.cents*l.quantity,0);out.textContent=fee===null?'Taxa para esta localidade: a confirmar pela loja.':'Tele-entrega: '+money(fee)+' · Total: '+money(subtotal+fee)+(deliveryAreasData?.prepaidPixCities?.includes(checkoutForm.elements.deliveryCity.value)?' · Pix antes do preparo. Cobertura a confirmar.':'');}
 }
 checkoutForm.elements.deliveryNeighborhood.addEventListener('change', updateOtherNeighborhood);
 async function populateDeliveryNeighborhoods() {
@@ -845,7 +846,7 @@ checkoutForm.onsubmit = async event => {
         orderStatus.textContent = error?.message || 'Confira o pedido e seu contato.';
         return;
     }
-    const deliveryFeeCents=fulfillment.type==='delivery'&&checkoutForm.elements.deliveryNeighborhood.value!=='__other__'?standardDeliveryFee(fulfillment.city,fulfillment.neighborhood,deliveryAreasData):null;
+    const deliveryFeeCents=fulfillment.type==='delivery'?standardDeliveryFee(fulfillment.city,checkoutForm.elements.deliveryNeighborhood.value,deliveryAreasData):null;
     const directMessage = buildSimpleWhatsAppMessage({
         lines, note, name: customer.name, fulfillment,deliveryFeeCents
     });
@@ -861,7 +862,7 @@ checkoutForm.onsubmit = async event => {
             registration = lastRegistration;
         } else {
             const challenge = await getChallenge();
-            if(deliveryAccountRequired&&fulfillment.type==='delivery'&&(!activeAccount?.profile?.hasCpf)){
+            if((deliveryAccountRequired||digitalOrders)&&fulfillment.type==='delivery'&&(!activeAccount?.profile?.hasCpf)){
                 const e=new Error('Entre em Minha conta e vincule seu CPF para continuar.');e.accountRequired=true;throw e;
             }
             if(!attempt||attempt.signature!==signature)attempt={signature,id:requestId()};
@@ -886,12 +887,12 @@ checkoutForm.onsubmit = async event => {
             if (!response.ok || data.status !== 'registered' || data.pending) {
                 throw new Error(data.error || 'O registro no bot não pôde ser confirmado.');
             }
-            registration = {id: data.id, digital:data.digital===true,trackingId,telegramConfirmed:data.telegramConfirmed, test: data.test, signature,deliveryFeeCents:Number.isSafeInteger(data.deliveryFeeCents)?data.deliveryFeeCents:null};
+            registration = {id: data.id, digital:data.digital===true,prepaidPix:data.prepaidPix===true,trackingId,telegramConfirmed:data.telegramConfirmed, test: data.test, signature,deliveryFeeCents:Number.isSafeInteger(data.deliveryFeeCents)?data.deliveryFeeCents:null};
             if(data.tracking===true && !data.test && fulfillment.type==='delivery') rememberDelivery(trackingId);
             lastRegistration = registration;
         }
         if(registration.digital){
-            const message='Pedido #'+registration.id+' registrado. Aguarde a decisão da loja.';
+            const message='Pedido #'+registration.id+' registrado. '+(fulfillment.type==='delivery'?(registration.deliveryFeeCents===null?'Frete a confirmar. ':'Tele-entrega '+money(registration.deliveryFeeCents)+' · Total '+money(lines.reduce((n,i)=>n+i.cents*i.quantity,0)+registration.deliveryFeeCents)+'. '):'Sem frete. ')+(registration.prepaidPix?'Pix antes do preparo. ':'')+'Aguarde a decisão da loja.';
             const p=byId('digitalOrderReceipt');p.hidden=false;byId('digitalOrderMessage').textContent=message;
             byId('digitalOrderCheck').onclick=async()=>{try{const r=await fetch('/api/delivery-status',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:registration.trackingId}),cache:'no-store'});if(!r.ok)throw Error();const d=await r.json();byId('digitalOrderMessage').textContent='Pedido #'+registration.id+' · '+({awaiting_acceptance:'Aguardando aceite',accepted:'Aceito',preparing:'Em preparo',completed:'Pronto',out_for_delivery:'Saiu para entrega',delivered:'Concluído',cancelled:'Rejeitado ou cancelado'}[d.status]||'Aguardando atualização');}catch{byId('digitalOrderMessage').textContent=message+' Acompanhamento temporariamente indisponível.';}};
             byId('digitalOrderClear').onclick=()=>{p.hidden=true;byId('digitalOrderMessage').textContent='';byId('digitalOrderCheck').onclick=null;};
