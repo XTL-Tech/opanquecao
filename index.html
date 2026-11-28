@@ -1519,6 +1519,7 @@ if(location.hostname==='opanquecao.vercel.app'){
             const destination = infoSections.has(id) ? document.getElementById(id) : null;
             // Closed is operational state; the dimmed entrance is only a visual state.
             document.documentElement.classList.toggle('menu-browsing', !!id || /^\/local\/?$/.test(location.pathname));
+            document.dispatchEvent(new Event('menu-route-change'));
             document.querySelectorAll('.site-tabs a[href^="#"]').forEach(link => {
                 const selected = (destination ? link.hash === '#' + id : link.hash === '#cardapio');
                 if (selected) link.setAttribute('aria-current', 'page');
@@ -1744,20 +1745,20 @@ if(location.hostname==='opanquecao.vercel.app'){
   .partner-card small { margin-top:3px; color:#735b55; }
 </style>
 <style>
- .store-lights-status[hidden],html.menu-browsing #storeLightsStatus{display:none!important}
+ .store-lights-status[hidden],html:not(.closed-intro) #storeLightsStatus,html.menu-browsing #storeLightsStatus{display:none!important}
  .store-lights-status{padding:16px 20px;text-align:center;background:#202020;color:#f4f4f4;border-bottom:1px solid #555}
  .store-lights-status strong{font-size:14px;letter-spacing:.13em}
  .store-lights-status p{margin:6px 0 0;font-size:13px;line-height:1.5}
- html.store-lights-off:not(.menu-browsing) body>header{filter:grayscale(1);background:#181818!important;box-shadow:none!important}
- html.store-lights-off:not(.menu-browsing) .restaurant-logo img{filter:brightness(.55);transition:filter .4s ease}
- html.store-lights-off:not(.menu-browsing) #storeOpenStatus{background:#ececec;color:#202020;border-color:#aaa}
+ html.closed-intro:not(.menu-browsing) body>header{filter:grayscale(1);background:#181818!important;box-shadow:none!important}
+ html.closed-intro:not(.menu-browsing) .restaurant-logo img{filter:brightness(.55);transition:filter .4s ease}
+ html.closed-intro:not(.menu-browsing) #storeOpenStatus{background:#ececec;color:#202020;border-color:#aaa}
  html.store-lights-off #openCart,html.store-lights-off a.whatsapp-float,html.store-lights-off .quick-add,html.store-lights-off .order-form,html.store-lights-off #productDialog .cart-whatsapp,html.store-lights-off #cartFeedback,html.store-lights-off #whatsappOrderLink{display:none!important}
- html.store-lights-off:not(.menu-browsing) #storeClosedDialog{background:#212121;color:#fff;border-color:#666}
- html.store-lights-off:not(.menu-browsing) #dismissStoreClosed{background:#e9e9e9;color:#222}
- html.store-lights-off:not(.menu-browsing) #storeClosedDialog::backdrop{background:rgba(0,0,0,.75)}
+ html.closed-intro:not(.menu-browsing) #storeClosedDialog{background:#212121;color:#fff;border-color:#666}
+ html.closed-intro:not(.menu-browsing) #dismissStoreClosed{background:#e9e9e9;color:#222}
+ html.closed-intro:not(.menu-browsing) #storeClosedDialog::backdrop{background:rgba(0,0,0,.75)}
  .closed-browse-note{display:none}
  html.store-lights-off .closed-browse-note{display:block;padding:12px;background:#ececec;color:#272727;border-radius:8px;text-align:center}
- @media(prefers-reduced-motion:reduce){html.store-lights-off:not(.menu-browsing) .restaurant-logo img{transition:none}}
+ @media(prefers-reduced-motion:reduce){html.closed-intro:not(.menu-browsing) .restaurant-logo img{transition:none}}
 </style>
 <style>
 #openCart[hidden]{display:none!important}
