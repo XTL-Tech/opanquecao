@@ -22,6 +22,25 @@ assert.equal(homeDoc.querySelector('meta[property="og:image"]')?.content,site+'/
 assert.equal(homeDoc.querySelector('meta[name="twitter:card"]')?.content,'summary_large_image');
 assert.equal(homeDoc.querySelector('meta[property="og:image:alt"]')?.content.includes('Disk Panquecão'),true);
 assert.equal(homeDoc.querySelectorAll('.footer-category-links a').length,12);
+const xtlFoodTop=homeDoc.querySelector('header .xtl-food-top-link');
+assert.ok(xtlFoodTop,'Link comercial XTL FOOD ausente do cabeçalho');
+assert.equal(xtlFoodTop.href,'https://xtltech.com.br/');
+assert.equal(xtlFoodTop.target,'_blank');
+assert.ok(xtlFoodTop.relList.contains('noopener'));
+assert.match(xtlFoodTop.textContent,/XTL FOOD/);
+
+const familyStory=homeDoc.querySelector('#nossa-historia');
+assert.ok(familyStory,'Seção Nossa história ausente');
+assert.equal(homeDoc.querySelectorAll('#nossa-historia').length,1);
+assert.equal(familyStory.getAttribute('aria-labelledby'),'familyStoryTitle');
+assert.match(familyStory.textContent,/família dos Santos/i);
+assert.match(familyStory.textContent,/R\$ 500/);
+assert.match(familyStory.textContent,/\+5 mil/);
+assert.match(familyStory.textContent,/10 anos/);
+assert.ok(homeDoc.querySelector('.site-tabs a[href="#nossa-historia"]'));
+assert.match(home,/infoSections = new Set\(\[[^\]]*'nossa-historia'/);
+
+
 assert.equal(homeDoc.querySelector('#shareCategory')?.hidden,true);
 const siteMap=read('sitemap.xml');
 assert.equal((siteMap.match(/<loc>/g)||[]).length,14,'Homepage + 12 categorias + guia turístico');
