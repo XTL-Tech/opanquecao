@@ -48,6 +48,11 @@ module.exports = async function handler(req, res) {
     } catch (error) {
         return res.status(400).json({ error: error?.message || 'Confira o endereço e a modalidade do pedido.' });
     }
+    let accountSubject=null;
+    if(deliveryDetails.type==='delivery'&&require('../lib/customer-cpf').enabled()){
+        try{accountSubject=await require('../lib/customer-cpf').requireDeliveryAccount(req,clean(name,80),normalizedPhone);}
+        catch(e){return res.status([401,403].includes(e.status)?e.status:503).json({error:[401,403].includes(e.status)?e.message:'Não foi possível validar sua conta.'});}
+    }
     // Fail closed: nunca informar a equipe de que um pedido é válido sem
     // conferir catálogo e horário no servidor.
     try {
@@ -126,7 +131,7 @@ module.exports = async function handler(req, res) {
             const customer=await backoffice.upsertCustomer({name:clean(name,80),phone:normalizedPhone});
             const claimed=await backoffice.createOrder({
                 requestId,customer,items:validated,fulfillment:deliveryDetails,
-                note:clean(note,400),origin:'site',status:'pending_customer',telegramState:'pending',deliveryFeeCents
+                note:clean(note,400),origin:'site',status:'pending_customer',telegramState:'pending',deliveryFeeCents,accountSubject
             });
             if (!claimed.created) {
                 return claimed.record.telegram_state==='sent'
