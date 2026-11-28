@@ -131,6 +131,25 @@
           "value": "no-referrer"
         }
       ]
+    },
+    {
+      "source": "/local",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex,follow"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "no-cache"
+        }
+      ]
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/local",
+      "destination": "/index.html"
     }
   ]
 }
