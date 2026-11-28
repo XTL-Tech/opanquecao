@@ -950,6 +950,9 @@ checkoutForm.onsubmit = async event => {
 if(localMode){
  document.body.classList.add('presential-mode');
  document.title='Pedidos na mesa | O Panquecão';
+ const manifest=document.createElement('link');manifest.rel='manifest';manifest.href='/local.webmanifest';document.head.append(manifest);
+ byId('localInstallInfo').hidden=false;
+ if('serviceWorker' in navigator&&window.isSecureContext)void navigator.serviceWorker.register('/local-worker.js',{scope:'/local'}).catch(()=>{});
  checkoutForm.elements.customerName.required=false;checkoutForm.elements.customerName.disabled=true;
  checkoutForm.elements.customerPhone.required=false;checkoutForm.elements.customerPhone.disabled=true;
  checkoutForm.elements.fulfillmentType.value='table';setDeliveryMode();
@@ -958,7 +961,7 @@ if(localMode){
 if(accountNav)void detectAccount();
 void fetch('/api/order-config',{cache:'no-store'}).then(r=>{if(!r.ok)throw Error();return r.json();}).then(c=>{
  orderModeKnown=true;digitalOrders=c.digitalOrders===true;deliveryAccountRequired=c.deliveryAccountRequired===true;
- if(digitalOrders){document.body.classList.add('digital-order-mode');byId('sendOrder').textContent='Enviar pedido à loja';byId('startCheckout').textContent='Continuar pedido';}
+ if(digitalOrders){document.body.classList.add('digital-order-mode');byId('sendOrder').textContent='Enviar pedido à loja';byId('startCheckout').textContent='Continuar pedido';const privacy=document.querySelector('.order-privacy');if(privacy){privacy.replaceChildren(document.createTextNode(localMode?'O pedido inclui mesa, itens e observações. Não informe dados pessoais nas observações. ':'O pedido inclui seus dados de contato, itens e endereço, se necessário. Aguarde o aceite da loja. '));const link=document.createElement('a');link.href='/privacidade.html';link.textContent='Privacidade';privacy.append(link);}}
  if(localMode&&!digitalOrders)byId('localOrderBanner').textContent='Cardápio presencial · pedidos digitais ainda indisponíveis.';
  if(deliveryAccountRequired&&!localMode)byId('savedAccountPitch').textContent='Entre na sua conta e vincule o CPF para pedidos de delivery.';
  refresh();
