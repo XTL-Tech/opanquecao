@@ -42,7 +42,9 @@ assert.match(home,/infoSections = new Set\(\[[^\]]*'nossa-historia'/);
 
 assert.equal(homeDoc.querySelector('#shareCategory')?.hidden,true);
 const siteMap=read('sitemap.xml');
-assert.equal((siteMap.match(/<loc>/g)||[]).length,13,'Homepage + 12 categorias');
+assert.equal((siteMap.match(/<loc>/g)||[]).length,15,'Homepage + 12 categorias + turismo e franquias');
+for(const name of ['turismo-nova-hartz.html','franquias.html']){assert.ok(siteMap.includes('<loc>https://opanquecao.vercel.app/'+name+'</loc>'));assert.ok(read(name).includes('O Panquecão')||read(name).includes('Panquecão'));}
+assert.equal(new Set([...siteMap.matchAll(/<loc>(.*?)<\/loc>/g)].map(m=>m[1])).size,15);
 assert.match(read('robots.txt'),/Disallow: \/api\/whatsapp-intent/);
 assert.match(read('robots.txt'),/Sitemap: https:\/\/opanquecao\.vercel\.app\/sitemap\.xml/);
 assert.equal(profile.delivery.cities.length,2);
@@ -113,5 +115,5 @@ assert.equal(total,82);
     'Deep-link abriu ficha errada');
  assert.match(d.querySelector('#productDialogContent form.order-form .order-primary').textContent,/30,00/,
     'Preço inicial do produto compartilhado não bate com catálogo');
- console.log('PASS SEO/COMPARTILHAMENTO: 12 páginas indexáveis, 82 produtos e links específicos, 13 URLs no sitemap, OG, Twitter, política comercial coerente e deep-link funcional.');
+ console.log('PASS SEO/COMPARTILHAMENTO: 12 páginas indexáveis, 82 produtos e links específicos, 15 URLs no sitemap, OG, Twitter, política comercial coerente e deep-link funcional.');
 })().catch(e=>{console.error(e);process.exitCode=1});
