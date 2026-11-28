@@ -45,6 +45,7 @@ module.exports = async function handler(req, res) {
     if (!['delivery', 'pickup', 'table'].includes(method)) {
         return reject(400, 'Selecione entrega, retirada ou mesa.', 'fulfillment_type');
     }
+    if(method==='delivery'&&require('../lib/customer-cpf').enabled())return reject(409,'Use o checkout atualizado para delivery.','legacy_delivery_disabled');
     const table = typeof fulfillment.table === 'string' ? fulfillment.table.trim() : '';
     const clean = (value, maxLength) => typeof value === 'string' &&
         value.trim().length <= maxLength && !/[\x00-\x1f\x7f]/u.test(value) ? value.trim() : null;
