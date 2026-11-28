@@ -1,0 +1,7 @@
+#localOrderBanner,#digitalOrderReceipt{padding:1rem;margin:1rem auto;border:1px solid #dfc5ae;border-radius:12px;background:#fff9ef;color:#5f1c30}
+#digitalOrderReceipt button{font:inherit;padding:.6rem .9rem;border:1px solid #681b30;border-radius:8px;color:#681b30;background:white;cursor:pointer}
+.presential-mode .premium-hero,.presential-mode .premium-loyalty,.presential-mode .checkout-account,.presential-mode .customer-fields,.presential-mode .fulfillment-choice,.presential-mode .cart-disclaimer,.presential-mode .cart-next,.presential-mode #customerAccountNav,.presential-mode #localOrderLink,.presential-mode .local-partners,.presential-mode .checkout-assurance,.presential-mode .order-privacy{display:none!important}
+.digital-order-mode .cart-next,.digital-order-mode .checkout-assurance,.digital-order-mode .order-privacy{display:none!important}
+.presential-mode #localOrderBanner{font-weight:700;text-align:center}
+.presential-mode #cartDialog #tableFields{padding:1rem}
+#localOrderBanner[hidden],#digitalOrderReceipt[hidden],#sendOrder[hidden]{display:none!important}
