@@ -29,10 +29,14 @@ async function sample(mode,demoAvailable=true){
   assert.equal(closed.d.getElementById('storeClosedDialog').open,true);
   assert.equal(closed.d.documentElement.classList.contains('store-lights-off'),true);
   assert.equal(closed.d.getElementById('storeLightsStatus').hidden,false);
+  assert.equal(closed.d.documentElement.classList.contains('closed-intro'),true);
   assert.match(closed.d.getElementById('storeOpenStatus').textContent,/DEMONSTRAÇÃO.*fechada/);
   assert.match(closed.d.getElementById('storeAlertNote').textContent,/ainda não estão habilitados/);
   closed.d.getElementById('dismissStoreClosed').click();
   assert.equal(closed.d.getElementById('storeClosedDialog').open,false);
+  assert.equal(closed.d.documentElement.classList.contains('closed-intro'),false);
+  assert.equal(closed.d.documentElement.classList.contains('store-lights-off'),true);
+  assert.equal(closed.d.getElementById('storeLightsStatus').hidden,true);
   const opened=await sample('aberta');
   assert.equal(opened.w.storeOperationStatus.open,true);
   assert.equal(opened.w.storeOperationStatus.simulated,true);
