@@ -561,17 +561,17 @@
    S.data.cash.orders:orders.filter(o=>o.status==='delivered').length);
   const target=$('#ordersTable');clear(target);
   const matches=orders.filter(o=>{
-   const cl=client(o.customer_id),s=[o.ref_code,cl?.name,cl?.phone].join(' ').toLowerCase();
-   return (!filter||o.status===filter)&&(!term||s.includes(term));
+   const cl=client(o.customer_id),s=[o.ref_code,o.customer_name||cl?.name,o.customer_phone||cl?.phone].join(' ').toLowerCase();
+   const channel=$('#orderChannelFilter')?.value;return (!channel||o.fulfillment?.type===channel)&&(!filter||o.status===filter)&&(!term||s.includes(term));
   });
   $('#ordersEmpty').hidden=matches.length>0;
   $('#moreOrders').hidden=S.demo||(!S.moreOrders&&orders.length<80);
   for(const o of matches){
    const channel=$('#orderChannelFilter')?.value;if(channel&&o.fulfillment?.type!==channel)continue;
-   const tr=el('tr');td(tr,'#'+o.ref_code,'td-primary');const who=td(tr,client(o.customer_id)?.name||'Cliente indisponível');
-   who.append(el('small',client(o.customer_id)?.phone||'', 'td-secondary'));
+   const tr=el('tr');td(tr,'#'+o.ref_code,'td-primary');const who=td(tr,o.customer_name||client(o.customer_id)?.name||'Cliente indisponível');
+   who.append(el('small',o.customer_phone||client(o.customer_id)?.phone||'', 'td-secondary'));
    const type={delivery:'Entrega',pickup:'Retirada',table:'Mesa'}[o.fulfillment?.type]||'—';
-   td(tr,type);td(tr,money(o.subtotal_cents));
+   td(tr,type);td(tr,total(o)===null?'Frete a confirmar':money(total(o)));
    td(tr,label[o.status], '');tr.children[4].className='';tr.children[4].replaceChildren(el('span',label[o.status],'status-tag s-'+o.status));
    td(tr,time(o.created_at));td(tr,null).append(button('Abrir',()=>openOrder(o.request_id),'td-btn'));
    target.append(tr);
@@ -683,7 +683,7 @@
  function openOrder(id){
   const o=S.data.orders.find(x=>x.request_id===id);if(!o)return;
   S.selected=id;
-  const customer=client(o.customer_id),body=$('#detailBody'),actions=$('#detailActions');clear(body);clear(actions);
+  const customer=S.data.lite?{name:o.customer_name||client(o.customer_id)?.name,phone:o.customer_phone||client(o.customer_id)?.phone}:client(o.customer_id),body=$('#detailBody'),actions=$('#detailActions');clear(body);clear(actions);
   $('#detailTitle').textContent='#'+o.ref_code;$('#detailEyebrow').textContent=label[o.status]+' · '+time(o.created_at);
   const meta=el('div',null,'detail-meta');
   meta.append(block('Cliente',customer?.name),block('WhatsApp',customer?.phone),
@@ -705,7 +705,7 @@
    body.append(el('div',[f.street,f.number,f.neighborhood,f.city].filter(Boolean).join(', ')+(f.complement?' · '+f.complement:'')+(f.reference?' · Ref.: '+f.reference:''),'text-block'));
    if(o.delivery_fee_cents===null&&['pending_customer','awaiting_acceptance'].includes(o.status)){
     const container=el('div',null,'payment-box');container.append(el('h3','Definir taxa de entrega'));
-    const input=el('input');input.placeholder='7,00';input.inputMode='decimal';
+    const input=el('input');input.placeholder='10,00';input.inputMode='decimal';
     container.append(input,button('Salvar taxa',async()=>{
      const fee=number(input.value);if(fee===null)return show('Taxa inválida.',true);
      await mutate('order_fee',{id,feeCents:fee},'Taxa atualizada.');
@@ -716,8 +716,10 @@
   if(o.note)body.append(el('div','Observação: '+o.note,'text-block'));
   const due=total(o),summary=el('div',null,'total-line');
   summary.append(el('span','Total previsto'),el('strong',due===null?'Entrega a confirmar':money(due)));body.append(summary);
+  if(o.fulfillment?.type==='delivery')body.append(el('p','Tele-entrega: '+(o.delivery_fee_cents===null?'A confirmar':money(o.delivery_fee_cents)),'hint'));
+  if(['Parobé','Sapiranga'].includes(o.fulfillment?.city)&&o.payment_status!=='paid')body.append(el('p','Pix obrigatório antes do preparo.','hint'));
   if(o.origin==='site'&&o.telegram_state!=='sent')body.append(el('p','Telegram não confirmado; verifique o pedido no painel antes do aceite.','hint'));
-  if(customer&&!S.demo)actions.append(button('WhatsApp',()=>window.open('https://wa.me/55'+customer.phone,'_blank','noopener,noreferrer')));
+  if(customer?.phone&&!S.demo)actions.append(button('WhatsApp',()=>window.open('https://wa.me/55'+customer.phone,'_blank','noopener,noreferrer')));
   const choices={pending_customer:[['Cliente confirmou','awaiting_acceptance'],['Cancelar','cancelled']],
    awaiting_acceptance:[['Aceitar pedido','accepted'],['Cancelar','cancelled']],
    accepted:[['Iniciar preparo','preparing'],['Marcar preparado','completed'],['Cancelar','cancelled']],
@@ -871,7 +873,7 @@
    if(S.data?.operational||['kitchen','courier'].includes(S.tab))void reload();
    else if(S.tab==='orders'&&!$('#orderSearch').value&&!$('#orderStatusFilter').value&&document.activeElement!==$('#orderSearch'))void reload();
   },30000);
-  document.addEventListener('visibilitychange',()=>{if(!document.hidden)void refreshAfterSales();});
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden&&!S.data?.lite)void refreshAfterSales();});
   for(const b of document.querySelectorAll('[data-close]'))b.addEventListener('click',()=>closeDialog(b.dataset.close));
   $('#navigation').addEventListener('click',e=>{const b=e.target.closest('[data-tab]');if(b)showTab(b.dataset.tab);});
   $('#refresh').addEventListener('click',async()=>{await reload();if(S.tab==='catalog')await ensureCatalog(true);});
