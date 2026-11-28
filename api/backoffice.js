@@ -13,6 +13,7 @@ const comandas=require('../lib/comandas');
 const annual=require('../lib/annual-ranking-fiscal');
 const ads=require('../lib/ad-contracts');
 const storeOperations=require('../lib/store-operations');
+const lite=require('../lib/lite-admin');
 
 function respond(res,status,payload){return res.status(status).json(payload);}
 function requireId(id){if(!c.UUID.test(id))c.fail('Identificador de pedido inválido.');return id;}
@@ -55,7 +56,7 @@ async function action(req,actor,body){
   const id=requireId(body.id),order=await db.getOrder(id);
   if(!order)throw new db.StoreError('Pedido não encontrado.',404);
   if(order.fulfillment?.type==='delivery'&&body.next==='delivered'&&order.status!=='out_for_delivery')c.fail('Registre a saída com o motoboy antes de entregar.');
-  if(body.next==='out_for_delivery')c.fail('A saída deve ser registrada pela conta do motoboy.');
+  if(body.next==='out_for_delivery'&&!lite.enabled())c.fail('A saída deve ser registrada pela conta do motoboy.');
   if(!c.statusAllowed(order.status,body.next))c.fail('Transição de pedido inválida. Atualize a tela.');
   if(body.next==='accepted'&&order.fulfillment?.type==='delivery'&&order.delivery_fee_cents===null)
    c.fail('Confirme o valor da entrega antes de aceitar o pedido.');
@@ -136,6 +137,12 @@ module.exports=async function handler(req,res){
   if(method==='POST'&&act==='login_otp')
    return respond(res,200,{actor:await auth.loginOtp(req,res,payload(req))});
   const actor=await auth.actor(req);
+  if(lite.enabled()){
+   if(!lite.allowedRole(actor.role)||!lite.allowedAction(method,act))throw new auth.AuthError('Acesso restrito à administração.',403);
+   if(method==='GET'&&act==='delivery_map')return respond(res,200,{points:await lite.deliveryMap()});
+   if(method==='GET'&&act==='account_history')return respond(res,200,{orders:await lite.history(req.query?.subject)});
+   if(method==='POST'&&act==='account_search')return respond(res,200,{accounts:await lite.accounts(payload(req).term)});
+  }
   if(operations.restricted(actor.role)){
    if(method==='GET'&&act==='session')return respond(res,200,{actor});
    if(method==='GET'&&act==='dashboard')return respond(res,200,await operations.queue(actor));
@@ -155,7 +162,7 @@ module.exports=async function handler(req,res){
    if(act==='live_bi')return respond(res,200,await liveBI.live(actor));
    if(act==='management_reports')return respond(res,200,await reports.report(actor,req.query));
    if(act==='after_sales')return respond(res,200,await afterSales.queue(actor));
-   if(act==='dashboard')return respond(res,200,{actor,...await db.dashboard()});
+   if(act==='dashboard')return respond(res,200,{actor,lite:lite.enabled(),...await db.dashboard()});
    if(act==='catalog')return respond(res,200,{catalog:await db.getCatalog()});
    if(act==='customers')return respond(res,200,{customers:await db.searchCustomers(req.query?.term,req.query?.cursor||0)});
    if(act==='orders')return respond(res,200,{orders:await db.searchOrders({term:req.query?.term,status:req.query?.status,before:req.query?.before,beforeId:req.query?.beforeId})});
