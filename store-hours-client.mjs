@@ -8,6 +8,7 @@ const noticeKey = 'disk-panquecao-closed-notice-v1';
 let previousOpen = null;
 let refreshing = false;
 function publishStatus(detail) {
+  document.documentElement.classList.toggle('menu-browsing', !!location.hash || /^\/local\/?$/.test(location.pathname));
   window.storeOperationStatus = detail;
   const closed = detail.enabled === true && detail.open !== true;
   document.documentElement.classList.toggle("store-lights-off", closed);
@@ -73,7 +74,7 @@ async function refreshStatus() {
     alertNote.textContent = data.canSubscribe
       ? 'Você poderá ativar avisos com sua permissão. Nunca habilitamos notificações sem sua escolha.'
       : 'Avisos automáticos de reabertura ainda não estão habilitados. Você pode consultar o status ao voltar ao site.';
-    if (previousOpen !== false) noticeOnce(data);
+    if (previousOpen !== false && !document.documentElement.classList.contains("menu-browsing")) noticeOnce(data);
     previousOpen = false;
   } catch {
     publishStatus({enabled:true,open:false,unknown:true});
@@ -81,7 +82,7 @@ async function refreshStatus() {
     label.textContent = 'Não foi possível verificar o funcionamento. Você pode consultar o cardápio.';
     description.textContent = 'O atendimento está temporariamente indisponível. Você pode continuar conhecendo o cardápio.';
     alertNote.textContent = 'Consulte o status novamente mais tarde.';
-    if(previousOpen !== false)noticeOnce({date:"unknown",reason:"unavailable"});
+    if(previousOpen !== false && !document.documentElement.classList.contains("menu-browsing"))noticeOnce({date:"unknown",reason:"unavailable"});
     previousOpen=false;
   } finally { refreshing=false; }
 }
