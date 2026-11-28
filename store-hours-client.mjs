@@ -7,13 +7,21 @@ const dismiss = document.getElementById('dismissStoreClosed');
 const noticeKey = 'disk-panquecao-closed-notice-v1';
 let previousOpen = null;
 let refreshing = false;
+function setIntro(active) {
+  const show = active && !document.documentElement.classList.contains('menu-browsing');
+  document.documentElement.classList.toggle('closed-intro', show);
+  const lights = document.getElementById('storeLightsStatus');
+  if(lights)lights.hidden=!show;
+  document.dispatchEvent(new CustomEvent('store-intro-change',{detail:{active:show}}));
+}
 function publishStatus(detail) {
   document.documentElement.classList.toggle('menu-browsing', !!location.hash || /^\/local\/?$/.test(location.pathname));
   window.storeOperationStatus = detail;
   const closed = detail.enabled === true && detail.open !== true;
   document.documentElement.classList.toggle("store-lights-off", closed);
   const lights = document.getElementById("storeLightsStatus");
-  if(lights){lights.hidden=!closed;const title=lights.querySelector("strong");if(title)title.textContent=detail.unknown?"● ATENDIMENTO TEMPORARIAMENTE INDISPONÍVEL":"● LUZES APAGADAS";}
+  if(lights){const title=lights.querySelector("strong");if(title)title.textContent=detail.unknown?"● ATENDIMENTO TEMPORARIAMENTE INDISPONÍVEL":"● LUZES APAGADAS";}
+  if(!closed)setIntro(false);
   document.dispatchEvent(new CustomEvent('store-operation-status',{detail}));
 }
 function noticeOnce(status) {
@@ -21,11 +29,21 @@ function noticeOnce(status) {
   let seen = false;
   try { seen = sessionStorage.getItem(noticeKey) === key; } catch {}
   if (!seen && !dialog.open && typeof dialog.showModal === 'function') {
+    // Only the first entrance is dimmed, not a later status change during browsing.
+    if(previousOpen===null)setIntro(true);
     dialog.showModal();
     try { sessionStorage.setItem(noticeKey,key); } catch {}
   }
 }
-dismiss.addEventListener('click',() => dialog.close());
+dismiss.addEventListener('click',() => {setIntro(false);dialog.close();});
+dialog.addEventListener('close',()=>setIntro(false));
+dialog.addEventListener('cancel',()=>setIntro(false));
+document.addEventListener('menu-route-change',()=>{
+  if(document.documentElement.classList.contains('menu-browsing')){
+    setIntro(false);
+    if(dialog.open)dialog.close();
+  }
+});
 async function refreshStatus() {
   if(refreshing)return;
   refreshing=true;
