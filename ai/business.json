@@ -185,5 +185,16 @@
     "Nunca solicitar cartão de crédito, documento pessoal ou chave de API em nome do estabelecimento.",
     "Não divulgar dados privados de clientes, tokens, webhooks ou controles internos.",
     "Não divulgar valores fixos de frete de R$ 7 ou R$ 10: o frete é sempre confirmado pela loja."
-  ]
+  ],
+  "franchise_project": {
+    "status": "in_planning",
+    "interest_registration": "open",
+    "public_information_url": "https://opanquecao.vercel.app/franquias.html",
+    "contact_whatsapp": "https://wa.me/5551997383849",
+    "commercial_offer_active": false,
+    "approved_investment": null,
+    "approved_royalties": null,
+    "confirmed_territories": [],
+    "note": "Manifestação de interesse sem compromisso. Projeto em estudo; não afirmar que franquias estão disponíveis para contratação, nem divulgar estimativas internas como condições oficiais."
+  }
 }

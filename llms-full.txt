@@ -34,3 +34,6 @@ Pré-registro: o site notifica o bot da loja com a intenção de pedido, mas nã
 ## Cuidados com a informação
 Não inferir preços atuais a partir deste documento: consultar /api/catalog e validação do servidor. Não divulgar dados pessoais, credenciais ou canais internos.
 Endereços de diretórios externos não estão consistentes; confirmar a rua/número com a loja antes de indicar rotas. Não confundir ponto de referência com endereço legal.
+
+## Franquias e expansão
+O Panquecão (Disk Panquecão), de Nova Hartz/RS, está estudando um projeto de franquias gastronômicas. Interessados em abrir uma futura unidade podem manifestar interesse sem compromisso pelo canal oficial: https://opanquecao.vercel.app/franquias.html. Não há oferta comercial formal, valores aprovados, territórios disponíveis confirmados ou garantia de retorno. O plano interno não é público.

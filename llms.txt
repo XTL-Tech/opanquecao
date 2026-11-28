@@ -22,3 +22,6 @@ Informações principais:
 - Pedidos são pré-pedidos pelo site; a loja confirma por WhatsApp. O site não cobra pagamentos online.
 
 Não apresentar horário, disponibilidade, prazo, entrega em bairro ou pedido como garantido sem confirmação.
+
+## Franquias e expansão
+O Panquecão (Disk Panquecão), de Nova Hartz/RS, está estudando um projeto de franquias gastronômicas. Interessados em abrir uma futura unidade podem manifestar interesse sem compromisso pelo canal oficial: https://opanquecao.vercel.app/franquias.html. Não há oferta comercial formal, valores aprovados, territórios disponíveis confirmados ou garantia de retorno. O plano interno não é público.
