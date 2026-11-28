@@ -9,6 +9,8 @@ function preparePartners(){const gen=++partnersGeneration;checkoutPartners=undef
 
 const byId = id => document.getElementById(id);
 const cart = [];
+const localMode=window.location.pathname.replace(/\/$/,'')==='/local';
+let digitalOrders=false,orderModeKnown=false,attempt=null;
 let catalog;
 let sending = false;
 let checkoutStep = false;
@@ -54,7 +56,7 @@ function announceAdded(line) {
 function initializeCatalog(data) {
     catalog = data;
     try {
-        const saved = JSON.parse(window.localStorage.getItem(storageKey));
+        const saved = localMode?null:JSON.parse(window.localStorage.getItem(storageKey));
         if (saved?.version === 1 && Date.now() - saved.updatedAt < 86400000 && saved.lines?.length) {
             const restored = priceOrder(catalog, saved.lines);
             cart.push(...restored);
@@ -89,14 +91,14 @@ document.addEventListener('menu-ready', event => initializeCatalog(event.detail)
 if (window.menuCatalog) initializeCatalog(window.menuCatalog);
 
 function refresh() {
-    try { window.localStorage.setItem(storageKey, JSON.stringify({version: 1, updatedAt: Date.now(), lines: cart})); } catch {}
+    try { if(!localMode)window.localStorage.setItem(storageKey, JSON.stringify({version: 1, updatedAt: Date.now(), lines: cart})); } catch {}
     if (!cart.length) checkoutStep = false;
     if (!checkoutStep) hideCheckoutPartners();
     byId('checkout').hidden = !cart.length || !checkoutStep;
-    byId('startCheckout').hidden = !cart.length || checkoutStep;
+    byId('startCheckout').hidden = !cart.length || checkoutStep || !storeOpenForOrders || (localMode&&!digitalOrders);
     byId('cartDialog').classList.toggle('checkout-mode', checkoutStep);
     byId('cartBack').textContent = checkoutStep ? '← Voltar ao carrinho' : '← Continuar escolhendo';
-    byId('cartTitle').textContent = checkoutStep ? 'Contato e entrega' : 'Seu pedido';
+    byId('cartTitle').textContent = checkoutStep ? (localMode?'Sua mesa':'Contato e entrega') : 'Seu pedido';
     const rows = byId('cartLines');
     rows.replaceChildren();
     let total = 0;
@@ -175,7 +177,7 @@ function refresh() {
         rows.append(row);
     }
     const quantity = cart.reduce((sum, line) => sum + line.quantity, 0);
-    const showCart=quantity>0 && storeOpenForOrders;
+    const showCart=quantity>0 && storeOpenForOrders && (!localMode||digitalOrders);
     byId('openCart').hidden=!showCart;
     document.body.classList.toggle('has-cart',showCart);
     byId('openCart').textContent = '🛒 Pedido · ' + quantity + (quantity === 1 ? ' item' : ' itens') +
@@ -184,7 +186,8 @@ function refresh() {
     byId('cartEmpty').hidden = !!cart.length;
     byId('cartSummary').hidden = !cart.length;
     byId('cartTotal').textContent = money(total);
-    byId('sendOrder').disabled = !cart.length || sending || !storeOpenForOrders;
+    byId('sendOrder').disabled = !cart.length || sending || !storeOpenForOrders || (localMode&&!digitalOrders);
+    byId('sendOrder').hidden=!storeOpenForOrders||(localMode&&!digitalOrders);
     byId('startCheckout').disabled = !cart.length || sending || !storeOpenForOrders;
 
 }
@@ -407,6 +410,7 @@ const neighborhoodSelect = byId('deliveryNeighborhood');
 const otherNeighborhood = byId('deliveryOtherNeighborhood');
 
 function setDeliveryMode() {
+    if(localMode)checkoutForm.elements.fulfillmentType.value='table';
     const mode = checkoutForm.elements.fulfillmentType.value;
     deliveryFields.hidden = mode !== 'delivery';
     tableFields.hidden = mode !== 'table';
@@ -573,6 +577,7 @@ function applyAccountProfile(force=false){
  checkoutForm.dispatchEvent(new window.Event('input',{bubbles:true}));
 }
 async function detectAccount({checkout=false,force=false}={}){
+ if(localMode)return;
  if(localLogout)return;
  if(accountCheck)await accountCheck;
  if(localLogout)return;
@@ -644,7 +649,7 @@ function getFulfillment() {
 }
 
 function openCart() {
-    if(!storeOpenForOrders)return;
+    if(!storeOpenForOrders||(localMode&&!digitalOrders))return;
     checkoutStep = false;
     refresh();
     if (!cartDialog.open) cartDialog.showModal();
@@ -663,14 +668,14 @@ byId('cartBack').onclick = () => {
     } else cartDialog.close();
 };
 byId('startCheckout').onclick = () => {
-    if (!cart.length || !storeOpenForOrders) return;
+    if (!cart.length || !storeOpenForOrders||(localMode&&!digitalOrders)) return;
     checkoutStep = true;
     preparePartners();
     if (!checkoutEventSent) {
         checkoutEventSent = trackMeta('InitiateCheckout', productEventData(cart));
     }
     refresh();
-    checkoutForm.elements.customerName.focus({preventScroll:true});
+    (localMode?checkoutForm.elements.tableIdentifier:checkoutForm.elements.customerName).focus({preventScroll:true});
     void detectAccount({checkout:true});
 };
 checkoutForm.addEventListener('input', () => {
@@ -732,6 +737,7 @@ function requestId() {
     return [hex.slice(0,8),hex.slice(8,12),hex.slice(12,16),hex.slice(16,20),hex.slice(20)].join('-');
 }
 function validateCustomer() {
+    if(localMode)return {name:'Cliente presencial',phone:''};
     const name = checkoutForm.elements.customerName.value.trim();
     let phone = checkoutForm.elements.customerPhone.value.replace(/\D/g, '');
     if (phone.startsWith('55') && [12,13].includes(phone.length)) phone = phone.slice(2);
@@ -748,6 +754,8 @@ async function ensureTurnstile() {
     if (!response.ok) throw new Error('Não conseguimos iniciar o registro seguro de pedidos.');
     const config = await response.json();
     deliveryAccountRequired=config.deliveryAccountRequired===true;
+    digitalOrders=config.digitalOrders===true;orderModeKnown=true;
+    if(localMode&&!digitalOrders)throw new Error('Pedidos presenciais ainda indisponíveis.');
     if (!config.siteKey) throw new Error('O registro pelo bot está indisponível neste momento.');
     if (!window.turnstile) {
         await new Promise((resolve, reject) => {
@@ -846,7 +854,7 @@ checkoutForm.onsubmit = async event => {
         hideCheckoutPartners();
     sending = true;
     refresh();
-    orderStatus.textContent = 'Registrando o pré-pedido e enviando o cupom térmico ao bot…';
+    orderStatus.textContent = 'Registrando seu pedido com segurança…';
     try {
         let registration;
         if (lastRegistration?.signature === signature) {
@@ -856,7 +864,8 @@ checkoutForm.onsubmit = async event => {
             if(deliveryAccountRequired&&fulfillment.type==='delivery'&&(!activeAccount?.profile?.hasCpf)){
                 const e=new Error('Entre em Minha conta e vincule seu CPF para continuar.');e.accountRequired=true;throw e;
             }
-            const trackingId = requestId();
+            if(!attempt||attempt.signature!==signature)attempt={signature,id:requestId()};
+            const trackingId = attempt.id;
             const response = await fetch('/api/whatsapp-intent', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -877,9 +886,16 @@ checkoutForm.onsubmit = async event => {
             if (!response.ok || data.status !== 'registered' || data.pending) {
                 throw new Error(data.error || 'O registro no bot não pôde ser confirmado.');
             }
-            registration = {id: data.id, test: data.test, signature,deliveryFeeCents:Number.isSafeInteger(data.deliveryFeeCents)?data.deliveryFeeCents:null};
+            registration = {id: data.id, digital:data.digital===true,trackingId,telegramConfirmed:data.telegramConfirmed, test: data.test, signature,deliveryFeeCents:Number.isSafeInteger(data.deliveryFeeCents)?data.deliveryFeeCents:null};
             if(data.tracking===true && !data.test && fulfillment.type==='delivery') rememberDelivery(trackingId);
             lastRegistration = registration;
+        }
+        if(registration.digital){
+            const message='Pedido #'+registration.id+' registrado. Aguarde a decisão da loja.';
+            const p=byId('digitalOrderReceipt');p.hidden=false;byId('digitalOrderMessage').textContent=message;
+            byId('digitalOrderCheck').onclick=async()=>{try{const r=await fetch('/api/delivery-status',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:registration.trackingId}),cache:'no-store'});if(!r.ok)throw Error();const d=await r.json();byId('digitalOrderMessage').textContent='Pedido #'+registration.id+' · '+({awaiting_acceptance:'Aguardando aceite',accepted:'Aceito',preparing:'Em preparo',completed:'Pronto',out_for_delivery:'Saiu para entrega',delivered:'Concluído',cancelled:'Rejeitado ou cancelado'}[d.status]||'Aguardando atualização');}catch{byId('digitalOrderMessage').textContent=message+' Acompanhamento temporariamente indisponível.';}};
+            byId('digitalOrderClear').onclick=()=>{p.hidden=true;byId('digitalOrderMessage').textContent='';byId('digitalOrderCheck').onclick=null;};
+            cart.length=0;attempt=null;lastRegistration=null;checkoutForm.reset();setDeliveryMode();orderStatus.textContent='';cartDialog.close();refresh();p.scrollIntoView?.({behavior:'smooth'});return;
         }
         if (registration.test) {
             orderStatus.textContent = 'TESTE: pré-registro enviado ao bot de homologação. Nenhum WhatsApp foi aberto.';
@@ -915,7 +931,7 @@ checkoutForm.onsubmit = async event => {
             if(error?.storeClosed){storeOpenForOrders=false;document.documentElement.classList.add('store-lights-off');const lights=byId('storeLightsStatus');if(lights)lights.hidden=false;}
             return;
         }
-        if(error?.accountRequired||(deliveryAccountRequired&&fulfillment.type==='delivery')){
+        if(error?.accountRequired||digitalOrders||localMode||!orderModeKnown||(deliveryAccountRequired&&fulfillment.type==='delivery')){
             orderStatus.textContent=error?.message||'Não foi possível registrar seu pedido.';
             fallback.hidden=true;return;
         }
@@ -930,4 +946,20 @@ checkoutForm.onsubmit = async event => {
     }
 };
 
-if(accountNav)void detectAccount();
+if(localMode){
+ document.body.classList.add('presential-mode');
+ document.title='Pedidos na mesa | O Panquecão';
+ checkoutForm.elements.customerName.required=false;checkoutForm.elements.customerName.disabled=true;
+ checkoutForm.elements.customerPhone.required=false;checkoutForm.elements.customerPhone.disabled=true;
+ checkoutForm.elements.fulfillmentType.value='table';setDeliveryMode();
+ const banner=byId('localOrderBanner');banner.hidden=false;
+}
+if(accountNav&&!localMode)void detectAccount();
+void fetch('/api/order-config',{cache:'no-store'}).then(r=>{if(!r.ok)throw Error();return r.json();}).then(c=>{
+ orderModeKnown=true;digitalOrders=c.digitalOrders===true;deliveryAccountRequired=c.deliveryAccountRequired===true;
+ if(digitalOrders){document.body.classList.add('digital-order-mode');byId('sendOrder').textContent='Enviar pedido à loja';byId('startCheckout').textContent='Continuar pedido';}
+ if(localMode&&!digitalOrders)byId('localOrderBanner').textContent='Cardápio presencial · pedidos digitais ainda indisponíveis.';
+ if(deliveryAccountRequired&&!localMode)byId('savedAccountPitch').textContent='Entre na sua conta e vincule o CPF para pedidos de delivery.';
+ refresh();
+}).catch(()=>{if(localMode)byId('localOrderBanner').textContent='Cardápio presencial · pedidos temporariamente indisponíveis.';});
+
