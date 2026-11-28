@@ -455,7 +455,7 @@
  function parseMobilePrice(text){
   const match=/R\$\s*(\d+),(\d{2})/.exec(text||'');return match?Number(match[1])*100+Number(match[2]):null;
  }
- function loggedOut(){$('#franchisePlan').textContent='';$('#franchiseNav').hidden=true;$('#tab-franchise').hidden=true;S.tab='orders';S.actor=null;S.data=null;S.catalogLoadedAt=0;S.catalogPending=null;$('#appShell').hidden=true;$('#loginScreen').hidden=false;}
+ function loggedOut(){$('#franchisePlan').textContent='';$('#franchiseNav').hidden=true;$('#tab-franchise').hidden=true;S.tab='orders';for(const name of ['orders','customers','cash','catalog','franchise'])$('#tab-'+name).hidden=name!=='orders';document.querySelectorAll('[data-tab]').forEach(n=>n.classList.toggle('active',n.dataset.tab==='orders'));$('#pageTitle').textContent='Pedidos';$('#pageSubtitle').textContent='Acompanhe cada pedido, do primeiro contato à entrega.';S.actor=null;S.data=null;S.catalogLoadedAt=0;S.catalogPending=null;$('#appShell').hidden=true;$('#loginScreen').hidden=false;}
  async function boot(){
   for(const b of document.querySelectorAll('[data-close]'))b.addEventListener('click',()=>closeDialog(b.dataset.close));
   $('#navigation').addEventListener('click',e=>{const b=e.target.closest('[data-tab]');if(b)showTab(b.dataset.tab);});
