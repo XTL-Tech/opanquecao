@@ -10,3 +10,6 @@
 @media(max-width:420px){.gourmet-header .site-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));min-width:0;max-width:100%;gap:0}.gourmet-header .site-tabs a{min-width:0;max-width:100%;padding:9px 4px;overflow-wrap:anywhere;white-space:normal}.gourmet-header-inner.container,.gourmet-header .restaurant-logo,.gourmet-header .restaurant-logo a,.local-strip,.local-strip a,.brand-caption{min-width:0;max-width:100%;overflow-wrap:anywhere}.local-strip .xtl-food-top-link{white-space:normal;text-align:center}.gourmet-header .restaurant-logo img{flex-shrink:0;max-width:80px}.brand-caption strong,.brand-caption small{white-space:normal}.hero-controls{flex-wrap:wrap;min-width:0}.premium-hero-copy{min-width:0;box-sizing:border-box}}
 .digital-order-mode a.whatsapp-float,.presential-mode a.whatsapp-float{display:none!important}
 .presential-mode .order-privacy,.digital-order-mode .order-privacy{display:block!important}
+
+/* Chromium 320px: the loyalty section's intrinsic flex width exceeded the viewport. */
+@media(max-width:700px){.premium-loyalty{width:100%;max-width:100%;min-width:0;box-sizing:border-box;flex-wrap:wrap;overflow-wrap:anywhere}.premium-loyalty>div{min-width:0;max-width:100%}.premium-loyalty .premium-medal{flex:0 0 72px}.premium-loyalty a{max-width:100%;white-space:normal;overflow-wrap:anywhere}}
