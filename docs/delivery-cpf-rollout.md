@@ -1,19 +1,22 @@
-# Delivery — cadastro CPF (issue #62)
-Entrega parcial em branch de homologação. Não ativar em produção.
- 
-## Implementado
-- Reutiliza sessão Neon Auth por OTP de e-mail existente e endereços salvos; CPF não é senha nem comprova titularidade. WhatsApp permanece não verificado.
-- CPF normalizado, dígitos verificadores, HMAC com segredo exclusivo e índice único. Apenas dois dígitos finais retornam à própria conta. Vínculo imutável pelo cliente; correção administrativa ainda precisa de fluxo seguro.
-- DELIVERY_ACCOUNT_REQUIRED=true habilita cadastro CPF, valida sessão e perfil na API de intenção delivery e desabilita a rota legada de delivery. Pedidos novos incluem account_subject no insert e no digest de idempotência. Não expõe CPF ao Telegram.
-- Sem flag, fluxo anterior permanece. Presencial e retirada não exigem CPF.
- 
-## Gate antes de ativar
-1. Confirmar migration anterior de dp.customer_accounts e tipo de subject; executar 100_customer_cpf_delivery.sql exclusivamente em Neon de homologação com backup e dados fictícios. Não rodar novamente sem revisar constraint existente.
-2. Configurar CUSTOMER_CPF_HMAC_KEY (32 bytes aleatórios em hex, exclusivo, manter em cofre; não rotacionar sem plano). Configurar CUSTOMER_ACCOUNTS_ENABLED e autenticação separada, Turnstile e origem HML. Nunca expor valores.
-3. Validar npm ci / npm test, sessão real HML, CPF duplicado, concorrência, troca de conta, autorização, idempotência e falhas de banco. Não usar chat ou credenciais reais. Não ativar flag sem persistência e horário em modo obrigatório.
-4. Concluir integração do histórico e busca administrativa pelo identificador da conta, desvincular agregações por telefone não verificado, definir correção/recuperação do CPF, privacidade e base legal; implementar autenticação do telefone se requerida. CPF não prova identidade nem propriedade da linha.
-5. Confirmar comportamento de sessão no checkout e fallback manual. Rever APIs públicas de pedidos e estado do site. Homologar com usuário.
-6. Aprovação explícita de merge/deploy. Rollback da flag para false (retorna fluxo legado), preservar registros e migration aditiva, não remover dados.
- 
-## Pendências da issue #62
-Backoffice simplificado, canal presencial separado, mapa privado, desligamento do cupom térmico, rejeição Telegram, filtros, histórico próprio e ajustes de horários. Horários e aceite Telegram já possuem componentes legados, mas não estão homologados para o escopo novo. Não declarar conclusão.
+# O Panquecão — backoffice Lite e pedidos digitais (issue #62)
+
+Estado: implementação em branch isolada, NÃO homologada para produção.
+
+## Entrega
+- Cadastro delivery por OTP de e-mail já existente, CPF validado, HMAC exclusivo, índice único, conta e endereços persistentes. Pedidos associados ao subject autenticado, contato histórico salvo separadamente. CPF e telefone não são comprovados como pertencentes ao titular.
+- Modo DIGITAL_ORDERS_ENABLED: registro no banco antes de notificar Telegram, mensagem textual em vez de PDF, aceite/rejeição autorizados e condicionais; fallback operacional no painel. Rota antiga /api/order bloqueada. Nenhuma aprovação automática.
+- /local: página web responsiva usando o catálogo comum, mesa obrigatória, sem frete, CPF ou telefone, carrinho em memória e comprovante/status na mesma sessão. Sem PWA instalável ou funcionamento offline homologado.
+- Painel Lite: somente administração (admin/manager existentes), pedidos, filtro de canal, clientes, busca CPF via POST/HMAC, histórico, preços, horários. Visualização GPS privada sem mapa-base e links individuais de mapa para endereços. Não rastreia clientes. Legado preservado para rollback.
+- Horário obrigatório no servidor com abertura/fechamento manual e agenda semanal. Override existente expira de 5 minutos a 24h; mudança de horário não altera pedidos aceitos.
+- Tarifas em delivery-areas.json: Nova Hartz e Araricá R$10 padrão; exceções Araricá R$15/R$20; Parobé e Sapiranga R$35 mediante cobertura e Pix recebido antes de preparar. Demais locais não cadastrados exigem revisão. Subtotal, frete e total recalculados/registrados pelo servidor; retirada e mesa sem frete. Não usar cobrança real nesta fase.
+
+## Gate
+1. CI completa: npm ci, npm test, testes de conta e retenção, cache e Chromium. Testes específicos CPF, texto digital, autorização e modalidades passaram no SHA c6c5a018; CI integral anterior falhou. Correções de regex do cabeçalho, runner Ubuntu 24.04, cache, inicialização de tarifas e sessão foram feitas depois; repetir CI no HEAD.
+2. Confirmar schema anterior de customer_accounts e migrações existentes, backup e restore. Aplicar somente em banco de homologação migrations 100, 101, 102 em ordem. Não executar em produção automaticamente. Verificar concorrência, triggers de estados, isolamento de contas e rollback.
+3. Validar uso de Neon dedicado, autenticação separada, Turnstile, Telegram e webhook com chat de teste, origem e segredos exclusivos. CUSTOMER_CPF_HMAC_KEY 32 bytes aleatórios em hex; nunca expor. O modo digital bloqueia gravação em preview; homologar runtime isolado com configuração explícita antes de publicar.
+4. Configurar catálogo e horários no Neon; STORE_HOURS_MODE=required, STORE_HOURS_SOURCE=neon, CATALOG_SOURCE=neon, CUSTOMER_ACCOUNTS_ENABLED=true, DELIVERY_ACCOUNT_REQUIRED=true, DIGITAL_ORDERS_ENABLED=true apenas após gate.
+5. Validar tarifa e Pix prévio, cancelamento, recuperação de CPF, LGPD, verificação de telefone se exigida, estados no Telegram e navegador real. A busca de CPF não expõe CPF completo. Fidelidade não ativada.
+6. Confirmar política comercial e divergências do branch main vs runtime comercial. Não publicar, mesclar ou executar migrações reais sem homologação. Rollback: desligar flags e manter migrations aditivas, registros e histórico. Não contratar serviços pagos.
+
+## Limitações atuais
+Mapa-base integrado, PWA instalável, programa de fidelidade, alertas automáticos de status e recuperação/correção de CPF não foram homologados ou concluídos. Entregas remotas exigem confirmação de cobertura e registro manual do Pix. Não declarar pronto para produção.
