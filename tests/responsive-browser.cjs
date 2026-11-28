@@ -257,6 +257,7 @@ function within(rect,width){
             assert.equal(home.home,true);
             assert.equal(home.visibleSections,0,'Home deve mostrar apenas categorias');
             assert.equal(home.categoryColumns,categories,'Categorias: '+width);
+            if(home.scrollWidth>width+2)console.log('OVERFLOW',JSON.stringify(await cdp.eval(`Array.from(document.querySelectorAll('body *')).filter(e=>{const r=e.getBoundingClientRect();return r.width&&r.height&&(r.right>document.documentElement.clientWidth+2||r.left< -2)}).slice(0,30).map(e=>({tag:e.tagName,id:e.id,cls:typeof e.className==='string'?e.className:'svg',r:e.getBoundingClientRect().right,l:e.getBoundingClientRect().left,text:e.textContent.slice(0,80)}))`)));
             assert.ok(home.scrollWidth<=width+2,'Rolagem horizontal na home: '+width+' '+home.scrollWidth);
             for(const rect of [home.whatsapp,home.cart,home.tabs])within(rect,width);
             assert.ok(home.whatsapp.right<=home.cart.left+1||
