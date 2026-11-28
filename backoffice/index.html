@@ -21,6 +21,7 @@
    <button data-tab="customers" type="button"><span aria-hidden="true">♙</span> Clientes</button>
    <button data-tab="cash" type="button"><span aria-hidden="true">▣</span> Caixa diário</button>
    <button data-tab="catalog" type="button"><span aria-hidden="true">≡</span> Preços do cardápio</button>
+   <button data-tab="franchise" id="franchiseNav" type="button" hidden>Plano de franquias · reservado</button>
   </nav>
   <div class="sidebar-foot"><div id="staffLabel">—</div><small id="staffRole"></small><button id="logout" class="soft" type="button">Sair da conta</button><small>Gestão por <b>XTL TECH</b></small></div>
  </aside>
@@ -101,6 +102,9 @@
     <div class="toolbar"><input id="catalogSearch" type="search" placeholder="Pesquisar produto ou categoria" aria-label="Pesquisar cardápio"></div>
     <div id="catalogNotice" class="hint"></div>
     <div class="table-wrap"><table><thead><tr><th>Categoria / Produto</th><th>Variação</th><th>Preço vigente</th><th></th></tr></thead><tbody id="catalogTable"></tbody></table></div>
+   </section>
+   <section id="tab-franchise" hidden>
+    <div class="form-card"><h2>Plano de franquias — acesso da gestão</h2><p class="hint">Documento interno. Não distribuir a candidatos.</p><pre id="franchisePlan" class="franchise-plan" aria-live="polite"></pre></div>
    </section>
   </main>
  </div>

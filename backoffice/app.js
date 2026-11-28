@@ -150,23 +150,36 @@
   try{await pending;}finally{if(S.catalogPending===pending)S.catalogPending=null;}
  }
  function showTab(tab){
-  S.tab=tab;for(const name of ['orders','customers','cash','catalog'])$('#tab-'+name).hidden=name!==tab;
+  if(tab==='franchise'&&(S.demo||S.actor?.role!=='manager'))return;
+  if(tab!=='franchise')$('#franchisePlan').textContent='';
+  S.tab=tab;for(const name of ['orders','customers','cash','catalog','franchise'])$('#tab-'+name).hidden=name!==tab;
   document.querySelectorAll('[data-tab]').forEach(n=>n.classList.toggle('active',n.dataset.tab===tab));
   const meta={orders:['Pedidos','Acompanhe cada pedido, do primeiro contato à entrega.'],
    customers:['Clientes','Cadastros e relacionamento com o cliente.'],
    cash:['Caixa diário','Conferência e fechamento dos pagamentos recebidos.'],
-   catalog:['Preços do cardápio','Ajuste de valores, com histórico e autorização.']};
+   catalog:['Preços do cardápio','Ajuste de valores, com histórico e autorização.'],
+   franchise:['Plano de franquias','Estudo confidencial de expansão da marca.']};
   $('#pageTitle').textContent=meta[tab][0];$('#pageSubtitle').textContent=meta[tab][1];
   if(S.data){
    renderTab();if(tab==='catalog')ensureCatalog();
    if(tab==='cash')refreshAsaas();
+   if(tab==='franchise')void loadFranchisePlan();
   }
  }
  function render(){if(!S.data)return;$('#todayText').textContent='📅 '+S.data.today.split('-').reverse().join('/');
   $('#staffLabel').textContent=S.actor.email||'Atendente';
   $('#staffRole').textContent=S.actor.role==='manager'?'Gestão':'Atendimento';
+  $('#franchiseNav').hidden=S.demo||S.actor.role!=='manager';
   $('#pendingCount').textContent=S.data.orders.filter(x=>['pending_customer','awaiting_acceptance'].includes(x.status)).length||'';
   renderTab();
+ }
+ async function loadFranchisePlan(){
+  const actor=S.actor;
+  if(S.demo||actor?.role!=='manager')return;
+  const node=$('#franchisePlan');node.textContent='Carregando estudo reservado…';
+  try{const result=await request('/api/backoffice?action=franchise_plan');
+   if(S.actor===actor&&S.tab==='franchise')node.textContent=typeof result.plan==='string'?result.plan:'Plano indisponível.';
+  }catch(e){if(S.actor===actor&&S.tab==='franchise')node.textContent=e.message;}
  }
  function renderTab(){if(S.tab==='orders')renderOrders();if(S.tab==='customers')renderCustomers();if(S.tab==='cash')renderCash();if(S.tab==='catalog')renderCatalog();}
  async function lookupOrders(more=false){
@@ -442,11 +455,11 @@
  function parseMobilePrice(text){
   const match=/R\$\s*(\d+),(\d{2})/.exec(text||'');return match?Number(match[1])*100+Number(match[2]):null;
  }
- function loggedOut(){S.actor=null;S.data=null;S.catalogLoadedAt=0;S.catalogPending=null;$('#appShell').hidden=true;$('#loginScreen').hidden=false;}
+ function loggedOut(){$('#franchisePlan').textContent='';$('#franchiseNav').hidden=true;$('#tab-franchise').hidden=true;S.tab='orders';S.actor=null;S.data=null;S.catalogLoadedAt=0;S.catalogPending=null;$('#appShell').hidden=true;$('#loginScreen').hidden=false;}
  async function boot(){
   for(const b of document.querySelectorAll('[data-close]'))b.addEventListener('click',()=>closeDialog(b.dataset.close));
   $('#navigation').addEventListener('click',e=>{const b=e.target.closest('[data-tab]');if(b)showTab(b.dataset.tab);});
-  $('#refresh').addEventListener('click',async()=>{await reload();if(S.tab==='catalog')await ensureCatalog(true);if(S.tab==='cash')await refreshAsaas();});
+  $('#refresh').addEventListener('click',async()=>{await reload();if(S.tab==='catalog')await ensureCatalog(true);if(S.tab==='cash')await refreshAsaas();if(S.tab==='franchise')await loadFranchisePlan();});
   $('#orderSearch').addEventListener('input',()=>{
     if(S.demo)return renderOrders();
     clearTimeout(S.orderSearchTimer);
