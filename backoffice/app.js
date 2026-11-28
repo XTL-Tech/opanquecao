@@ -535,7 +535,7 @@
   try{
    const term=$('#orderSearch').value.trim(),status=$('#orderStatusFilter').value;
    const last=more?S.data.orders.at(-1):null;
-   const q=new URLSearchParams({action:'orders',term,status});
+   const q=new URLSearchParams({action:'orders',term,status,channel:$('#orderChannelFilter')?.value||''});
    if(last?.created_at&&last.request_id){
     q.set('before',last.created_at);q.set('beforeId',last.request_id);
    }
@@ -810,7 +810,7 @@
  function parseMobilePrice(text){
   const match=/R\$\s*(\d+),(\d{2})/.exec(text||'');return match?Number(match[1])*100+Number(match[2]):null;
  }
- function loggedOut(){exitBiTV();biData=null;biLastOK=0;clear($('#biCards'));clear($('#biCharts'));S.actor=null;S.data=null;S.catalogLoadedAt=0;S.catalogPending=null;$('#appShell').hidden=true;$('#loginScreen').hidden=false;}
+ function loggedOut(){for(const id of ['accountSearchResults','accountHistory','deliveryMapResult']){const n=$('#'+id);if(n)clear(n);}exitBiTV();biData=null;biLastOK=0;clear($('#biCards'));clear($('#biCharts'));S.actor=null;S.data=null;S.catalogLoadedAt=0;S.catalogPending=null;$('#appShell').hidden=true;$('#loginScreen').hidden=false;}
  async function boot(){
   $('#holidayAdd').addEventListener('click',()=>holidayRow());
   $('#hoursForm').addEventListener('submit',async e=>{
@@ -883,7 +883,7 @@
     S.orderSearchTimer=setTimeout(()=>lookupOrders(),450);
   });
   $('#orderStatusFilter').addEventListener('change',()=>lookupOrders());
-  $('#orderChannelFilter').addEventListener('change',renderOrders);
+  $('#orderChannelFilter').addEventListener('change',()=>lookupOrders());
   $('#moreOrders').addEventListener('click',()=>lookupOrders(true));
   $('#clientSearch').addEventListener('input',()=>{
     clearTimeout(S.searchTimer);
