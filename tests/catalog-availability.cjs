@@ -1,0 +1,20 @@
+'use strict';
+const assert=require('node:assert/strict');
+const {applyAvailability,publicCatalog}=require('../lib/catalog-availability');
+(async()=>{
+const {priceOrder}=await import('../order-catalog.mjs');
+const catalog=require('../cardapio.json');
+const cat=catalog.categorias.find(c=>c.id==='bebidas'),item=cat.itens.find(i=>i.preco);
+const key={category:cat.id,product:item.nome};
+const line={...key,option:'Único',quantity:1,note:'',flavors:[],freeExtras:[],paidExtras:[]};
+const before=priceOrder(catalog,[line]);
+const paused=applyAvailability(catalog,{...key,available:false});
+assert.equal(paused.previous,true);assert.equal(paused.changed,true);assert.equal(item.available,undefined);
+assert.equal(publicCatalog(paused.catalog).categorias.find(c=>c.id===cat.id).itens.some(i=>i.nome===item.nome),false);
+assert.throws(()=>priceOrder(paused.catalog,[line]),/indisponível/);
+const active=applyAvailability(paused.catalog,{...key,available:true});
+assert.deepEqual(priceOrder(active.catalog,[line]),before);
+assert.throws(()=>applyAvailability(catalog,{...key,available:'false'}));
+assert.equal(applyAvailability(active.catalog,{...key,available:true}).changed,false);
+console.log('PASS disponibilidade: pausa, catálogo público, carrinho antigo, reativação e preço preservado');
+})().catch(e=>{console.error(e);process.exitCode=1;});
