@@ -46,7 +46,7 @@ module.exports = async function handler(req, res) {
     try {
         const functions = await import('../fulfillment.mjs');
         deliveryDetails = functions.normalizeFulfillment(fulfillment, deliveryAreas);
-        if(deliveryDetails.type==='delivery'&&fulfillment.neighborhood!=='__other__')deliveryFeeCents=functions.standardDeliveryFee(deliveryDetails.city,deliveryDetails.neighborhood,deliveryAreas);
+        if(deliveryDetails.type==='delivery')deliveryFeeCents=functions.standardDeliveryFee(deliveryDetails.city,fulfillment.neighborhood,deliveryAreas);
     } catch (error) {
         return res.status(400).json({ error: error?.message || 'Confira o endereço e a modalidade do pedido.' });
     }
@@ -106,14 +106,15 @@ module.exports = async function handler(req, res) {
         let claimed;
         try{
             if(!await digital.preflight())return res.status(423).json({error:'Loja fechada ou atendimento digital indisponível.'});
-            const customer=guest?await digital.guestCustomer(requestId,clean(name,80)):await backoffice.upsertCustomer({name:clean(name,80),phone:normalizedPhone});
-            claimed=await backoffice.createOrder({requestId,customer,items:validated,fulfillment:deliveryDetails,note:clean(note,400),origin:'site',status:'awaiting_acceptance',telegramState:'pending',deliveryFeeCents,accountSubject});
+            const customer=accountSubject?await digital.customerForAccount(accountSubject,clean(name,80),normalizedPhone):guest?await digital.guestCustomer(requestId,clean(name,80)):await backoffice.upsertCustomer({name:clean(name,80),phone:normalizedPhone});
+            claimed=await backoffice.createOrder({requestId,customer,items:validated,fulfillment:deliveryDetails,note:clean(note,400),origin:'site',status:'awaiting_acceptance',telegramState:'pending',deliveryFeeCents,accountSubject,contact:{name:clean(name,80),phone:normalizedPhone}});
         }catch(e){return res.status(e.status===409?409:503).json({error:'Não foi possível confirmar o registro. Confira antes de reenviar.'});}
-        const reply={id,status:'registered',digital:true,test:false,tracking:false,deliveryFeeCents:claimed.record.delivery_fee_cents??null};
+        const reply={id,status:'registered',digital:true,test:false,tracking:false,prepaidPix:digital.prepaid(deliveryDetails),deliveryFeeCents:claimed.record.delivery_fee_cents??null};
         if(!claimed.created)return res.status(200).json({...reply,replayed:true,telegramConfirmed:claimed.record.telegram_state==='sent'});
         try{
             const keyboard=[];
-            if(require('../lib/telegram-approval').approvalEnabled())keyboard.push([{text:'Aceitar pedido',callback_data:'accept:'+requestId},{text:'Rejeitar pedido',callback_data:'reject:'+requestId}]);
+            if(require('../lib/telegram-approval').approvalEnabled()&&!digital.prepaid(deliveryDetails))keyboard.push([{text:'Aceitar pedido',callback_data:'accept:'+requestId},{text:'Rejeitar pedido',callback_data:'reject:'+requestId}]);
+            if(digital.prepaid(deliveryDetails)&&require('../lib/telegram-approval').approvalEnabled())keyboard.push([{text:'Rejeitar pedido',callback_data:'reject:'+requestId}]);
             if(normalizedPhone)keyboard.push([{text:'Contato WhatsApp',url:'https://wa.me/55'+normalizedPhone}]);
             const loc=deliveryDetails.location;
             if(loc)keyboard.push([{text:'Ver rota de entrega',url:'https://www.google.com/maps?q='+loc.latitude+','+loc.longitude}]);
