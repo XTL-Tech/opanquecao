@@ -913,10 +913,19 @@
    try{
     const d=await request('/api/backoffice?action=delivery_map'),points=d.points||[],gps=points.filter(p=>p.location);
     if(gps.length){
-     const ns='http://www.w3.org/2000/svg',svg=document.createElementNS(ns,'svg');svg.setAttribute('viewBox','0 0 600 300');svg.setAttribute('role','img');svg.setAttribute('aria-label','Distribuição geográfica dos endereços com GPS; sem mapa-base');svg.classList.add('delivery-plot');
-     const lat=gps.map(p=>p.location.latitude),lon=gps.map(p=>p.location.longitude),lo=Math.min(...lon),hi=Math.max(...lon),bottom=Math.min(...lat),top=Math.max(...lat);
-     for(const p of gps){const circle=document.createElementNS(ns,'circle');circle.setAttribute('cx',String(20+560*(p.location.longitude-lo)/(hi-lo||1)));circle.setAttribute('cy',String(280-260*(p.location.latitude-bottom)/(top-bottom||1)));circle.setAttribute('r','5');circle.setAttribute('fill','#681b30');const title=document.createElementNS(ns,'title');title.textContent='#'+p.ref;circle.append(title);svg.append(circle);}
-     root.append(el('p',gps.length+' pontos com GPS · distribuição sem mapa-base.'),svg);
+     const ns='http://www.w3.org/2000/svg',svg=document.createElementNS(ns,'svg');svg.setAttribute('viewBox','0 0 768 768');svg.setAttribute('role','img');svg.setAttribute('aria-label','Mapa regional de entregas com GPS autorizado');svg.classList.add('delivery-plot');
+     // Fixed public region, independent of customer coordinates. Never geocode or send individual pins to the tile provider.
+     const zoom=12,n=2**zoom,project=(lat,lon)=>{const r=Math.max(-85,Math.min(85,lat))*Math.PI/180;return [(lon+180)/360*n,(1-Math.asinh(Math.tan(r))/Math.PI)/2*n];};
+     const center=project(-29.65,-50.98),x0=Math.floor(center[0])-1,y0=Math.floor(center[1])-1;
+     const tiles=document.createElementNS(ns,'g'),markers=document.createElementNS(ns,'g');svg.append(tiles,markers);
+     let shown=0;for(const p of gps){const xy=project(p.location.latitude,p.location.longitude),x=(xy[0]-x0)*256,y=(xy[1]-y0)*256;if(x<0||x>768||y<0||y>768)continue;shown++;const circle=document.createElementNS(ns,'circle');circle.setAttribute('cx',String(x));circle.setAttribute('cy',String(y));circle.setAttribute('r','5');circle.setAttribute('fill','#681b30');circle.setAttribute('stroke','#ffffff');circle.setAttribute('stroke-width','1.5');const title=document.createElementNS(ns,'title');title.textContent='#'+p.ref;circle.append(title);markers.append(circle);}
+     const toggle=button('Carregar mapa-base OpenStreetMap',()=>{
+      if(tiles.childNodes.length)return;
+      for(let x=0;x<3;x++)for(let y=0;y<3;y++){const img=document.createElementNS(ns,'image');img.setAttribute('x',String(x*256));img.setAttribute('y',String(y*256));img.setAttribute('width','256');img.setAttribute('height','256');img.setAttribute('href','https://tile.openstreetmap.org/'+zoom+'/'+(x0+x)+'/'+(y0+y)+'.png');tiles.append(img);}
+      toggle.disabled=true;toggle.textContent='Mapa-base solicitado';
+     });
+     const credit=el('a','© OpenStreetMap contributors');credit.href='https://www.openstreetmap.org/copyright';credit.target='_blank';credit.rel='noopener noreferrer';
+     root.append(el('p',shown+' de '+gps.length+' pontos na região. Fora da área, consulte a lista.'),el('p','O mapa-base é opcional: o provedor recebe apenas solicitações de uma região fixa e o IP do navegador, não os pontos dos clientes.'),toggle,svg,credit);
     }
     for(const p of points){const row=el('p','#'+p.ref+' · '+p.address+' ');const link=el('a','Abrir no mapa');link.href='https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(p.location?p.location.latitude+','+p.location.longitude:p.address);link.target='_blank';link.rel='noopener noreferrer';row.append(link);root.append(row);}
     if(!points.length)root.append(el('p','Nenhuma entrega registrada.'));
