@@ -50,7 +50,7 @@ async function loadAddresses(more=false){
  records=more?[...records,...result.addresses]:result.addresses;next=result.next;render();
 }
 async function showAccount(state){
- login.hidden=true;dashboard.hidden=false;$('accountEmail').textContent=state.email;profile.elements.name.value=state.profile?.name||'';profile.elements.phone.value=state.profile?.phone||'';clearAddress();await loadAddresses();
+ login.hidden=true;dashboard.hidden=false;$('accountEmail').textContent=state.email;profile.elements.name.value=state.profile?.name||'';profile.elements.phone.value=state.profile?.phone||'';const cpf=profile.elements.cpf;if(cpf){const required=config?.cpfRequired===true;const linked=state.profile?.hasCpf===true;$('cpfField').hidden=!required;cpf.disabled=!required||linked;cpf.required=required&&!linked;cpf.value='';$('cpfHint').textContent=linked?'CPF vinculado · final '+state.profile.cpfLast2:'Necessário para pedidos de delivery. Não é sua senha.';}clearAddress();await loadAddresses();
 }
 async function showLogin(){
  dashboard.hidden=true;login.hidden=false;$('otpRequest').hidden=false;$('otpVerify').hidden=true;
@@ -66,7 +66,7 @@ $('otpRequest').onsubmit=e=>{e.preventDefault();void busy(async()=>{email=$('otp
 $('otpVerify').onsubmit=e=>{e.preventDefault();void busy(async()=>{const state=await accountRequest('otp_verify',{email,otp:$('otpVerify').elements.otp.value});$('otpVerify').reset();signalSession('login');await showAccount(state);status('Bem-vindo!');});};
 $('changeEmail').onclick=()=>busy(async()=>{await showLogin();status('');});
 $('accountLogout').onclick=()=>busy(async()=>{await accountRequest('logout',{});signalSession('logout');records=[];next=null;profile.reset();clearAddress();$('accountEmail').textContent='';$('addressList').replaceChildren();await showLogin();status('Você saiu da conta.');});
-profile.onsubmit=e=>{e.preventDefault();void busy(async()=>{await accountRequest('profile_save',{name:profile.elements.name.value,phone:profile.elements.phone.value});status('Seus dados foram salvos.');});};
+profile.onsubmit=e=>{e.preventDefault();void busy(async()=>{await accountRequest('profile_save',{name:profile.elements.name.value,phone:profile.elements.phone.value,...(config?.cpfRequired&&profile.elements.cpf&&!profile.elements.cpf.disabled?{cpf:profile.elements.cpf.value}:{})});await showAccount(await accountRequest('state'));status('Seus dados foram salvos.');});};
 $('addAddress').onclick=()=>busy(()=>openAddress(null));
 $('cancelAddress').onclick=()=>{clearAddress();status('Edição cancelada.');};
 $('moreAddresses').onclick=()=>busy(()=>loadAddresses(true));
