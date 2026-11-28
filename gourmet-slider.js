@@ -7,7 +7,8 @@ const slides=[
 ];
 const hero=document.querySelector('.premium-hero'),media=hero.querySelector('.premium-hero-media img'),dots=document.getElementById('heroDots'),pause=document.getElementById('heroPause'),controls=hero.querySelector('.hero-controls');
 let index=0,timer=null,paused=window.matchMedia?.('(prefers-reduced-motion: reduce)').matches===true,hover=false,focus=false;
-const isClosed=()=>document.documentElement.classList.contains('store-lights-off');
+// The hero follows the introductory visual state, not the ordering permission.
+const isClosed=()=>document.documentElement.classList.contains('closed-intro');
 function stop(){if(timer!==null)clearTimeout(timer);timer=null;}
 function schedule(){stop();if(!paused&&!hover&&!focus&&!document.hidden&&!isClosed())timer=setTimeout(()=>{render(index+1);schedule();},6000);}
 function render(next=index){
@@ -28,4 +29,5 @@ hero.addEventListener('mouseenter',()=>{hover=true;stop();});hero.addEventListen
 hero.addEventListener('focusin',()=>{focus=true;stop();});hero.addEventListener('focusout',e=>{if(!hero.contains(e.relatedTarget)){focus=false;schedule();}});
 document.addEventListener('visibilitychange',schedule);
 document.addEventListener('store-operation-status',()=>{render();schedule();});
+document.addEventListener('store-intro-change',()=>{render();schedule();});
 render();schedule();
