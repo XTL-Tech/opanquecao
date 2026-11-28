@@ -1005,7 +1005,7 @@ if(location.hostname==='opanquecao.vercel.app'){
  const script=document.createElement('script');script.defer=true;script.src='/_vercel/speed-insights/script.js';document.head.append(script);
 }
 </script>
-<link rel="stylesheet" href="/gourmet.css">
+<link rel="stylesheet" href="/gourmet.css"><link rel="stylesheet" href="/local-order.css">
 <script src="/gourmet-slider.js" defer></script>
 </head>
 
@@ -1024,7 +1024,7 @@ if(location.hostname==='opanquecao.vercel.app'){
     <div class="container gourmet-header-inner">
         <h1 class="restaurant-logo"><a href="/" aria-label="Panquecão — início"><img src="img/logo-disk-panquecao.webp" width="160" height="175" alt="Disk Panquecão"><span class="brand-caption"><strong>O PANQUECÃO</strong><small>MAIS QUE UMA PANQUECA, É O PANQUECÃO</small></span></a></h1>
         <nav class="site-tabs" aria-label="Navegação principal">
-            <a href="#cardapio">Cardápio</a>
+            <a href="#cardapio">Cardápio</a><a href="/local" id="localOrderLink">Pedir na mesa</a>
             <a href="#nossa-historia">Nossa história</a>
             <a href="#contato">Contato</a>
             <a href="#como-chegar">Como chegar</a><a href="/minha-conta.html" id="customerAccountNav">Minha conta</a>
@@ -1033,7 +1033,7 @@ if(location.hostname==='opanquecao.vercel.app'){
     </div>
 </header>
 <section class="premium-hero" aria-labelledby="premiumTitle" aria-roledescription="carrossel"><div class="premium-hero-media"><img src="/img/cardapio/c02-p15.webp" alt="Imagem ilustrativa da especialidade Panquetudo" width="560" height="420" fetchpriority="high"><span>Imagem ilustrativa do cardápio</span></div><div class="premium-hero-copy"><span class="premium-eyebrow">O SABOR QUE NOS UNE · NOVA HARTZ</span><h2 id="premiumTitle">MAIS QUE UMA PANQUECA, É O PANQUECÃO</h2><p id="premiumHeroText">Você merece o melhor. E sua família também.</p><a class="premium-cta" id="premiumCta" href="#cardapio">Explorar cardápio <span aria-hidden="true">↓</span></a><span class="premium-hours">QUARTA A DOMINGO · 19H–23H</span><div class="hero-controls" aria-label="Controles do banner"><button type="button" id="heroPrev" aria-label="Banner anterior">‹</button><div id="heroDots" role="group" aria-label="Escolher banner"></div><button type="button" id="heroNext" aria-label="Próximo banner">›</button><button type="button" id="heroPause" aria-label="Pausar rotação">Pausar</button></div></div></section>
-<div id="storeLightsStatus" class="store-lights-status" hidden><strong>● LUZES APAGADAS</strong><p>Voltamos no próximo horário de atendimento. O cardápio continua disponível para você conhecer.</p></div>
+<section id="localOrderBanner" hidden class="container" aria-label="Consumo presencial">Consumo presencial · escolha seus itens e informe a mesa.</section><section id="digitalOrderReceipt" hidden class="container" aria-live="polite"><h2 id="digitalOrderMessage"></h2><button id="digitalOrderCheck" type="button">Atualizar situação</button> <button id="digitalOrderClear" type="button">Novo pedido</button></section><div id="storeLightsStatus" class="store-lights-status" hidden><strong>● LUZES APAGADAS</strong><p>Voltamos no próximo horário de atendimento. O cardápio continua disponível para você conhecer.</p></div>
 <p id="storeOpenStatus" role="status" aria-live="polite" hidden></p>
 
 <div class="nav-wrapper">
