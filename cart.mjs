@@ -11,6 +11,7 @@ const byId = id => document.getElementById(id);
 const cart = [];
 const localMode=window.location.pathname.replace(/\/$/,'')==='/local';
 let digitalOrders=false,orderModeKnown=false,attempt=null;
+let deliveryAreasData=null;
 let catalog;
 let sending = false;
 let checkoutStep = false;
@@ -402,7 +403,6 @@ const cartDialog = byId('cartDialog');
 const turnstileContainer = byId('orderTurnstile');
 let widgetId;
 let challengeWaiter;
-let deliveryAreasData = null;
 let deliveryAreasPromise = null;
 let deliveryLocation = null;
 const deliveryFields = byId('deliveryFields');
@@ -955,7 +955,7 @@ if(localMode){
  checkoutForm.elements.fulfillmentType.value='table';setDeliveryMode();
  const banner=byId('localOrderBanner');banner.hidden=false;
 }
-if(accountNav&&!localMode)void detectAccount();
+if(accountNav)void detectAccount();
 void fetch('/api/order-config',{cache:'no-store'}).then(r=>{if(!r.ok)throw Error();return r.json();}).then(c=>{
  orderModeKnown=true;digitalOrders=c.digitalOrders===true;deliveryAccountRequired=c.deliveryAccountRequired===true;
  if(digitalOrders){document.body.classList.add('digital-order-mode');byId('sendOrder').textContent='Enviar pedido à loja';byId('startCheckout').textContent='Continuar pedido';}
