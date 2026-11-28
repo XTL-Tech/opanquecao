@@ -9,7 +9,7 @@ module.exports=async(req,res)=>{
   const cfg=auth.config(),method=req.method;
   if(!['GET','POST'].includes(method))return res.status(405).json({error:'Método inválido.'});
   auth.originGuard(req,cfg,method==='POST');
-  if(method==='GET'&&req.query?.action==='config')return res.status(200).json({enabled:true,siteKey:process.env.TURNSTILE_SITE_KEY});
+  if(method==='GET'&&req.query?.action==='config')return res.status(200).json({enabled:true,siteKey:process.env.TURNSTILE_SITE_KEY,cpfRequired:require('../lib/customer-cpf').enabled()});
   const body=req.body||{};
   if(typeof body!=='object'||Array.isArray(body)||JSON.stringify(body).length>12000)throw new auth.AccountError('Dados inválidos.');
   const action=method==='GET'?req.query?.action||'state':body.action;
