@@ -7,6 +7,7 @@ const { loadStoreStatus } = require('../lib/store-hours-source');
 
 module.exports = async function handler(req, res) {
     res.setHeader('Cache-Control', 'no-store');
+    if(require('../lib/digital-orders').enabled())return res.status(410).json({error:'Utilize o checkout digital atualizado.'});
     if (req.method !== 'POST') return res.status(405).json({ error: 'Método inválido.' });
     // Diagnóstico sem dados pessoais, sem token Turnstile e sem credenciais.
     const receivedTrace = req.headers?.['x-checkout-trace'];
