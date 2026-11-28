@@ -45,3 +45,5 @@ input,textarea,select{width:100%;background:white;color:var(--ink);border:1px so
 @media(prefers-reduced-motion:reduce){.bi-bar-row progress::-webkit-progress-value{animation:none}}
 
 .delivery-plot{display:block;width:100%;height:auto;max-height:320px;background:#fff7ed;border:1px solid #decab8;border-radius:10px;margin:12px 0}#deliveryMapResult a{overflow-wrap:anywhere}#liteAccounts[hidden]{display:none!important}
+
+.delivery-plot{max-height:580px;aspect-ratio:1;max-width:768px}.delivery-plot circle{pointer-events:auto}
