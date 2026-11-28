@@ -14,6 +14,7 @@ const annual=require('../lib/annual-ranking-fiscal');
 const ads=require('../lib/ad-contracts');
 const storeOperations=require('../lib/store-operations');
 const lite=require('../lib/lite-admin');
+const digital=require('../lib/digital-orders');
 
 function respond(res,status,payload){return res.status(status).json(payload);}
 function requireId(id){if(!c.UUID.test(id))c.fail('Identificador de pedido inválido.');return id;}
@@ -57,6 +58,7 @@ async function action(req,actor,body){
   if(!order)throw new db.StoreError('Pedido não encontrado.',404);
   if(order.fulfillment?.type==='delivery'&&body.next==='delivered'&&order.status!=='out_for_delivery')c.fail('Registre a saída com o motoboy antes de entregar.');
   if(body.next==='out_for_delivery'&&!lite.enabled())c.fail('A saída deve ser registrada pela conta do motoboy.');
+  if(lite.enabled()&&digital.prepaid(order.fulfillment)&&['preparing','completed','out_for_delivery','delivered'].includes(body.next)&&(order.payment_status!=='paid'||order.payment_method!=='pix'))c.fail('Confirme o Pix recebido antes de iniciar o preparo.');
   if(!c.statusAllowed(order.status,body.next))c.fail('Transição de pedido inválida. Atualize a tela.');
   if(body.next==='accepted'&&order.fulfillment?.type==='delivery'&&order.delivery_fee_cents===null)
    c.fail('Confirme o valor da entrega antes de aceitar o pedido.');
@@ -86,6 +88,7 @@ async function action(req,actor,body){
   if(!order)throw new db.StoreError('Pedido não encontrado.',404);
   if(!['accepted','preparing','completed','out_for_delivery','delivered'].includes(order.status)||order.payment_status!=='pending')
    c.fail('Pagamento só pode ser confirmado em pedido aceito e ainda não pago.');
+  if(lite.enabled()&&digital.prepaid(order.fulfillment)&&body.method!=='pix')c.fail('Esta localidade exige pagamento antecipado via Pix.');
   if(!c.METHODS.includes(body.method))c.fail('Selecione a forma de pagamento recebida.');
   if(c.orderTotal(order)===null)c.fail('Defina a taxa de entrega antes de registrar o pagamento.');
   if(body.received!==true)c.fail('Confirme que o pagamento foi realmente recebido.');
