@@ -44,6 +44,12 @@ async function refreshStatus() {
       return;
     }
     label.hidden = false;
+    if(data.weeklySchedule&&typeof data.weeklySchedule==='object'){
+      const names=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+      const list=names.map((name,i)=>{const w=data.weeklySchedule[i]||[];return name+' '+(w.length?w.map(r=>r.start+'–'+r.end).join(', '):'fechado');});
+      const text=list.join(' · ');
+      document.querySelectorAll('[data-store-weekly]').forEach(node=>node.textContent=text);
+    }
     const open = (response.ok || data.simulated) && data.enabled === true && data.open === true;
     publishStatus({enabled:true,open,unknown:!!data.unknown,simulated:!!data.simulated});
     if (data.unknown || (!response.ok && !data.simulated)) {

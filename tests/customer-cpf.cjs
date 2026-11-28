@@ -1,0 +1,14 @@
+'use strict';
+const assert=require('node:assert/strict');
+const {normalizeCpf,fingerprint,enabled}=require('../lib/customer-cpf');
+process.env.CUSTOMER_CPF_HMAC_KEY='ab'.repeat(32);
+const sample='52998224725';
+assert.equal(normalizeCpf(sample),sample);
+assert.equal(normalizeCpf('529.982.247-25'),sample);
+for(const invalid of ['00000000000','11111111111','52998224724','529x98224725','',null])assert.throws(()=>normalizeCpf(invalid));
+const a=fingerprint(sample);
+assert.equal(a.last2,'25');assert.match(a.hash,/^[a-f0-9]{64}$/);assert.equal(a.hash,fingerprint('529.982.247-25').hash);
+delete process.env.CUSTOMER_CPF_HMAC_KEY;assert.throws(()=>fingerprint(sample),e=>e.status===503);
+process.env.DELIVERY_ACCOUNT_REQUIRED='true';assert.equal(enabled(),true);
+delete process.env.DELIVERY_ACCOUNT_REQUIRED;assert.equal(enabled(),false);
+console.log('customer-cpf: validação, HMAC, configuração e flag OK');

@@ -1,0 +1,24 @@
+{
+  "id": "/local",
+  "name": "O Panquecão — Pedidos na mesa",
+  "short_name": "Panquecão Mesa",
+  "start_url": "/local",
+  "scope": "/local",
+  "display": "standalone",
+  "background_color": "#fff9ef",
+  "theme_color": "#681b30",
+  "lang": "pt-BR",
+  "icons": [
+    {
+      "src": "/favicons/oficial/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    },
+    {
+      "src": "/local-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

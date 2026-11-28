@@ -2,8 +2,8 @@
 // Taxa padrão para bairros cadastrados; localidades não cadastradas precisam de revisão.
 export function standardDeliveryFee(city, neighborhood, areas){
  const row=areas?.cities?.[city]?.find(x=>x.name===neighborhood);
- if(!row)return null;
- const cents=row.feeCents??areas.defaultFeeCents?.[city];
+ if(!row&&!(neighborhood&&areas?.cityWideFeeCities?.includes(city)))return null;
+ const cents=row?.feeCents??areas.defaultFeeCents?.[city];
  return Number.isSafeInteger(cents)&&cents>=0&&cents<=10000?cents:null;
 }
 const tidy = (value, max) => typeof value === 'string'
@@ -33,8 +33,8 @@ export function normalizeFulfillment(raw, areas) {
             : { type: 'table', table: readable(raw.table, 1, 12, 'a mesa ou comanda') };
     }
     const city = raw.city;
-    if (!['Nova Hartz', 'Araricá'].includes(city)) {
-        throw new Error('Selecione Nova Hartz ou Araricá para a entrega.');
+    if (typeof city!=='string'||!Object.hasOwn(areas?.cities||{},city)) {
+        throw new Error('Selecione Nova Hartz ou Araricá ou outra cidade atendida para a entrega.');
     }
     const listed = areas?.cities?.[city];
     if (!Array.isArray(listed)) throw new Error('Não conseguimos validar os bairros. Atualize o cardápio.');

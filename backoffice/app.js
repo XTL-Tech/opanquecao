@@ -155,7 +155,9 @@
   S.catalogPending=pending;
   try{await pending;}finally{if(S.catalogPending===pending)S.catalogPending=null;}
  }
+ const liteTabs=new Set(['orders','customers','catalog','store-hours']);
  function showTab(tab){
+  if(S.data?.lite&&!liteTabs.has(tab))return;
   if(S.data?.operational)return;
   if(['kitchen','courier','integrations'].includes(tab)&&S.actor?.role!=='admin')return;
   if(['reports','bi','ranking','fiscal','partners','store-hours'].includes(tab)&&!['admin','manager'].includes(S.actor?.role))return;
@@ -186,8 +188,9 @@
   $('#staffRole').textContent=S.actor.role==='admin'?'Superadministrador XTL':S.actor.role==='manager'?'Administração do estabelecimento':'Atendimento';
   document.querySelectorAll('[data-superadmin]').forEach(n=>n.hidden=S.actor.role!=='admin');
   document.querySelectorAll('[data-management]').forEach(n=>n.hidden=!['admin','manager'].includes(S.actor.role));
+  if(S.data.lite){document.querySelectorAll('[data-tab]').forEach(n=>n.hidden=!liteTabs.has(n.dataset.tab));$('#staffRole').textContent='Administração';$('#newOrder').hidden=true;$('#liteAccounts').hidden=false;}
   $('#pendingCount').textContent=S.data.orders.filter(x=>['pending_customer','awaiting_acceptance'].includes(x.status)).length||'';
-  renderTab();if(S.tab!=='after-sales')void refreshAfterSales();
+  renderTab();if(!S.data.lite&&S.tab!=='after-sales')void refreshAfterSales();
  }
  function renderOperational(data=S.data,view=S.actor.role){
   const isAdmin=S.actor.role==='admin';
@@ -522,7 +525,7 @@
   try{
    const d=await request('/api/backoffice?action=store_operations');if(S.actor!==actor||S.tab!=='store-hours')return;
    const c=d.config;hoursRevision=c?.revision||0;drawHours(c?.weekly_schedule||{});drawHolidays(d.holidays,c?.holiday_exceptions||{});
-   const f=$('#hoursForm').elements;f.acceptingOrders.checked=c?.accepting_orders===true;f.manualState.value='auto';
+   const f=$('#hoursForm').elements;f.acceptingOrders.checked=c?.accepting_orders===true;f.manualState.value=c?.manual_state!=='auto'&&Date.parse(c?.manual_override_until)>Date.now()?c.manual_state:'auto';if(f.manualState.value!=='auto')f.overrideMinutes.value=String(Math.max(5,Math.ceil((Date.parse(c.manual_override_until)-Date.now())/60000)));
    $('#hoursStatus').textContent=(d.integrated?'Controle online ativo. ':'Integração do horário ainda não ativada. ')+(c?'Estado atual da agenda: '+(d.status.open?'Aberta':'Fechada')+' · '+d.status.reason:'Nenhum horário cadastrado.');hoursLoaded=true;$('#hoursSave').disabled=false;
   }catch(e){$('#hoursStatus').textContent=e.message;}finally{hoursBusy=false;}
  }
@@ -532,7 +535,7 @@
   try{
    const term=$('#orderSearch').value.trim(),status=$('#orderStatusFilter').value;
    const last=more?S.data.orders.at(-1):null;
-   const q=new URLSearchParams({action:'orders',term,status});
+   const q=new URLSearchParams({action:'orders',term,status,channel:$('#orderChannelFilter')?.value||''});
    if(last?.created_at&&last.request_id){
     q.set('before',last.created_at);q.set('beforeId',last.request_id);
    }
@@ -558,16 +561,17 @@
    S.data.cash.orders:orders.filter(o=>o.status==='delivered').length);
   const target=$('#ordersTable');clear(target);
   const matches=orders.filter(o=>{
-   const cl=client(o.customer_id),s=[o.ref_code,cl?.name,cl?.phone].join(' ').toLowerCase();
-   return (!filter||o.status===filter)&&(!term||s.includes(term));
+   const cl=client(o.customer_id),s=[o.ref_code,o.customer_name||cl?.name,o.customer_phone||cl?.phone].join(' ').toLowerCase();
+   const channel=$('#orderChannelFilter')?.value;return (!channel||o.fulfillment?.type===channel)&&(!filter||o.status===filter)&&(!term||s.includes(term));
   });
   $('#ordersEmpty').hidden=matches.length>0;
   $('#moreOrders').hidden=S.demo||(!S.moreOrders&&orders.length<80);
   for(const o of matches){
-   const tr=el('tr');td(tr,'#'+o.ref_code,'td-primary');const who=td(tr,client(o.customer_id)?.name||'Cliente indisponível');
-   who.append(el('small',client(o.customer_id)?.phone||'', 'td-secondary'));
+   const channel=$('#orderChannelFilter')?.value;if(channel&&o.fulfillment?.type!==channel)continue;
+   const tr=el('tr');td(tr,'#'+o.ref_code,'td-primary');const who=td(tr,o.customer_name||client(o.customer_id)?.name||'Cliente indisponível');
+   who.append(el('small',o.customer_phone||client(o.customer_id)?.phone||'', 'td-secondary'));
    const type={delivery:'Entrega',pickup:'Retirada',table:'Mesa'}[o.fulfillment?.type]||'—';
-   td(tr,type);td(tr,money(o.subtotal_cents));
+   td(tr,type);td(tr,total(o)===null?'Frete a confirmar':money(total(o)));
    td(tr,label[o.status], '');tr.children[4].className='';tr.children[4].replaceChildren(el('span',label[o.status],'status-tag s-'+o.status));
    td(tr,time(o.created_at));td(tr,null).append(button('Abrir',()=>openOrder(o.request_id),'td-btn'));
    target.append(tr);
@@ -679,7 +683,7 @@
  function openOrder(id){
   const o=S.data.orders.find(x=>x.request_id===id);if(!o)return;
   S.selected=id;
-  const customer=client(o.customer_id),body=$('#detailBody'),actions=$('#detailActions');clear(body);clear(actions);
+  const customer=S.data.lite?{name:o.customer_name||client(o.customer_id)?.name,phone:o.customer_phone||client(o.customer_id)?.phone}:client(o.customer_id),body=$('#detailBody'),actions=$('#detailActions');clear(body);clear(actions);
   $('#detailTitle').textContent='#'+o.ref_code;$('#detailEyebrow').textContent=label[o.status]+' · '+time(o.created_at);
   const meta=el('div',null,'detail-meta');
   meta.append(block('Cliente',customer?.name),block('WhatsApp',customer?.phone),
@@ -701,7 +705,7 @@
    body.append(el('div',[f.street,f.number,f.neighborhood,f.city].filter(Boolean).join(', ')+(f.complement?' · '+f.complement:'')+(f.reference?' · Ref.: '+f.reference:''),'text-block'));
    if(o.delivery_fee_cents===null&&['pending_customer','awaiting_acceptance'].includes(o.status)){
     const container=el('div',null,'payment-box');container.append(el('h3','Definir taxa de entrega'));
-    const input=el('input');input.placeholder='7,00';input.inputMode='decimal';
+    const input=el('input');input.placeholder='10,00';input.inputMode='decimal';
     container.append(input,button('Salvar taxa',async()=>{
      const fee=number(input.value);if(fee===null)return show('Taxa inválida.',true);
      await mutate('order_fee',{id,feeCents:fee},'Taxa atualizada.');
@@ -712,14 +716,16 @@
   if(o.note)body.append(el('div','Observação: '+o.note,'text-block'));
   const due=total(o),summary=el('div',null,'total-line');
   summary.append(el('span','Total previsto'),el('strong',due===null?'Entrega a confirmar':money(due)));body.append(summary);
-  if(o.origin==='site'&&o.telegram_state!=='sent')body.append(el('p','⚠️ Telegram não confirmado; verifique o contato e o cupom antes do aceite.','hint'));
-  if(customer&&!S.demo)actions.append(button('WhatsApp',()=>window.open('https://wa.me/55'+customer.phone,'_blank','noopener,noreferrer')));
+  if(o.fulfillment?.type==='delivery')body.append(el('p','Tele-entrega: '+(o.delivery_fee_cents===null?'A confirmar':money(o.delivery_fee_cents)),'hint'));
+  if(['Parobé','Sapiranga'].includes(o.fulfillment?.city)&&o.payment_status!=='paid')body.append(el('p','Pix obrigatório antes do preparo.','hint'));
+  if(o.origin==='site'&&o.telegram_state!=='sent')body.append(el('p','Telegram não confirmado; verifique o pedido no painel antes do aceite.','hint'));
+  if(customer?.phone&&!S.demo)actions.append(button('WhatsApp',()=>window.open('https://wa.me/55'+customer.phone,'_blank','noopener,noreferrer')));
   const choices={pending_customer:[['Cliente confirmou','awaiting_acceptance'],['Cancelar','cancelled']],
    awaiting_acceptance:[['Aceitar pedido','accepted'],['Cancelar','cancelled']],
    accepted:[['Iniciar preparo','preparing'],['Marcar preparado','completed'],['Cancelar','cancelled']],
    preparing:[['Marcar preparado','completed'],['Cancelar','cancelled']],
    returned_to_attendant:[['Revisar e reenviar para aceite','awaiting_acceptance'],['Cancelar','cancelled']],
-   completed:o.fulfillment?.type==='delivery'?[['Cancelar','cancelled']]:[['Marcar entregue','delivered'],['Cancelar','cancelled']],
+   completed:o.fulfillment?.type==='delivery'?(S.data?.lite?[['Saiu para entrega','out_for_delivery'],['Cancelar','cancelled']]:[['Cancelar','cancelled']]):[['Marcar entregue','delivered'],['Cancelar','cancelled']],
    out_for_delivery:[['Marcar entregue','delivered'],['Cancelar','cancelled']]};
   for(const [text,next] of choices[o.status]||[])actions.append(button(text,async()=>{
    if(next==='accepted'&&due===null)return show('Defina a taxa de entrega antes de aceitar.',true);
@@ -804,7 +810,7 @@
  function parseMobilePrice(text){
   const match=/R\$\s*(\d+),(\d{2})/.exec(text||'');return match?Number(match[1])*100+Number(match[2]):null;
  }
- function loggedOut(){exitBiTV();biData=null;biLastOK=0;clear($('#biCards'));clear($('#biCharts'));S.actor=null;S.data=null;S.catalogLoadedAt=0;S.catalogPending=null;$('#appShell').hidden=true;$('#loginScreen').hidden=false;}
+ function loggedOut(){for(const id of ['accountSearchResults','accountHistory','deliveryMapResult']){const n=$('#'+id);if(n)clear(n);}exitBiTV();biData=null;biLastOK=0;clear($('#biCards'));clear($('#biCharts'));S.actor=null;S.data=null;S.catalogLoadedAt=0;S.catalogPending=null;$('#appShell').hidden=true;$('#loginScreen').hidden=false;}
  async function boot(){
   $('#holidayAdd').addEventListener('click',()=>holidayRow());
   $('#hoursForm').addEventListener('submit',async e=>{
@@ -860,14 +866,14 @@
   if(!S.demo)setInterval(()=>{if(S.tab==='bi')void refreshBI();},30000);
   $('#reportForm').addEventListener('submit',e=>{e.preventDefault();void refreshReports();});
   $('#reportExport').addEventListener('click',exportReports);
-  setInterval(()=>{if(S.actor&&!S.demo&&!S.data?.operational&&!document.hidden)void refreshAfterSales();},60000);
+  setInterval(()=>{if(S.actor&&!S.demo&&!S.data?.operational&&!S.data?.lite&&!document.hidden)void refreshAfterSales();},60000);
   // Poll only active operational screens; never reset an open dialog or search.
   if(!S.demo)setInterval(()=>{
    if(!S.actor||document.hidden||document.querySelector('dialog[open]'))return;
    if(S.data?.operational||['kitchen','courier'].includes(S.tab))void reload();
    else if(S.tab==='orders'&&!$('#orderSearch').value&&!$('#orderStatusFilter').value&&document.activeElement!==$('#orderSearch'))void reload();
   },30000);
-  document.addEventListener('visibilitychange',()=>{if(!document.hidden)void refreshAfterSales();});
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden&&!S.data?.lite)void refreshAfterSales();});
   for(const b of document.querySelectorAll('[data-close]'))b.addEventListener('click',()=>closeDialog(b.dataset.close));
   $('#navigation').addEventListener('click',e=>{const b=e.target.closest('[data-tab]');if(b)showTab(b.dataset.tab);});
   $('#refresh').addEventListener('click',async()=>{await reload();if(S.tab==='catalog')await ensureCatalog(true);});
@@ -877,6 +883,7 @@
     S.orderSearchTimer=setTimeout(()=>lookupOrders(),450);
   });
   $('#orderStatusFilter').addEventListener('change',()=>lookupOrders());
+  $('#orderChannelFilter').addEventListener('change',()=>lookupOrders());
   $('#moreOrders').addEventListener('click',()=>lookupOrders(true));
   $('#clientSearch').addEventListener('input',()=>{
     clearTimeout(S.searchTimer);
@@ -890,6 +897,39 @@
         renderCustomers();
       }catch(e){show(e.message,true);}
     },450);
+  });
+  $('#accountSearchBtn').addEventListener('click',async()=>{
+   if(!S.data?.lite||S.demo)return;
+   const root=$('#accountSearchResults');clear(root);clear($('#accountHistory'));
+   try{const d=await run('account_search',{term:$('#accountSearchInput').value});$('#accountSearchInput').value='';
+    for(const c of d.accounts){const row=el('div',null,'form-card');row.append(el('strong',c.name||'Cadastro incompleto'),el('p',(c.phone||'—')+' · CPF final '+c.cpf_last2+' · '+c.orders+' pedidos'));
+     row.append(button('Histórico',async()=>{const target=$('#accountHistory');clear(target);try{const h=await request('/api/backoffice?action=account_history&subject='+encodeURIComponent(c.subject));if(!h.orders.length)target.append(el('p','Nenhum pedido vinculado.'));for(const o of h.orders){const r=el('div',null,'form-card');r.append(el('strong','#'+o.ref_code+' · '+(label[o.status]||o.status)),el('p',time(o.created_at)+' · '+money(o.subtotal_cents+(o.delivery_fee_cents||0))),el('p',(o.items||[]).map(i=>i.quantity+'× '+i.product).join(' · ')));target.append(r);}}catch(e){show(e.message,true);}}));root.append(row);
+    }if(!d.accounts.length)root.append(el('p','Nenhuma conta encontrada.'));
+   }catch(e){show(e.message,true);}
+  });
+  $('#deliveryMapBtn').addEventListener('click',async()=>{
+   if(!S.data?.lite||S.demo)return;
+   const root=$('#deliveryMapResult');clear(root);
+   try{
+    const d=await request('/api/backoffice?action=delivery_map'),points=d.points||[],gps=points.filter(p=>p.location);
+    if(gps.length){
+     const ns='http://www.w3.org/2000/svg',svg=document.createElementNS(ns,'svg');svg.setAttribute('viewBox','0 0 768 768');svg.setAttribute('role','img');svg.setAttribute('aria-label','Mapa regional de entregas com GPS autorizado');svg.classList.add('delivery-plot');
+     // Fixed public region, independent of customer coordinates. Never geocode or send individual pins to the tile provider.
+     const zoom=12,n=2**zoom,project=(lat,lon)=>{const r=Math.max(-85,Math.min(85,lat))*Math.PI/180;return [(lon+180)/360*n,(1-Math.asinh(Math.tan(r))/Math.PI)/2*n];};
+     const center=project(-29.65,-50.98),x0=Math.floor(center[0])-1,y0=Math.floor(center[1])-1;
+     const tiles=document.createElementNS(ns,'g'),markers=document.createElementNS(ns,'g');svg.append(tiles,markers);
+     let shown=0;for(const p of gps){const xy=project(p.location.latitude,p.location.longitude),x=(xy[0]-x0)*256,y=(xy[1]-y0)*256;if(x<0||x>768||y<0||y>768)continue;shown++;const circle=document.createElementNS(ns,'circle');circle.setAttribute('cx',String(x));circle.setAttribute('cy',String(y));circle.setAttribute('r','5');circle.setAttribute('fill','#681b30');circle.setAttribute('stroke','#ffffff');circle.setAttribute('stroke-width','1.5');const title=document.createElementNS(ns,'title');title.textContent='#'+p.ref;circle.append(title);markers.append(circle);}
+     const toggle=button('Carregar mapa-base OpenStreetMap',()=>{
+      if(tiles.childNodes.length)return;
+      for(let x=0;x<3;x++)for(let y=0;y<3;y++){const img=document.createElementNS(ns,'image');img.setAttribute('x',String(x*256));img.setAttribute('y',String(y*256));img.setAttribute('width','256');img.setAttribute('height','256');img.setAttribute('href','https://tile.openstreetmap.org/'+zoom+'/'+(x0+x)+'/'+(y0+y)+'.png');tiles.append(img);}
+      toggle.disabled=true;toggle.textContent='Mapa-base solicitado';
+     });
+     const credit=el('a','© OpenStreetMap contributors');credit.href='https://www.openstreetmap.org/copyright';credit.target='_blank';credit.rel='noopener noreferrer';
+     root.append(el('p',shown+' de '+gps.length+' pontos na região. Fora da área, consulte a lista.'),el('p','O mapa-base é opcional: o provedor recebe apenas solicitações de uma região fixa e o IP do navegador, não os pontos dos clientes.'),toggle,svg,credit);
+    }
+    for(const p of points){const row=el('p','#'+p.ref+' · '+p.address+' ');const link=el('a','Abrir no mapa');link.href='https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(p.location?p.location.latitude+','+p.location.longitude:p.address);link.target='_blank';link.rel='noopener noreferrer';row.append(link);root.append(row);}
+    if(!points.length)root.append(el('p','Nenhuma entrega registrada.'));
+   }catch(e){show(e.message,true);}
   });
   $('#catalogSearch').addEventListener('input',renderCatalog);
   $('#newCustomer').addEventListener('click',()=>openCustomer(null));

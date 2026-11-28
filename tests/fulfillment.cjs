@@ -16,6 +16,11 @@ const areas=JSON.parse(fs.readFileSync(path.resolve('delivery-areas.json'),'utf8
     assert.equal(standardDeliveryFee('Araricá','Centro',areas),1000);
     assert.equal(standardDeliveryFee('Nova Hartz','__other__',areas),null);
     assert.equal(standardDeliveryFee('Nova Hartz','Inventado',areas),null);
+    for(const city of ['Parobé','Sapiranga']){
+      assert.equal(standardDeliveryFee(city,'__other__',areas),3500);
+      assert.equal(standardDeliveryFee(city,'',areas),null);
+      assert.equal(normalizeFulfillment({...base,city,neighborhood:'__other__',otherNeighborhood:'Bairro de teste'},areas).city,city);
+    }
     const delivery=normalizeFulfillment(base,areas);
     assert.equal(delivery.type,'delivery');
     assert.equal(delivery.city,'Nova Hartz');

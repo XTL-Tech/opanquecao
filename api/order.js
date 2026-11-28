@@ -7,6 +7,7 @@ const { loadStoreStatus } = require('../lib/store-hours-source');
 
 module.exports = async function handler(req, res) {
     res.setHeader('Cache-Control', 'no-store');
+    if(require('../lib/digital-orders').enabled())return res.status(410).json({error:'Utilize o checkout digital atualizado.'});
     if (req.method !== 'POST') return res.status(405).json({ error: 'Método inválido.' });
     // Diagnóstico sem dados pessoais, sem token Turnstile e sem credenciais.
     const receivedTrace = req.headers?.['x-checkout-trace'];
@@ -45,6 +46,7 @@ module.exports = async function handler(req, res) {
     if (!['delivery', 'pickup', 'table'].includes(method)) {
         return reject(400, 'Selecione entrega, retirada ou mesa.', 'fulfillment_type');
     }
+    if(method==='delivery'&&require('../lib/customer-cpf').enabled())return reject(409,'Use o checkout atualizado para delivery.','legacy_delivery_disabled');
     const table = typeof fulfillment.table === 'string' ? fulfillment.table.trim() : '';
     const clean = (value, maxLength) => typeof value === 'string' &&
         value.trim().length <= maxLength && !/[\x00-\x1f\x7f]/u.test(value) ? value.trim() : null;

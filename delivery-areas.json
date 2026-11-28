@@ -1,6 +1,6 @@
 {
-  "version": 2,
-  "description": "Taxas padrao por cidade em centavos. feeCents por bairro null = herda o padrao municipal; valor numerico sobrescreve. Fora da lista exige confirmacao.",
+  "version": 3,
+  "description": "Valores em centavos. Bairros cadastrados herdam a taxa municipal salvo exceção. Parobé e Sapiranga: taxa municipal fixa, Pix antes do preparo; cobertura confirmada pela loja. Demais localidades não cadastradas: revisão manual.",
   "cities": {
     "Nova Hartz": [
       {
@@ -237,10 +237,22 @@
         "name": "Zona Rural",
         "feeCents": null
       }
-    ]
+    ],
+    "Parobé": [],
+    "Sapiranga": []
   },
   "defaultFeeCents": {
     "Nova Hartz": 1000,
-    "Araricá": 1000
-  }
+    "Araricá": 1000,
+    "Parobé": 3500,
+    "Sapiranga": 3500
+  },
+  "cityWideFeeCities": [
+    "Parobé",
+    "Sapiranga"
+  ],
+  "prepaidPixCities": [
+    "Parobé",
+    "Sapiranga"
+  ]
 }
