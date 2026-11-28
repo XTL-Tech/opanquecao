@@ -2,6 +2,7 @@
 
 const { orderPdf } = require('../lib/order-pdf');
 const backoffice=require('../lib/backoffice-neon');
+const digital=require('../lib/digital-orders');
 const { loadCatalog } = require('../lib/catalog-source');
 const { loadStoreStatus } = require('../lib/store-hours-source');
 const deliveryAreas = require('../delivery-areas.json');
@@ -33,9 +34,10 @@ module.exports = async function handler(req, res) {
         return res.status(400).json({ error: 'Pedido inválido ou muito grande.' });
     }
     const { requestId, name, phone, challenge, lines, note, fulfillment } = raw;
-    const normalizedPhone = normalizePhone(phone);
+    const guest=digital.enabled()&&fulfillment?.type==='table'&&!phone;
+    const normalizedPhone = guest?null:normalizePhone(phone);
     if (!REQUEST_ID.test(requestId) || typeof name !== 'string' || !clean(name, 80) ||
-        name.length > 80 || /[\r\n]/.test(name) || !normalizedPhone ||
+        name.length > 80 || /[\r\n]/.test(name) || (!guest&&!normalizedPhone) ||
         typeof note !== 'string' || note.length > 400 ||
         typeof challenge !== 'string' || challenge.length < 1 || challenge.length > 2048) {
         return res.status(400).json({ error: 'Confira nome, WhatsApp e dados do pré-pedido.' });
@@ -49,7 +51,7 @@ module.exports = async function handler(req, res) {
         return res.status(400).json({ error: error?.message || 'Confira o endereço e a modalidade do pedido.' });
     }
     let accountSubject=null;
-    if(deliveryDetails.type==='delivery'&&require('../lib/customer-cpf').enabled()){
+    if(deliveryDetails.type==='delivery'&&(digital.enabled()||require('../lib/customer-cpf').enabled())){
         try{accountSubject=await require('../lib/customer-cpf').requireDeliveryAccount(req,clean(name,80),normalizedPhone);}
         catch(e){return res.status([401,403].includes(e.status)?e.status:503).json({error:[401,403].includes(e.status)?e.message:'Não foi possível validar sua conta.'});}
     }
@@ -57,6 +59,7 @@ module.exports = async function handler(req, res) {
     // conferir catálogo e horário no servidor.
     try {
         const status = await loadStoreStatus();
+        if(digital.enabled()&&!status.enabled)return res.status(503).json({error:'Horário de atendimento não configurado.'});
         if (status.enabled && !status.open) {
             return res.status(423).json({ error: 'A loja está fechada para novos pedidos.' });
         }
@@ -96,6 +99,35 @@ module.exports = async function handler(req, res) {
 
     const id = requestId.slice(0, 8).toUpperCase();
     const preview = process.env.VERCEL_ENV !== 'production';
+    if(digital.enabled()){
+        // Preview never writes to the restaurant DB or sends actual Telegram messages.
+        if(preview||!backoffice.configured())return res.status(503).json({error:'Pedidos digitais indisponíveis neste ambiente.'});
+        if(deliveryDetails.type==='delivery'&&!accountSubject)return res.status(403).json({error:'Entre na sua conta.'});
+        let claimed;
+        try{
+            if(!await digital.preflight())return res.status(423).json({error:'Loja fechada ou atendimento digital indisponível.'});
+            const customer=guest?await digital.guestCustomer(requestId,clean(name,80)):await backoffice.upsertCustomer({name:clean(name,80),phone:normalizedPhone});
+            claimed=await backoffice.createOrder({requestId,customer,items:validated,fulfillment:deliveryDetails,note:clean(note,400),origin:'site',status:'awaiting_acceptance',telegramState:'pending',deliveryFeeCents,accountSubject});
+        }catch(e){return res.status(e.status===409?409:503).json({error:'Não foi possível confirmar o registro. Confira antes de reenviar.'});}
+        const reply={id,status:'registered',digital:true,test:false,tracking:false,deliveryFeeCents:claimed.record.delivery_fee_cents??null};
+        if(!claimed.created)return res.status(200).json({...reply,replayed:true,telegramConfirmed:claimed.record.telegram_state==='sent'});
+        try{
+            const keyboard=[];
+            if(require('../lib/telegram-approval').approvalEnabled())keyboard.push([{text:'Aceitar pedido',callback_data:'accept:'+requestId},{text:'Rejeitar pedido',callback_data:'reject:'+requestId}]);
+            if(normalizedPhone)keyboard.push([{text:'Contato WhatsApp',url:'https://wa.me/55'+normalizedPhone}]);
+            const loc=deliveryDetails.location;
+            if(loc)keyboard.push([{text:'Ver rota de entrega',url:'https://www.google.com/maps?q='+loc.latitude+','+loc.longitude}]);
+            const response=await fetch('https://api.telegram.org/bot'+config.token+'/sendMessage',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chat_id:config.chat,text:digital.orderText({id,name,phone:normalizedPhone,items:validated,fulfillment:deliveryDetails,note,deliveryFeeCents}),reply_markup:{inline_keyboard:keyboard}}),signal:AbortSignal.timeout(12000)});
+            const sent=await response.json();
+            if(!response.ok||sent.ok!==true)throw Error('telegram');
+            await backoffice.patchOrder(requestId,{telegram_state:'eq.pending'},{telegram_state:'sent'});
+            return res.status(201).json({...reply,telegramConfirmed:true});
+        }catch{
+            try{await backoffice.patchOrder(requestId,{telegram_state:'eq.pending'},{telegram_state:'uncertain'});}catch{}
+            // The database has already committed. Do not ask the customer to reorder.
+            return res.status(201).json({...reply,telegramConfirmed:false});
+        }
+    }
     const whatsAppLink = 'https://wa.me/55' + normalizedPhone +
         '?text=' + encodeURIComponent('Olá, ' + clean(name, 60) + '! Aqui é o Disk Panquecão. ' +
             'Vimos seu pré-pedido #' + id + ' no nosso cardápio. ' +
