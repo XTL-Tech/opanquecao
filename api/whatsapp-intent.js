@@ -101,7 +101,7 @@ module.exports = async function handler(req, res) {
     const preview = process.env.VERCEL_ENV !== 'production';
     if(digital.enabled()){
         // Preview never writes to the restaurant DB or sends actual Telegram messages.
-        if(preview||!backoffice.configured())return res.status(503).json({error:'Pedidos digitais indisponíveis neste ambiente.'});
+        if(preview||!backoffice.configured()||process.env.CATALOG_SOURCE!=='neon')return res.status(503).json({error:'Pedidos digitais indisponíveis neste ambiente.'});
         if(deliveryDetails.type==='delivery'&&!accountSubject)return res.status(403).json({error:'Entre na sua conta.'});
         let claimed;
         try{
