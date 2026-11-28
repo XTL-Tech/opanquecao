@@ -168,7 +168,7 @@ module.exports=async function handler(req,res){
    if(act==='dashboard')return respond(res,200,{actor,lite:lite.enabled(),...await db.dashboard()});
    if(act==='catalog')return respond(res,200,{catalog:await db.getCatalog()});
    if(act==='customers')return respond(res,200,{customers:await db.searchCustomers(req.query?.term,req.query?.cursor||0)});
-   if(act==='orders')return respond(res,200,{orders:await db.searchOrders({term:req.query?.term,status:req.query?.status,before:req.query?.before,beforeId:req.query?.beforeId})});
+   if(act==='orders')return respond(res,200,{orders:await db.searchOrders({term:req.query?.term,status:req.query?.status,channel:req.query?.channel,before:req.query?.before,beforeId:req.query?.beforeId})});
    if(act==='events')return respond(res,200,{events:await db.events(requireId(req.query?.id))});
    if(act==='session')return respond(res,200,{actor});
    return respond(res,404,{error:'Recurso não encontrado.'});
