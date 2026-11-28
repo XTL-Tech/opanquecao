@@ -18,9 +18,10 @@ assert.equal(policyFor('/favicons/(.*)'), 'public, max-age=86400, must-revalidat
 assert.equal(config.functions['api/catalog.js']?.includeFiles,'cardapio.json');
 assert.equal(policyFor('/api/backoffice'), 'private, no-store, max-age=0',
   'Backoffice precisa de no-store explícito para PII');
-assert.equal(headers.some(item => item.source.startsWith('/api') &&
-  item.source !== '/api/backoffice'), false,
-  'Outras APIs não podem herdar cache estático sem revisão explícita');
+for(const rule of headers.filter(item=>item.source.startsWith('/api'))){
+  assert.ok(['/api/backoffice','/api/customer-account'].includes(rule.source),'Regra de API não revisada: '+rule.source);
+  assert.equal(policyFor(rule.source),'private, no-store, max-age=0');
+}
 
 const orderSource = fs.readFileSync(path.join(root, 'api', 'order.js'), 'utf8');
 assert.match(orderSource, /setHeader\('Cache-Control',\s*'no-store'\)/,
@@ -34,7 +35,7 @@ const response = {
   end() { return this; }
 };
 require(path.join(root, 'api', 'order-config.js'))({method: 'GET'}, response);
-assert.equal(response.headers['cache-control'], 'public, max-age=15, s-maxage=60');
+assert.equal(response.headers['cache-control'], 'no-store');
 assert.equal(response.data.testMode, process.env.VERCEL_ENV !== 'production');
 assert.ok(!Object.hasOwn(response.data, 'TELEGRAM_BOT_TOKEN'),
   'A API nunca pode expor credenciais');
