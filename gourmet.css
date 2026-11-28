@@ -149,3 +149,20 @@ html.store-lights-off .gourmet-partners{filter:grayscale(1)}
 .local-photo-stack{display:grid;gap:12px;grid-template-columns:1.3fr 1fr;align-items:start;min-width:0}.local-photo{margin:0;min-width:0}.local-photo>a{display:block;background:#dae4d8;border-radius:12px;overflow:hidden}.local-photo img{display:block;width:100%;aspect-ratio:4/5;object-fit:cover;color:#394b3f;font-size:13px}.local-photo figcaption{font-size:10px;color:#465849;line-height:1.5;margin-top:6px;overflow-wrap:anywhere}.local-photo figcaption a{color:inherit;text-decoration:underline}.local-photo-city{margin-top:20px}.premium-hero h2{overflow-wrap:anywhere;font-size:clamp(30px,3.9vw,59px)}@media(max-width:700px){.local-photo img{aspect-ratio:4/3}.local-photo-city{margin-top:0}.premium-hero h2{font-size:clamp(28px,7.6vw,43px)}}
 
 .brand-caption small{max-width:180px;line-height:1.35;font-size:10px;white-space:normal}
+
+/* Nossa história: conteúdo editorial, independente do fluxo de pedidos. */
+.family-story{max-width:1150px;margin:clamp(28px,5vw,64px) auto;padding:clamp(22px,4vw,48px);background:#fffaf2;border:1px solid var(--g-line);border-radius:var(--g-radius);color:var(--g-ink);scroll-margin-top:100px}
+.family-story h2{font:800 clamp(27px,4vw,43px)/1.16 Montserrat,'Open Sans',sans-serif;letter-spacing:-.035em;color:var(--g-wine);margin:12px 0 20px;max-width:800px}
+.family-story p:not(.category-kicker){font-size:15px;line-height:1.8;color:var(--g-muted);max-width:78ch;margin:0 0 14px}
+.family-story-milestones{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:26px 0}
+.family-story-milestones>div{padding:18px 12px;border:1px solid var(--g-line);background:var(--g-paper);border-radius:var(--g-small);display:flex;flex-direction:column;gap:5px}
+.family-story-milestones strong{font:800 clamp(23px,3vw,34px)/1.2 Montserrat,'Open Sans',sans-serif;color:var(--g-wine)}
+.family-story-milestones span{font-size:13px;line-height:1.4;color:var(--g-muted)}
+.family-story h3{font:800 clamp(19px,2.5vw,27px)/1.25 Montserrat,'Open Sans',sans-serif;color:var(--g-ink);margin:24px 0 12px}
+.family-story p.family-story-signature{font-weight:800;color:var(--g-wine);font-size:18px}
+.family-story-actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:20px}
+.family-story-actions a{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:10px 16px;border-radius:var(--g-small);background:var(--g-wine);color:#fff;font-size:14px;font-weight:800;text-decoration:none}
+.family-story-actions a+ a{background:transparent;color:var(--g-wine);border:1px solid var(--g-wine)}
+.family-story-actions a:focus-visible{outline:2px solid var(--g-wine);outline-offset:3px}
+@media(max-width:1000px){.gourmet-header .header-cta{display:none}}
+@media(max-width:700px){.family-story{margin-inline:16px;scroll-margin-top:84px}.family-story-milestones{grid-template-columns:repeat(2,minmax(0,1fr))}.gourmet-header .site-tabs{flex-wrap:wrap}.gourmet-header .site-tabs a{flex:1 1 28%;white-space:normal}}
