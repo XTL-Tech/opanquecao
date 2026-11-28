@@ -22,6 +22,13 @@ assert.equal(homeDoc.querySelector('meta[property="og:image"]')?.content,site+'/
 assert.equal(homeDoc.querySelector('meta[name="twitter:card"]')?.content,'summary_large_image');
 assert.equal(homeDoc.querySelector('meta[property="og:image:alt"]')?.content.includes('Disk Panquecão'),true);
 assert.equal(homeDoc.querySelectorAll('.footer-category-links a').length,12);
+const xtlFoodTop=homeDoc.querySelector('header .xtl-food-top-link');
+assert.ok(xtlFoodTop,'Link comercial XTL FOOD ausente do cabeçalho');
+assert.equal(xtlFoodTop.href,'https://xtltech.com.br/');
+assert.equal(xtlFoodTop.target,'_blank');
+assert.ok(xtlFoodTop.relList.contains('noopener'));
+assert.match(xtlFoodTop.textContent,/XTL FOOD/);
+
 const familyStory=homeDoc.querySelector('#nossa-historia');
 assert.ok(familyStory,'Seção Nossa história ausente');
 assert.equal(homeDoc.querySelectorAll('#nossa-historia').length,1);
